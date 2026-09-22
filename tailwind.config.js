@@ -1,0 +1,45 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ['./app/**/*.{js,jsx,ts,tsx}', './components/**/*.{js,jsx,ts,tsx}'],
+  presets: [require('nativewind/preset')],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        primary: '#0F9B98',
+        'primary-teal': '#0F9B98',
+        'primary-dark': '#08111F',
+        'action-green': '#16B364',
+        secondary: '#16B364',
+        accent: '#FF6B6B',
+        success: '#16B364',
+        info: '#19C3BC',
+        warning: '#F5B83D',
+        error: '#EF4444',
+        background: '#F8FAFC',
+        'background-dark': '#0B1424',
+        card: '#FFFFFF',
+        'card-dark': '#18263A',
+        dark: '#1C1917',
+        muted: '#57534E',
+        border: '#E2E8F0',
+        'input-bg': '#F1F5F9',
+        'filter-bg': '#CCFBF1',
+        'filter-text': '#0F9B98',
+      },
+      fontFamily: {
+        sans: ['PlusJakartaSans_400Regular'],
+        medium: ['PlusJakartaSans_500Medium'],
+        semibold: ['PlusJakartaSans_600SemiBold'],
+        bold: ['PlusJakartaSans_700Bold'],
+        display: ['Outfit_600SemiBold'],
+      },
+      borderRadius: {
+        xl: '16px',
+        '2xl': '20px',
+        '3xl': '24px',
+      },
+    },
+  },
+  plugins: [],
+};
