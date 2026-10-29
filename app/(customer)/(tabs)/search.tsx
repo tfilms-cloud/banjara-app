@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
 import {
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -10,20 +9,24 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { ExplorePanels, FloatingCrossSell } from '@/components/explore/ExplorePanels';
-import { ScreenHeader } from '@/components/navigation/ScreenHeader';
+import { CustomerHeader } from '@/components/travel/CustomerHeader';
+import { SearchModeTabs } from '@/components/travel/SearchCard';
+import { useAuthStore } from '@/store/authStore';
+import { useUserStore } from '@/store/userStore';
 import { Colors, useThemeColors } from '@/constants/colors';
 import {
-  EXPLORE_SERVICE_TABS,
   type ExploreServiceTab,
 } from '@/constants/exploreCatalog';
-import { Radius, Shadows, Spacing } from '@/constants/spacing';
-import { Fonts } from '@/constants/typography';
+import { Spacing } from '@/constants/spacing';
+import { CustomerType, Fonts } from '@/constants/typography';
 import { usePopularHotels } from '@/hooks/useHotels';
 import { useGuides, useRestaurants, useTourOperators } from '@/hooks/useRestaurants';
 import { useRecommendedTrips } from '@/hooks/useTrips';
 import { pushPath } from '@/utils/navigation';
 
 export default function ExploreScreen() {
+  const user = useAuthStore(state => state.user);
+  const notifications = useUserStore(state => state.notifications);
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const [tab, setTab] = useState<ExploreServiceTab>('transport');
@@ -80,13 +83,9 @@ export default function ExploreScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <ScreenHeader
-        title="Explore"
-        showNotifications
-        onNotificationsPress={() => pushPath('/(customer)/(tabs)/notifications')}
-      />
+      <CustomerHeader userName={user?.name} userAvatar={user?.avatar} hasUnread={notifications.some(item => !item.read)} onOpenSearch={() => pushPath('/(customer)/results')} onNotifications={() => pushPath('/(customer)/(tabs)/notifications')} onProfile={() => pushPath('/(customer)/(tabs)/profile')} />
       <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + Spacing['3xl'] }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         refreshControl={
@@ -98,42 +97,7 @@ export default function ExploreScreen() {
           <Text style={[styles.introSub, { color: colors.muted }]}>{subtitle}</Text>
         </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tabsRow}
-        >
-          {EXPLORE_SERVICE_TABS.map((item) => {
-            const active = tab === item.id;
-            return (
-              <Pressable
-                key={item.id}
-                onPress={() => setTab(item.id)}
-                style={[
-                  styles.tabChip,
-                  {
-                    backgroundColor: active ? colors.primary : colors.card,
-                    borderColor: active ? colors.primary : colors.border,
-                  },
-                ]}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    {
-                      color: active ? colors.white : colors.dark,
-                      fontFamily: active ? Fonts.bodySemiBold : Fonts.bodyMedium,
-                    },
-                  ]}
-                >
-                  {item.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+        <View style={{ paddingHorizontal: Spacing.screen }}><SearchModeTabs mode={tab} onChange={setTab} compact /></View>
 
         <ExplorePanels
           tab={tab}
@@ -173,27 +137,11 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   introTitle: {
-    fontFamily: Fonts.display,
-    fontSize: 22,
+    ...CustomerType.section,
     letterSpacing: -0.3,
   },
   introSub: {
     fontFamily: Fonts.body,
-    fontSize: 13,
-  },
-  tabsRow: {
-    paddingHorizontal: Spacing.screen,
-    gap: 8,
-    paddingBottom: Spacing.sm,
-  },
-  tabChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    ...Shadows.soft,
-  },
-  tabText: {
     fontSize: 13,
   },
   loadingHint: {

@@ -1,3 +1,4 @@
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, TextInput, View, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +8,7 @@ import { HomeSection } from '@/components/travel/HomeSection';
 import { DestinationCard } from '@/components/travel/DestinationCard';
 import { AgencyTripSummaryCard } from '@/components/trip/AgencyTripSummaryCard';
 import { LocationPinSheet, formatPickedCity } from '@/components/location/LocationPinSheet';
-import { useThemeColors } from '@/constants/colors';
+import { useThemeColors, type ColorTokens } from '@/constants/colors';
 import {
   GUIDE_GENDERS,
   RESIDENCE_CLASSES,
@@ -60,6 +61,7 @@ type ExplorePanelsProps = {
 
 function EmptyCatalog({ title, message }: { title: string; message: string }) {
   const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={[styles.emptyBox, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
       <Text style={[styles.emptyTitle, { color: colors.dark }]}>{title}</Text>
@@ -330,6 +332,7 @@ export function ExplorePanels({
   onSearchRestaurants,
 }: ExplorePanelsProps) {
   const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const [vehicleClass, setVehicleClass] = useState<VehicleClass | 'all'>('all');
   const [residence, setResidence] = useState<ResidenceClass>('hotel');
   const [guideGender, setGuideGender] = useState<GuideGender>('male');
@@ -951,7 +954,7 @@ export function FloatingCrossSell({
   return null;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTokens) => StyleSheet.create({
   root: { gap: 0 },
   classRow: {
     paddingHorizontal: Spacing.screen,
@@ -977,8 +980,8 @@ const styles = StyleSheet.create({
     gap: 8,
     borderWidth: 1,
     borderRadius: Radius.full,
-    paddingHorizontal: 14,
-    minHeight: 46,
+    paddingHorizontal: Spacing.lg,
+    minHeight: Spacing['5xl'],
   },
   restoSearchRow: {
     paddingHorizontal: Spacing.screen,
@@ -989,7 +992,7 @@ const styles = StyleSheet.create({
   },
   restoSearchCol: {
     paddingHorizontal: Spacing.screen,
-    gap: 10,
+    gap: Spacing.md,
     marginBottom: Spacing.sm,
   },
   restoSearchField: {
@@ -1025,7 +1028,7 @@ const styles = StyleSheet.create({
   searchBtnText: {
     fontFamily: Fonts.bodySemiBold,
     fontSize: 13,
-    color: '#fff',
+    color: colors.white,
   },
   searchInput: {
     flex: 1,

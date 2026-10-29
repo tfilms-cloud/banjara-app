@@ -1,8 +1,9 @@
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { useThemeColors } from '@/constants/colors';
+import { useThemeColors, type ColorTokens } from '@/constants/colors';
 import type { ExploreThumb } from '@/constants/exploreCatalog';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Radius, Shadows, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 import { pushPath } from '@/utils/navigation';
@@ -30,6 +31,7 @@ export function ThumbnailGrid({
   onItemPress,
 }: ThumbnailGridProps) {
   const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const { width } = useWindowDimensions();
   const pad = Spacing.screen * 2;
   const gap = Spacing.sm;
@@ -74,7 +76,7 @@ export function ThumbnailGrid({
               ) : null}
               {item.rating != null ? (
                 <View style={styles.rating}>
-                  <Ionicons name="star" size={10} color="#F5B83D" />
+                  <Ionicons name="star" size={10} color={colors.warning} />
                   <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
                 </View>
               ) : null}
@@ -98,7 +100,7 @@ export function ThumbnailGrid({
           accessibilityLabel={showMoreLabel}
         >
           <Text style={[styles.moreText, { color: colors.primary }]}>{showMoreLabel}</Text>
-          <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+          <Ionicons name="chevron-forward" size={16} color={colors.primaryText} />
         </Pressable>
       ) : null}
     </View>
@@ -117,6 +119,7 @@ export function ExploreFilterChips<T extends string>({
   onChange,
 }: FilterChipsProps<T>) {
   const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={[styles.filters, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
       {options.map((option) => {
@@ -151,7 +154,7 @@ export function ExploreFilterChips<T extends string>({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTokens) => StyleSheet.create({
   wrap: {
     paddingHorizontal: Spacing.screen,
     gap: Spacing.md,
@@ -164,9 +167,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   thumbWrap: {
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     overflow: 'hidden',
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.inputBg,
     ...Shadows.soft,
   },
   thumb: {
@@ -184,7 +187,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontFamily: Fonts.bodySemiBold,
     fontSize: 9,
-    color: '#fff',
+    color: colors.white,
   },
   rating: {
     position: 'absolute',
@@ -193,7 +196,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    backgroundColor: 'rgba(8,17,31,0.75)',
+    backgroundColor: colors.mediaScrim,
     paddingHorizontal: 5,
     paddingVertical: 2,
     borderRadius: Radius.full,
@@ -207,13 +210,13 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bodySemiBold,
     fontSize: 11,
     marginTop: 5,
-    lineHeight: 14,
+    lineHeight: 18,
   },
   meta: {
     fontFamily: Fonts.body,
     fontSize: 10,
     marginTop: 1,
-    lineHeight: 13,
+    lineHeight: 16,
   },
   moreBtn: {
     alignSelf: 'center',
