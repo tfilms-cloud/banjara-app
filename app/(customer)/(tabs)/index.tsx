@@ -16,6 +16,9 @@ import { HotelSearchCard } from '@/components/hotels/HotelSearchCard';
 import { LocationPinSheet, formatPickedCity } from '@/components/location/LocationPinSheet';
 import { DestinationCard } from '@/components/travel/DestinationCard';
 import { HomeHeroHeader } from '@/components/travel/HomeHeroHeader';
+import { HomeStories } from '@/components/travel/HomeStories';
+import { RoadStatusChip } from '@/components/travel/RoadStatusChip';
+import { HomeHelpButton } from '@/components/travel/HomeHelpButton';
 import { TrustGrid } from '@/components/travel/TrustGrid';
 import { groupTripsByAgency } from '@/utils/groupTripsByAgency';
 import { HomeSection } from '@/components/travel/HomeSection';
@@ -57,6 +60,11 @@ import { formatDate } from '@/utils/formatDate';
 import { formatDuration } from '@/utils/formatTime';
 import { pushPath } from '@/utils/navigation';
 import type { LocationPickerValue } from '@/types/location';
+
+// TODO: enable previews only after content and actions are approved.
+const SHOW_STORIES = false;
+const SHOW_ROAD_STATUS_CHIP = false;
+const SHOW_HELP_BUTTON = false;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -608,47 +616,8 @@ export default function HomeScreen() {
   const searchBlock =
     mode === 'tours' || mode === 'guides' || mode === 'restaurants' ? null : (
     <View style={styles.searchFloat}>
-      {mode === 'transport' ? (
-        <View
-          style={[
-            styles.transportControls,
-            { backgroundColor: colors.card, borderColor: colors.border },
-          ]}
-        >
-          <SegmentChips
-            value={transportPanel}
-            onChange={setTransportPanel}
-            options={[
-              { id: 'available' as const, label: 'Available rides' },
-              { id: 'customise' as const, label: 'Customise route' },
-            ]}
-          />
-          {transportPanel === 'customise' ? (
-            <>
-              <SegmentChips
-                value={journeyKind}
-                onChange={onChangeJourney}
-                options={[
-                  { id: 'one_way' as const, label: 'One way' },
-                  { id: 'round_trip' as const, label: 'Two way' },
-                ]}
-              />
-              <SegmentChips
-                value={bookingKind}
-                onChange={setBookingKind}
-                options={[
-                  { id: 'seat' as const, label: 'Seat booking' },
-                  { id: 'vehicle' as const, label: 'Vehicle booking' },
-                ]}
-              />
-            </>
-          ) : null}
-        </View>
-      ) : null}
-
-      {mode === 'transport' && transportPanel === 'available' ? null : (
+      <>
         <>
-          <HomeSearchKindTabs value={searchKind} onChange={setSearchKind} />
           {searchKind === 'name' ? (
             <NameSearchCard
               value={query}
@@ -733,7 +702,46 @@ export default function HomeScreen() {
             </>
           )}
         </>
-      )}
+      </>
+      {mode === 'transport' ? (
+        <View
+          style={[
+            styles.transportControls,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
+          <SegmentChips
+            value={transportPanel}
+            onChange={setTransportPanel}
+            options={[
+              { id: 'available' as const, label: 'Available rides' },
+              { id: 'customise' as const, label: 'Customise route' },
+            ]}
+          />
+          {transportPanel === 'customise' ? (
+            <>
+              <SegmentChips
+                value={journeyKind}
+                onChange={onChangeJourney}
+                options={[
+                  { id: 'one_way' as const, label: 'One way' },
+                  { id: 'round_trip' as const, label: 'Two way' },
+                ]}
+              />
+              <SegmentChips
+                value={bookingKind}
+                onChange={setBookingKind}
+                options={[
+                  { id: 'seat' as const, label: 'Seat booking' },
+                  { id: 'vehicle' as const, label: 'Vehicle booking' },
+                ]}
+              />
+            </>
+          ) : null}
+        </View>
+      ) : null}
+
+      <HomeSearchKindTabs value={searchKind} onChange={setSearchKind} />
     </View>
   );
 
@@ -1027,6 +1035,8 @@ export default function HomeScreen() {
         }
       >
         <HomeHeroHeader
+          stories={SHOW_STORIES ? <HomeStories /> : undefined}
+          roadStatus={SHOW_ROAD_STATUS_CHIP ? <RoadStatusChip /> : undefined}
           mode={mode}
           onChangeMode={onChangeMode}
           from={from}
@@ -1185,6 +1195,7 @@ export default function HomeScreen() {
           <TrustGrid />
         </HomeSection>
       </ScrollView>
+      {SHOW_HELP_BUTTON ? <HomeHelpButton /> : null}
     </View>
   );
 }
@@ -1195,9 +1206,10 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing['4xl'],
   },
   searchFloat: {
-    marginTop: Spacing.sm,
+    marginTop: -Spacing.overlap,
     marginHorizontal: Spacing.screen,
     gap: Spacing.md,
+    zIndex: 1,
   },
   transportControls: {
     borderRadius: Radius.xl,

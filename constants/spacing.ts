@@ -66,6 +66,7 @@ export const Size = {
   iconSm: 16, iconMd: 18, icon: 20, iconLg: 22, iconHero: 28,
   touch: 44, button: 48, avatar: 52, avatarSmall: 34,
   badgeDot: 6, photoDot: 7, sideSlot: 44,
+  category: 76,
   hero: 220, tripHero: 260, map: 240, thumbnail: 68,
   border: 1, borderStrong: 1.5, borderActive: 2,
 } as const;

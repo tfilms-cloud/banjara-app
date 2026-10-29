@@ -16,7 +16,7 @@ import {
   type CustomerProductMode,
   type HomeServiceCategory,
 } from '@/constants/productModes';
-import { Radius, Shadows, Spacing } from '@/constants/spacing';
+import { Radius, Shadows, Size, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -307,27 +307,28 @@ export function SearchModeTabs({ mode, onChange, compact = false }: ModeTabsProp
             style={[
               styles.modeChip,
               {
-                backgroundColor: active ? colors.primary : colors.inputBg,
-                borderColor: active ? colors.primary : colors.border,
+                backgroundColor: colors.transparent,
+                borderColor: colors.transparent,
               },
             ]}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
             accessibilityLabel={`${item.label}. ${item.shortHint}`}
           >
-            <CategoryIcon icon={item.icon} active={active} colors={colors} />
+            <View style={[styles.categoryIcon, { backgroundColor: active ? colors.primarySoft : colors.card, borderColor: active ? colors.primary : colors.border }]}><CategoryIcon icon={item.icon} active={false} colors={colors} /></View>
             <Text
               style={[
                 styles.modeChipText,
                 {
-                  color: active ? colors.white : colors.dark,
+                  color: active ? colors.primaryText : colors.muted,
                   fontFamily: active ? Fonts.bodySemiBold : Fonts.bodyMedium,
                 },
               ]}
-              numberOfLines={1}
+              numberOfLines={2}
             >
               {item.label}
             </Text>
+            <View style={[styles.categoryIndicator, { backgroundColor: active ? colors.primary : colors.transparent }]} />
           </Pressable>
         );
       })}
@@ -566,7 +567,7 @@ const styles = StyleSheet.create({
   },
   cta: {
     marginTop: Spacing.xs,
-    minHeight: 50,
+    minHeight: Size.button,
     borderRadius: Radius.full,
   },
   modes: {
@@ -620,18 +621,8 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingBottom: Spacing.sm,
   },
-  modeChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    marginRight: 8,
-  },
-  modeChipText: {
-    fontSize: 13,
-    letterSpacing: -0.2,
-  },
+  categoryIcon: { width: Size.touch, height: Size.touch, borderRadius: Radius.full, borderWidth: Size.border, alignItems: 'center', justifyContent: 'center' },
+  categoryIndicator: { height: Size.borderActive, width: Spacing.xl, borderRadius: Radius.full },
+  modeChip: { width: Size.category, minHeight: Size.category, alignItems: 'center', justifyContent: 'flex-start', gap: Spacing.xs },
+  modeChipText: { fontSize: 11, lineHeight: 16, textAlign: 'center', minHeight: Spacing['3xl'] },
 });

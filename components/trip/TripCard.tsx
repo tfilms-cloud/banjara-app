@@ -7,7 +7,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 import { Button } from '@/components/ui/Button';
 import { Colors, useThemeColors } from '@/constants/colors';
 import { Radius, Shadows, Spacing } from '@/constants/spacing';
-import { Fonts } from '@/constants/typography';
+import { CustomerType, Fonts } from '@/constants/typography';
 import type { TripWithDetails, VehicleType } from '@/types/trip';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDuration, formatTime } from '@/utils/formatTime';
@@ -71,14 +71,14 @@ export const TripCard = memo(function TripCard({ trip, onPress, compact }: TripC
     seats <= 0
       ? colors.inputBg
       : seats <= 3
-        ? colors.softDanger
+        ? colors.coralSoft
         : colors.softGreen;
 
   const seatColor =
     seats <= 0
       ? colors.mutedLight
       : seats <= 3
-        ? colors.danger
+        ? colors.coralText
         : colors.action;
 
   const seatLabel =
@@ -132,7 +132,7 @@ export const TripCard = memo(function TripCard({ trip, onPress, compact }: TripC
 
           <View style={styles.agencyCopy}>
             <View style={styles.nameRow}>
-              <Text style={[styles.agency, { color: colors.dark }]} numberOfLines={1}>
+              <Text style={[styles.agency, { color: colors.dark }]} numberOfLines={2}>
                 {trip.agency.name}
               </Text>
               {trip.agency.verified ? (
@@ -206,10 +206,10 @@ export const TripCard = memo(function TripCard({ trip, onPress, compact }: TripC
         </View>
 
         <View style={styles.footer}>
-          <View>
+          <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[styles.fromLabel, { color: colors.mutedLight }]}>FROM</Text>
             <View style={styles.priceRow}>
-              <Text style={[styles.price, { color: colors.dark }]}>
+              <Text style={[styles.price, { color: colors.action }]}>
                 {formatCurrency(trip.price, trip.currency)}
               </Text>
               <Text style={[styles.perSeat, { color: colors.mutedLight }]}> / seat</Text>
@@ -273,8 +273,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   agency: {
-    fontFamily: Fonts.bodySemiBold,
-    fontSize: 15,
+    ...CustomerType.card,
     flexShrink: 1,
   },
   ratingRow: {
@@ -324,7 +323,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  timeCol: { width: 84 },
+  timeCol: { flex: 1, minWidth: 0 },
   timeEnd: { alignItems: 'flex-end' },
   time: {
     fontFamily: Fonts.display,
@@ -408,12 +407,11 @@ const styles = StyleSheet.create({
   priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
+    flexWrap: 'wrap',
     marginTop: 1,
   },
   price: {
-    fontFamily: Fonts.display,
-    fontSize: 20,
-    letterSpacing: -0.3,
+    ...CustomerType.hero,
   },
   perSeat: {
     fontFamily: Fonts.body,
