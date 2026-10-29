@@ -1,3 +1,4 @@
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,10 +29,10 @@ import { ErrorState } from '@/components/ui/EmptyState';
 import { Header } from '@/components/ui/Header';
 import { Rating } from '@/components/ui/Rating';
 import { TripDetailsSkeleton } from '@/components/ui/Skeleton';
-import { Colors } from '@/constants/colors';
+import { useThemeColors, type ColorTokens } from '@/constants/colors';
 import { journeyTypeMeta } from '@/constants/journeyTypes';
-import { Radius, Shadows, Spacing } from '@/constants/spacing';
-import { Fonts, Typography } from '@/constants/typography';
+import { Radius, Shadows, Size, Spacing } from '@/constants/spacing';
+import { CustomerType, Fonts, Typography } from '@/constants/typography';
 import { useLocation } from '@/hooks/useLocation';
 import { useTrip } from '@/hooks/useTrips';
 import * as tripService from '@/services/tripService';
@@ -49,6 +50,8 @@ import { paramId, pushPath, safeBack } from '@/utils/navigation';
 const UNAVAILABLE_STATUSES = new Set(['cancelled', 'completed', 'departed']);
 
 export default function TripDetailsScreen() {
+  const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const params = useLocalSearchParams<{ id: string | string[] }>();
   const id = paramId(params.id);
   const insets = useSafeAreaInsets();
@@ -153,7 +156,7 @@ export default function TripDetailsScreen() {
         onBack={() => safeBack('/(customer)/results')}
         right={
           <Pressable onPress={() => void onShare()} hitSlop={8} accessibilityRole="button" accessibilityLabel="Share trip">
-            <Ionicons name="share-outline" size={22} color={Colors.dark} />
+            <Ionicons name="share-outline" size={22} color={colors.dark} />
           </Pressable>
         }
       />
@@ -173,9 +176,9 @@ export default function TripDetailsScreen() {
               accessibilityLabel={`${trip.vehicleName || 'Vehicle'} on the ${trip.from} to ${trip.to} trip`}
             />
           ) : (
-            <LinearGradient colors={[Colors.primary, Colors.primaryDark]} style={styles.heroImage} />
+            <LinearGradient colors={[colors.primary, colors.primaryDark]} style={styles.heroImage} />
           )}
-          <LinearGradient colors={['transparent', 'rgba(11, 31, 51, 0.88)']} style={styles.heroOverlay}>
+          <LinearGradient colors={[colors.transparent, colors.mediaScrim]} style={styles.heroOverlay}>
             <Text style={styles.heroRoute}>
               {trip.from} → {trip.to}
             </Text>
@@ -192,6 +195,7 @@ export default function TripDetailsScreen() {
               {visibleHero.map((uri, index) => (
                 <Pressable
                   key={uri}
+                  hitSlop={Spacing.sm}
                   onPress={() => setHeroIndex(index)}
                   style={[styles.dot, index === heroIndex && styles.dotActive]}
                   accessibilityRole="button"
@@ -269,7 +273,7 @@ export default function TripDetailsScreen() {
                 userLocation={location}
                 traveler={mapTravelerFromUser(user)}
                 vehicle={mapVehicleFromTrip(trip)}
-                height={240}
+                height={Size.map}
                 allowFullscreen
                 showControls
                 showSelectedCard
@@ -352,10 +356,10 @@ export default function TripDetailsScreen() {
                 const displayName =
                   review.userName && review.userName !== 'Guest' ? review.userName : 'Customer';
                 return (
-                  <Card key={review.id} elevated={false}>
+                  <Card key={review.id} elevated={false} style={{ borderRadius: Radius.xl }}>
                     <View style={styles.reviewHead}>
                       <Avatar uri={review.userAvatar} name={displayName} size={40} />
-                      <View style={{ flex: 1 }}>
+                      <View style={{ flex: 1, minWidth: 0 }}>
                         <Text style={styles.reviewName}>{displayName}</Text>
                         {review.date ? (
                           <Text style={styles.reviewDate}>{formatDate(review.date, false)}</Text>
@@ -434,6 +438,7 @@ export default function TripDetailsScreen() {
 }
 
 function Fact({ label, value }: { label: string; value: string }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.fact}>
       <Text style={styles.factLabel}>{label}</Text>
@@ -442,11 +447,13 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+const createStyles = (colors: ColorTokens) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   hero: {
-    height: 240,
-    backgroundColor: Colors.primary,
+    minHeight: Size.tripHero,
+    marginHorizontal: Spacing.screen,
+    borderRadius: Radius.hero,
+    backgroundColor: colors.primary,
     overflow: 'hidden',
   },
   heroImage: {
@@ -464,12 +471,12 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.displayBold,
     fontSize: 26,
     lineHeight: 32,
-    color: Colors.white,
+    color: colors.white,
   },
   heroMeta: {
     fontFamily: Fonts.bodyMedium,
     fontSize: 14,
-    color: 'rgba(255,255,255,0.86)',
+    color: colors.white,
   },
   heroFacts: {
     flexDirection: 'row',
@@ -481,12 +488,12 @@ const styles = StyleSheet.create({
   heroPrice: {
     fontFamily: Fonts.bodyBold,
     fontSize: 20,
-    color: Colors.white,
+    color: colors.white,
   },
   heroSeats: {
     fontFamily: Fonts.bodySemiBold,
     fontSize: 13,
-    color: Colors.white,
+    color: colors.white,
     flexShrink: 1,
     textAlign: 'right',
   },
@@ -501,10 +508,10 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.45)',
+    backgroundColor: colors.border,
   },
   dotActive: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
   },
   content: {
     padding: Spacing.screen,
@@ -518,10 +525,10 @@ const styles = StyleSheet.create({
   summaryCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.card,
+    backgroundColor: colors.card,
     borderRadius: Radius['2xl'],
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     padding: Spacing.lg,
     gap: Spacing.md,
     ...Shadows.soft,
@@ -530,28 +537,28 @@ const styles = StyleSheet.create({
   summaryEnd: { alignItems: 'flex-end' },
   city: {
     ...Typography.bodyBold,
-    color: Colors.primary,
+    color: colors.primary,
   },
   time: {
     fontFamily: Fonts.display,
     fontSize: 22,
-    color: Colors.dark,
+    color: colors.dark,
     marginTop: 4,
   },
   summaryMid: {
     alignItems: 'center',
-    width: 72,
+    width: Size.touch,
   },
   summaryLine: {
     width: 40,
     height: 2,
-    backgroundColor: Colors.action,
+    backgroundColor: colors.action,
     borderRadius: 1,
   },
   duration: {
     fontFamily: Fonts.bodySemiBold,
     fontSize: 11,
-    color: Colors.muted,
+    color: colors.muted,
     marginTop: 6,
     textAlign: 'center',
   },
@@ -563,17 +570,17 @@ const styles = StyleSheet.create({
   fact: {
     width: '48%',
     flexGrow: 1,
-    backgroundColor: Colors.card,
+    backgroundColor: colors.card,
     borderRadius: Radius.lg,
-    padding: Spacing.md,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
-  factLabel: { ...Typography.small, color: Colors.muted },
-  factValue: { ...Typography.bodyBold, color: Colors.dark, marginTop: 4 },
+  factLabel: { ...Typography.small, color: colors.muted },
+  factValue: { ...Typography.bodyBold, color: colors.dark, marginTop: 4 },
   section: {
-    ...Typography.section,
-    color: Colors.primary,
+    ...CustomerType.section,
+    color: colors.dark,
     marginTop: Spacing.sm,
   },
   pickupList: { gap: Spacing.sm },
@@ -583,7 +590,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   amenity: {
-    backgroundColor: Colors.actionSoft,
+    backgroundColor: colors.actionSoft,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.md,
     paddingVertical: 8,
@@ -591,11 +598,11 @@ const styles = StyleSheet.create({
   amenityText: {
     fontFamily: Fonts.bodySemiBold,
     fontSize: 13,
-    color: Colors.action,
+    color: colors.action,
   },
   emptyCopy: {
     ...Typography.caption,
-    color: Colors.muted,
+    color: colors.muted,
     lineHeight: 20,
   },
   reviewSummary: { marginBottom: 2 },
@@ -609,35 +616,35 @@ const styles = StyleSheet.create({
   reviewName: {
     fontFamily: Fonts.bodySemiBold,
     fontSize: 15,
-    color: Colors.dark,
+    color: colors.dark,
   },
   reviewDate: {
     ...Typography.small,
-    color: Colors.muted,
+    color: colors.muted,
     marginTop: 2,
   },
   reviewComment: {
     ...Typography.body,
-    color: Colors.muted,
+    color: colors.muted,
     lineHeight: 22,
   },
   reply: {
     marginTop: Spacing.md,
     paddingTop: Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: colors.border,
     gap: 4,
   },
   replyLabel: {
     fontFamily: Fonts.bodySemiBold,
     fontSize: 12,
-    color: Colors.primary,
+    color: colors.primary,
   },
   priceCard: {
-    backgroundColor: Colors.card,
+    backgroundColor: colors.card,
     borderRadius: Radius.xl,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     padding: Spacing.lg,
     gap: Spacing.sm,
   },
@@ -649,16 +656,16 @@ const styles = StyleSheet.create({
   },
   priceLabel: {
     ...Typography.body,
-    color: Colors.muted,
+    color: colors.muted,
     flex: 1,
   },
   priceValue: {
-    ...Typography.h3,
-    color: Colors.primary,
+    ...CustomerType.section,
+    color: colors.action,
   },
   priceHint: {
     ...Typography.caption,
-    color: Colors.muted,
+    color: colors.muted,
     lineHeight: 18,
   },
   cta: {
@@ -669,14 +676,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
-    backgroundColor: Colors.card,
+    backgroundColor: colors.card,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: colors.border,
     paddingHorizontal: Spacing.screen,
     paddingTop: Spacing.md,
     ...Shadows.float,
   },
-  ctaLabel: { ...Typography.small, color: Colors.muted },
-  ctaPrice: { ...Typography.h3, color: Colors.primary },
-  ctaButton: { minWidth: 150, maxWidth: 200 },
+  ctaLabel: { ...Typography.small, color: colors.muted },
+  ctaPrice: { ...CustomerType.hero, color: colors.action },
+  ctaButton: { flex: 1, minWidth: 0, minHeight: Size.button },
 });

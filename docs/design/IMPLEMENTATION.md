@@ -32,3 +32,7 @@ Changed bookings.tsx, BookingCard, HotelBookingCard, PackageBookingCard and Guid
 ## Step 5 — Messages
 
 Changed ConversationListScreen, ConversationRow, ChatThread, MessageBubble, MessageComposer and ChatProfilePreview. Round search with icon, 52px avatars, soft unread cards, teal pills/bubbles, lighter incoming cards and theme-derived styles. Local search, connection text, typing, pagination, attachments, retry, receipts and keyboard handling remain. No chatStore/socket edits. TypeScript passed; Expo lint: 0 new errors against baseline, 60 warnings. No Messages reference image supplied; no phone test.
+
+## Step 6 — Trip Details
+
+Changed trip/[id].tsx, TripRouteTimeline, VehicleCard, AgencyCard and JourneyTypePanel. Rounded vehicle-photo hero, clearer summary/facts, Outfit section headings, softer route/provider/vehicle cards, green prices and a flexible fixed booking bar. Theme-derived styles update on theme changes. Availability guards, setTrip handoff, map preview, image fallback/dots, capacity and available-seat distinctions, reviews and price wording remain. No floating gear was added or found in this screen. TypeScript passed; Expo lint: 0 new errors against baseline, 60 warnings. No Trip Details reference image supplied; no phone test.

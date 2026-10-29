@@ -1,7 +1,8 @@
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { StyleSheet, Text, View } from 'react-native';
-import { Colors } from '@/constants/colors';
-import { Fonts, Typography } from '@/constants/typography';
-import { Radius, Spacing } from '@/constants/spacing';
+import { type ColorTokens } from '@/constants/colors';
+import { CustomerType, Fonts, Typography } from '@/constants/typography';
+import { Radius, Shadows, Spacing } from '@/constants/spacing';
 import type { PickupPoint } from '@/types/route';
 import { formatTime } from '@/utils/formatTime';
 
@@ -20,6 +21,7 @@ export function TripRouteTimeline({
   arrivalTime,
   pickups = [],
 }: TripRouteTimelineProps) {
+  const styles = useThemedStyles(createStyles);
   const origin = from.trim();
   const destination = to.trim();
   if (!origin && !destination) return null;
@@ -74,6 +76,7 @@ function TimelineRow({
   last?: boolean;
   branch?: boolean;
 }) {
+  const styles = useThemedStyles(createStyles);
   const formatted = time ? formatTime(time) : '';
   return (
     <View style={styles.row}>
@@ -91,12 +94,13 @@ function TimelineRow({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTokens) => StyleSheet.create({
   card: {
-    backgroundColor: Colors.card,
+    backgroundColor: colors.card,
     borderRadius: Radius['2xl'],
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
+    ...Shadows.soft,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
   },
@@ -111,7 +115,7 @@ const styles = StyleSheet.create({
   line: {
     width: 2,
     flex: 1,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
   },
   lineTop: { marginBottom: 2 },
   lineBottom: { marginTop: 2 },
@@ -120,16 +124,16 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   dotLast: {
-    backgroundColor: Colors.action,
+    backgroundColor: colors.action,
   },
   dotBranch: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.coral,
   },
   copy: {
     flex: 1,
@@ -137,19 +141,19 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
   },
   title: {
-    ...Typography.bodyBold,
-    color: Colors.primary,
+    ...CustomerType.card,
+    color: colors.dark,
     flexShrink: 1,
   },
   caption: {
     ...Typography.caption,
-    color: Colors.muted,
+    color: colors.muted,
     marginTop: 2,
   },
   time: {
     fontFamily: Fonts.bodySemiBold,
     fontSize: 13,
-    color: Colors.dark,
+    color: colors.dark,
     marginTop: 4,
   },
 });

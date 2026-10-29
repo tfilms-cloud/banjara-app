@@ -1,9 +1,10 @@
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import { journeyTypeMeta, type JourneyType } from '@/constants/journeyTypes';
-import { Colors } from '@/constants/colors';
-import { Radius, Spacing } from '@/constants/spacing';
-import { Fonts } from '@/constants/typography';
+import { useThemeColors, type ColorTokens } from '@/constants/colors';
+import { Radius, Shadows, Spacing } from '@/constants/spacing';
+import { CustomerType, Fonts } from '@/constants/typography';
 import { formatDate } from '@/utils/formatDate';
 import { formatTime } from '@/utils/formatTime';
 
@@ -24,6 +25,8 @@ export function JourneyTypePanel({
   returnTime,
   compact,
 }: JourneyTypePanelProps) {
+  const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const journey = journeyTypeMeta(journeyType);
   const isRound = journey.value === 'round_trip';
 
@@ -34,7 +37,7 @@ export function JourneyTypePanel({
           <Ionicons
             name={isRound ? 'swap-horizontal' : 'arrow-forward'}
             size={18}
-            color={isRound ? Colors.actionDark : Colors.primary}
+            color={isRound ? colors.actionDark : colors.primary}
           />
         </View>
         <View style={{ flex: 1 }}>
@@ -86,9 +89,11 @@ function PathRow({
   title: string;
   detail: string;
 }) {
+  const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.pathRow}>
-      <Ionicons name={icon} size={16} color={Colors.action} />
+      <Ionicons name={icon} size={16} color={colors.action} />
       <View style={{ flex: 1 }}>
         <Text style={styles.pathTitle}>{title}</Text>
         <Text style={styles.pathDetail}>{detail}</Text>
@@ -97,11 +102,12 @@ function PathRow({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTokens) => StyleSheet.create({
   card: {
     borderRadius: Radius.xl,
     borderWidth: 1,
-    padding: Spacing.md,
+    padding: Spacing.lg,
+    ...Shadows.soft,
     gap: Spacing.md,
   },
   compact: {
@@ -109,12 +115,12 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   cardOne: {
-    backgroundColor: Colors.primarySoft,
-    borderColor: Colors.border,
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.border,
   },
   cardRound: {
-    backgroundColor: Colors.actionSoft,
-    borderColor: Colors.action,
+    backgroundColor: colors.actionSoft,
+    borderColor: colors.border,
   },
   header: {
     flexDirection: 'row',
@@ -128,38 +134,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconOne: { backgroundColor: Colors.card },
-  iconRound: { backgroundColor: Colors.card },
+  iconOne: { backgroundColor: colors.card },
+  iconRound: { backgroundColor: colors.card },
   label: {
-    fontFamily: Fonts.bodyBold,
-    fontSize: 15,
-    color: Colors.dark,
+    ...CustomerType.card,
+    color: colors.dark,
   },
   hint: {
     fontFamily: Fonts.body,
     fontSize: 12,
-    color: Colors.muted,
+    color: colors.muted,
     marginTop: 2,
-    lineHeight: 17,
+    lineHeight: 20,
   },
   path: { gap: Spacing.sm },
   pathRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: Spacing.sm,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: colors.card,
     borderRadius: Radius.lg,
     padding: Spacing.sm,
   },
   pathTitle: {
     fontFamily: Fonts.bodySemiBold,
     fontSize: 12,
-    color: Colors.dark,
+    color: colors.dark,
   },
   pathDetail: {
     fontFamily: Fonts.body,
     fontSize: 12,
-    color: Colors.muted,
+    color: colors.muted,
     marginTop: 1,
   },
 });

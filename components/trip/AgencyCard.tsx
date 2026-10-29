@@ -1,11 +1,12 @@
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Image } from 'expo-image';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Badge } from '@/components/ui/Badge';
 import { Rating } from '@/components/ui/Rating';
-import { Colors } from '@/constants/colors';
-import { Radius, Spacing } from '@/constants/spacing';
-import { Fonts, Typography } from '@/constants/typography';
+import { type ColorTokens } from '@/constants/colors';
+import { Radius, Shadows, Spacing } from '@/constants/spacing';
+import { CustomerType, Fonts, Typography } from '@/constants/typography';
 import type { Agency } from '@/types/trip';
 import { normalizeMediaUrl } from '@/utils/mediaUrl';
 
@@ -23,6 +24,7 @@ function agencyInitials(name: string) {
 }
 
 export function AgencyCard({ agency, onPress, linkLabel = 'View all trips' }: AgencyCardProps) {
+  const styles = useThemedStyles(createStyles);
   const logoUri = useMemo(
     () => normalizeMediaUrl(agency.logo) ?? (agency.logo || undefined),
     [agency.logo]
@@ -78,31 +80,32 @@ export function AgencyCard({ agency, onPress, linkLabel = 'View all trips' }: Ag
   return <View style={styles.card}>{content}</View>;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTokens) => StyleSheet.create({
   card: {
     flexDirection: 'row',
     gap: Spacing.md,
-    backgroundColor: Colors.card,
-    borderRadius: Radius.lg,
+    backgroundColor: colors.card,
+    borderRadius: Radius.xl,
+    ...Shadows.soft,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   logo: {
     width: 52,
     height: 52,
     borderRadius: 14,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
   },
   logoFallback: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primarySoft,
+    backgroundColor: colors.primarySoft,
   },
   logoInitials: {
     fontFamily: Fonts.bodyBold,
     fontSize: 15,
-    color: Colors.primary,
+    color: colors.primary,
   },
   nameRow: {
     flexDirection: 'row',
@@ -112,20 +115,20 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   name: {
-    ...Typography.bodyBold,
-    color: Colors.primary,
+    ...CustomerType.card,
+    color: colors.dark,
     flexShrink: 1,
   },
   desc: {
     ...Typography.caption,
-    color: Colors.muted,
+    color: colors.muted,
     marginTop: 6,
     lineHeight: 18,
   },
   link: {
     fontFamily: Fonts.bodySemiBold,
     fontSize: 13,
-    color: Colors.action,
+    color: colors.primaryText,
     marginTop: 8,
   },
 });
