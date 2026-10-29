@@ -6,8 +6,8 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { useThemeColors } from '@/constants/colors';
-import { Radius, Spacing, Size } from '@/constants/spacing';
-import { Fonts, TypeSize, Leading } from '@/constants/typography';
+import { Radius, Spacing } from '@/constants/spacing';
+import { Fonts } from '@/constants/typography';
 
 type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'tertiary' | 'accent' | 'danger';
 
@@ -60,16 +60,16 @@ export function Button({
             ? colors.danger
             : resolvedVariant === 'outline'
               ? colors.card
-              : colors.transparent;
+              : 'transparent';
 
   const textColor =
     textColorProp ??
     (resolvedVariant === 'outline'
       ? colors.action
       : resolvedVariant === 'ghost'
-        ? colors.primaryText
+        ? colors.primary
         : resolvedVariant === 'secondary'
-          ? colors.primaryText
+          ? colors.primary
           : resolvedVariant === 'accent'
             ? colors.dark
             : colors.white);
@@ -93,8 +93,8 @@ export function Button({
         compact ? styles.compact : null,
         {
           backgroundColor: background,
-          borderColor: resolvedVariant === 'outline' ? colors.border : colors.transparent,
-          borderWidth: resolvedVariant === 'outline' ? Size.borderStrong : 0,
+          borderColor: resolvedVariant === 'outline' ? colors.border : 'transparent',
+          borderWidth: resolvedVariant === 'outline' ? 1.5 : 0,
           opacity: isDisabled ? 0.5 : 1,
           alignSelf: fullWidth ? 'stretch' : 'flex-start',
         },
@@ -117,8 +117,8 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: Size.button,
-    borderRadius: Radius.full,
+    minHeight: 48,
+    borderRadius: Radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -126,17 +126,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
   },
   compact: {
-    minHeight: Size.compactControl,
+    minHeight: 38,
     paddingHorizontal: Spacing.md,
   },
   title: {
-    fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.body,
-    lineHeight: Leading.caption,
+    fontFamily: Fonts.body,
+    fontSize: 14,
+    lineHeight: 18,
     letterSpacing: 0,
   },
   compactTitle: {
-    fontSize: TypeSize.label,
-    lineHeight: Leading.compact,
+    fontSize: 13,
+    lineHeight: 16,
   },
 });

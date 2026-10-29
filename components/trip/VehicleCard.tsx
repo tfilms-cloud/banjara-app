@@ -1,11 +1,10 @@
-import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Badge } from '@/components/ui/Badge';
-import { type ColorTokens } from '@/constants/colors';
-import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
-import { CustomerType, Typography } from '@/constants/typography';
+import { Colors } from '@/constants/colors';
+import { Radius, Spacing } from '@/constants/spacing';
+import { Typography } from '@/constants/typography';
 import type { VehicleType } from '@/types/trip';
 import { vehicleTypeLabel } from '@/utils/helpers';
 
@@ -30,7 +29,6 @@ interface VehicleCardProps {
 }
 
 export function VehicleCard({ vehicle, availableSeats, tripTotalSeats }: VehicleCardProps) {
-  const styles = useThemedStyles(createStyles);
   const gallery =
     vehicle.images && vehicle.images.length > 0
       ? vehicle.images
@@ -95,19 +93,18 @@ export function VehicleCard({ vehicle, availableSeats, tripTotalSeats }: Vehicle
   );
 }
 
-const createStyles = (colors: ColorTokens) => StyleSheet.create({
+const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
-    borderRadius: Radius.xl,
-    ...Shadows.soft,
+    backgroundColor: Colors.card,
+    borderRadius: Radius.lg,
     overflow: 'hidden',
-    borderWidth: Size.border,
-    borderColor: colors.border,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   image: {
     width: '100%',
-    height: Size.vehiclePhoto,
-    backgroundColor: colors.border,
+    height: 160,
+    backgroundColor: Colors.border,
   },
   thumbs: {
     paddingHorizontal: Spacing.md,
@@ -115,26 +112,26 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     gap: Spacing.sm,
   },
   thumb: {
-    width: Size.thumbSmall,
-    height: Size.touch,
+    width: 56,
+    height: 44,
     borderRadius: Radius.md,
-    borderWidth: Size.borderActive,
-    borderColor: colors.transparent,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   thumbActive: {
-    borderColor: colors.secondary,
+    borderColor: Colors.secondary,
   },
   content: {
     padding: Spacing.lg,
     gap: Spacing.sm,
   },
   name: {
-    ...CustomerType.section,
-    color: colors.dark,
+    ...Typography.h3,
+    color: Colors.primary,
   },
   meta: {
     ...Typography.caption,
-    color: colors.muted,
+    color: Colors.muted,
   },
   seatRow: {
     flexDirection: 'row',
@@ -143,22 +140,22 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   seatChip: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: Colors.background,
     borderRadius: Radius.md,
     padding: Spacing.md,
-    borderWidth: Size.border,
-    borderColor: colors.border,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   seatLabel: {
     ...Typography.small,
-    color: colors.muted,
+    color: Colors.muted,
   },
   seatValue: {
     ...Typography.bodyBold,
-    color: colors.primary,
-    marginTop: Spacing.xxs,
+    color: Colors.primary,
+    marginTop: 2,
   },
   seatAvailable: {
-    color: colors.success,
+    color: Colors.success,
   },
 });

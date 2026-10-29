@@ -2,8 +2,8 @@ import type { ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useThemeColors } from '@/constants/colors';
-import { Spacing, Size } from '@/constants/spacing';
-import { CustomerType, Fonts, TypeSize } from '@/constants/typography';
+import { Spacing } from '@/constants/spacing';
+import { Fonts } from '@/constants/typography';
 
 type HomeSectionProps = {
   title: string;
@@ -36,8 +36,8 @@ export function HomeSection({
             accessibilityLabel={actionLabel}
           >
             <View style={styles.actionRow}>
-              <Text style={[styles.action, { color: colors.primaryText }]}>{actionLabel}</Text>
-              <ChevronRight size={Size.iconSmall} color={colors.primaryText} strokeWidth={2.4} />
+              <Text style={[styles.action, { color: colors.primary }]}>{actionLabel}</Text>
+              <ChevronRight size={14} color={colors.primary} strokeWidth={2.4} />
             </View>
           </Pressable>
         ) : null}
@@ -63,26 +63,28 @@ const styles = StyleSheet.create({
     paddingRight: Spacing.md,
   },
   title: {
-    ...CustomerType.section,
+    fontFamily: Fonts.display,
+    fontSize: 19,
+    lineHeight: 25,
     letterSpacing: -0.3,
   },
   subtitle: {
     fontFamily: Fonts.body,
-    fontSize: TypeSize.caption,
-    marginTop: Spacing.tight,
+    fontSize: 12,
+    marginTop: 3,
   },
   actionHit: {
-    minHeight: Spacing['5xl'],
+    minHeight: 40,
     justifyContent: 'center',
     paddingLeft: Spacing.sm,
   },
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.tight,
+    gap: 3,
   },
   action: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.label,
+    fontSize: 13,
   },
 });

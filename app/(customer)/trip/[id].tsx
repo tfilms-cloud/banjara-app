@@ -1,4 +1,3 @@
-import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,10 +28,10 @@ import { ErrorState } from '@/components/ui/EmptyState';
 import { Header } from '@/components/ui/Header';
 import { Rating } from '@/components/ui/Rating';
 import { TripDetailsSkeleton } from '@/components/ui/Skeleton';
-import { useThemeColors, type ColorTokens } from '@/constants/colors';
+import { Colors } from '@/constants/colors';
 import { journeyTypeMeta } from '@/constants/journeyTypes';
-import { Radius, Shadows, Size, Spacing } from '@/constants/spacing';
-import { CustomerType, Fonts, Typography, TypeSize, Leading } from '@/constants/typography';
+import { Radius, Shadows, Spacing } from '@/constants/spacing';
+import { Fonts, Typography } from '@/constants/typography';
 import { useLocation } from '@/hooks/useLocation';
 import { useTrip } from '@/hooks/useTrips';
 import * as tripService from '@/services/tripService';
@@ -50,8 +49,6 @@ import { paramId, pushPath, safeBack } from '@/utils/navigation';
 const UNAVAILABLE_STATUSES = new Set(['cancelled', 'completed', 'departed']);
 
 export default function TripDetailsScreen() {
-  const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
   const params = useLocalSearchParams<{ id: string | string[] }>();
   const id = paramId(params.id);
   const insets = useSafeAreaInsets();
@@ -156,13 +153,13 @@ export default function TripDetailsScreen() {
         onBack={() => safeBack('/(customer)/results')}
         right={
           <Pressable onPress={() => void onShare()} hitSlop={8} accessibilityRole="button" accessibilityLabel="Share trip">
-            <Ionicons name="share-outline" size={Size.iconLg} color={colors.dark} />
+            <Ionicons name="share-outline" size={22} color={Colors.dark} />
           </Pressable>
         }
       />
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + Size.footerClearance }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 118 }}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.hero}>
@@ -176,9 +173,9 @@ export default function TripDetailsScreen() {
               accessibilityLabel={`${trip.vehicleName || 'Vehicle'} on the ${trip.from} to ${trip.to} trip`}
             />
           ) : (
-            <LinearGradient colors={[colors.primary, colors.primaryDark]} style={styles.heroImage} />
+            <LinearGradient colors={[Colors.primary, Colors.primaryDark]} style={styles.heroImage} />
           )}
-          <LinearGradient colors={[colors.transparent, colors.mediaScrim]} style={styles.heroOverlay}>
+          <LinearGradient colors={['transparent', 'rgba(11, 31, 51, 0.88)']} style={styles.heroOverlay}>
             <Text style={styles.heroRoute}>
               {trip.from} → {trip.to}
             </Text>
@@ -195,7 +192,6 @@ export default function TripDetailsScreen() {
               {visibleHero.map((uri, index) => (
                 <Pressable
                   key={uri}
-                  hitSlop={Spacing.sm}
                   onPress={() => setHeroIndex(index)}
                   style={[styles.dot, index === heroIndex && styles.dotActive]}
                   accessibilityRole="button"
@@ -273,7 +269,7 @@ export default function TripDetailsScreen() {
                 userLocation={location}
                 traveler={mapTravelerFromUser(user)}
                 vehicle={mapVehicleFromTrip(trip)}
-                height={Size.map}
+                height={240}
                 allowFullscreen
                 showControls
                 showSelectedCard
@@ -346,7 +342,7 @@ export default function TripDetailsScreen() {
               <Rating
                 value={trip.agency.rating || trip.rating}
                 count={reviewCount || undefined}
-                size={Size.iconSm}
+                size={16}
               />
             </View>
           ) : null}
@@ -356,10 +352,10 @@ export default function TripDetailsScreen() {
                 const displayName =
                   review.userName && review.userName !== 'Guest' ? review.userName : 'Customer';
                 return (
-                  <Card key={review.id} elevated={false} style={{ borderRadius: Radius.xl }}>
+                  <Card key={review.id} elevated={false}>
                     <View style={styles.reviewHead}>
-                      <Avatar uri={review.userAvatar} name={displayName} size={Size.compactControl} />
-                      <View style={{ flex: 1, minWidth: 0 }}>
+                      <Avatar uri={review.userAvatar} name={displayName} size={40} />
+                      <View style={{ flex: 1 }}>
                         <Text style={styles.reviewName}>{displayName}</Text>
                         {review.date ? (
                           <Text style={styles.reviewDate}>{formatDate(review.date, false)}</Text>
@@ -438,7 +434,6 @@ export default function TripDetailsScreen() {
 }
 
 function Fact({ label, value }: { label: string; value: string }) {
-  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.fact}>
       <Text style={styles.factLabel}>{label}</Text>
@@ -447,13 +442,11 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
-const createStyles = (colors: ColorTokens) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: Colors.background },
   hero: {
-    minHeight: Size.tripHero,
-    marginHorizontal: Spacing.screen,
-    borderRadius: Radius.hero,
-    backgroundColor: colors.primary,
+    height: 240,
+    backgroundColor: Colors.primary,
     overflow: 'hidden',
   },
   heroImage: {
@@ -465,18 +458,18 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     ...StyleSheet.absoluteFill,
     justifyContent: 'flex-end',
     padding: Spacing.lg,
-    gap: Spacing.xs,
+    gap: 4,
   },
   heroRoute: {
     fontFamily: Fonts.displayBold,
-    fontSize: TypeSize.display,
-    lineHeight: Leading.display,
-    color: colors.white,
+    fontSize: 26,
+    lineHeight: 32,
+    color: Colors.white,
   },
   heroMeta: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: TypeSize.body,
-    color: colors.white,
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.86)',
   },
   heroFacts: {
     flexDirection: 'row',
@@ -487,13 +480,13 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   heroPrice: {
     fontFamily: Fonts.bodyBold,
-    fontSize: TypeSize.title,
-    color: colors.white,
+    fontSize: 20,
+    color: Colors.white,
   },
   heroSeats: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.label,
-    color: colors.white,
+    fontSize: 13,
+    color: Colors.white,
     flexShrink: 1,
     textAlign: 'right',
   },
@@ -502,16 +495,16 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     top: Spacing.md,
     right: Spacing.md,
     flexDirection: 'row',
-    gap: Spacing.micro,
+    gap: 6,
   },
   dot: {
-    width: Size.photoDot,
-    height: Size.photoDot,
-    borderRadius: Radius.full,
-    backgroundColor: colors.border,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.45)',
   },
   dotActive: {
-    backgroundColor: colors.white,
+    backgroundColor: Colors.white,
   },
   content: {
     padding: Spacing.screen,
@@ -520,15 +513,15 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   badgeRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.sm,
+    gap: 8,
   },
   summaryCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
+    backgroundColor: Colors.card,
     borderRadius: Radius['2xl'],
-    borderWidth: Size.border,
-    borderColor: colors.border,
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: Spacing.lg,
     gap: Spacing.md,
     ...Shadows.soft,
@@ -537,29 +530,29 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   summaryEnd: { alignItems: 'flex-end' },
   city: {
     ...Typography.bodyBold,
-    color: colors.primary,
+    color: Colors.primary,
   },
   time: {
     fontFamily: Fonts.display,
-    fontSize: TypeSize.heading,
-    color: colors.dark,
-    marginTop: Spacing.xs,
+    fontSize: 22,
+    color: Colors.dark,
+    marginTop: 4,
   },
   summaryMid: {
     alignItems: 'center',
-    width: Size.touch,
+    width: 72,
   },
   summaryLine: {
-    width: Size.compactControl,
-    height: Size.borderActive,
-    backgroundColor: colors.action,
-    borderRadius: Radius.full,
+    width: 40,
+    height: 2,
+    backgroundColor: Colors.action,
+    borderRadius: 1,
   },
   duration: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.micro,
-    color: colors.muted,
-    marginTop: Spacing.micro,
+    fontSize: 11,
+    color: Colors.muted,
+    marginTop: 6,
     textAlign: 'center',
   },
   facts: {
@@ -570,17 +563,17 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   fact: {
     width: '48%',
     flexGrow: 1,
-    backgroundColor: colors.card,
+    backgroundColor: Colors.card,
     borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    borderWidth: Size.border,
-    borderColor: colors.border,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
-  factLabel: { ...Typography.small, color: colors.muted },
-  factValue: { ...Typography.bodyBold, color: colors.dark, marginTop: Spacing.xs },
+  factLabel: { ...Typography.small, color: Colors.muted },
+  factValue: { ...Typography.bodyBold, color: Colors.dark, marginTop: 4 },
   section: {
-    ...CustomerType.section,
-    color: colors.dark,
+    ...Typography.section,
+    color: Colors.primary,
     marginTop: Spacing.sm,
   },
   pickupList: { gap: Spacing.sm },
@@ -590,22 +583,22 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     gap: Spacing.sm,
   },
   amenity: {
-    backgroundColor: colors.actionSoft,
+    backgroundColor: Colors.actionSoft,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: 8,
   },
   amenityText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.label,
-    color: colors.action,
+    fontSize: 13,
+    color: Colors.action,
   },
   emptyCopy: {
     ...Typography.caption,
-    color: colors.muted,
-    lineHeight: Leading.body,
+    color: Colors.muted,
+    lineHeight: 20,
   },
-  reviewSummary: { marginBottom: Spacing.xxs },
+  reviewSummary: { marginBottom: 2 },
   reviewList: { gap: Spacing.md },
   reviewHead: {
     flexDirection: 'row',
@@ -615,36 +608,36 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   reviewName: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.medium,
-    color: colors.dark,
+    fontSize: 15,
+    color: Colors.dark,
   },
   reviewDate: {
     ...Typography.small,
-    color: colors.muted,
-    marginTop: Spacing.xxs,
+    color: Colors.muted,
+    marginTop: 2,
   },
   reviewComment: {
     ...Typography.body,
-    color: colors.muted,
-    lineHeight: Leading.card,
+    color: Colors.muted,
+    lineHeight: 22,
   },
   reply: {
     marginTop: Spacing.md,
     paddingTop: Spacing.md,
-    borderTopWidth: Size.border,
-    borderTopColor: colors.border,
-    gap: Spacing.xs,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+    gap: 4,
   },
   replyLabel: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.caption,
-    color: colors.primary,
+    fontSize: 12,
+    color: Colors.primary,
   },
   priceCard: {
-    backgroundColor: colors.card,
+    backgroundColor: Colors.card,
     borderRadius: Radius.xl,
-    borderWidth: Size.border,
-    borderColor: colors.border,
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: Spacing.lg,
     gap: Spacing.sm,
   },
@@ -656,17 +649,17 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   priceLabel: {
     ...Typography.body,
-    color: colors.muted,
+    color: Colors.muted,
     flex: 1,
   },
   priceValue: {
-    ...CustomerType.section,
-    color: colors.action,
+    ...Typography.h3,
+    color: Colors.primary,
   },
   priceHint: {
     ...Typography.caption,
-    color: colors.muted,
-    lineHeight: Leading.caption,
+    color: Colors.muted,
+    lineHeight: 18,
   },
   cta: {
     position: 'absolute',
@@ -676,14 +669,14 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
-    backgroundColor: colors.card,
-    borderTopWidth: Size.border,
-    borderTopColor: colors.border,
+    backgroundColor: Colors.card,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
     paddingHorizontal: Spacing.screen,
     paddingTop: Spacing.md,
     ...Shadows.float,
   },
-  ctaLabel: { ...Typography.small, color: colors.muted },
-  ctaPrice: { ...CustomerType.hero, color: colors.action },
-  ctaButton: { flex: 1, minWidth: 0, minHeight: Size.button },
+  ctaLabel: { ...Typography.small, color: Colors.muted },
+  ctaPrice: { ...Typography.h3, color: Colors.primary },
+  ctaButton: { minWidth: 150, maxWidth: 200 },
 });

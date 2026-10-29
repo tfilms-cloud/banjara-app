@@ -1,4 +1,3 @@
-import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { useEffect, useState } from 'react';
 import { ArrowLeftRight, Calendar, ChevronRight, MapPin, Search, Users } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,15 +9,15 @@ import Animated, {
 } from 'react-native-reanimated';
 import { QuickDateChips } from '@/components/travel/QuickDateChips';
 import { Button } from '@/components/ui/Button';
-import { useThemeColors, type ColorTokens } from '@/constants/colors';
+import { Colors, useThemeColors } from '@/constants/colors';
 import {
   PRODUCT_MODES,
   SERVICE_CATEGORIES,
   type CustomerProductMode,
   type HomeServiceCategory,
 } from '@/constants/productModes';
-import { Radius, Shadows, Size, Spacing } from '@/constants/spacing';
-import { Fonts, TypeSize, Leading } from '@/constants/typography';
+import { Radius, Shadows, Spacing } from '@/constants/spacing';
+import { Fonts } from '@/constants/typography';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -32,7 +31,6 @@ type SearchFieldProps = {
 
 function SearchField({ icon, label, value, onPress, compact }: SearchFieldProps) {
   const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
   const scale = useSharedValue(1);
 
   const animStyle = useAnimatedStyle(() => ({
@@ -66,7 +64,7 @@ function SearchField({ icon, label, value, onPress, compact }: SearchFieldProps)
           {value || 'Select'}
         </Text>
       </View>
-      <ChevronRight size={Size.iconDetail} color={colors.mutedLight} strokeWidth={2} />
+      <ChevronRight size={15} color={colors.mutedLight} strokeWidth={2} />
     </AnimatedPressable>
   );
 }
@@ -115,7 +113,6 @@ export function TransportSearchCard({
   const meta = PRODUCT_MODES.find((m) => m.id === intent) ?? PRODUCT_MODES[0];
   const isTrip = intent === 'trips';
   const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
   const swapScale = useSharedValue(1);
 
   const swapAnim = useAnimatedStyle(() => ({
@@ -155,7 +152,7 @@ export function TransportSearchCard({
                 {from || 'Select departure'}
               </Text>
             </View>
-            <ChevronRight size={Size.iconDetail} color={colors.mutedLight} strokeWidth={2} />
+            <ChevronRight size={15} color={colors.mutedLight} strokeWidth={2} />
           </Pressable>
 
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -172,7 +169,7 @@ export function TransportSearchCard({
                 {to || 'Select destination'}
               </Text>
             </View>
-            <ChevronRight size={Size.iconDetail} color={colors.mutedLight} strokeWidth={2} />
+            <ChevronRight size={15} color={colors.mutedLight} strokeWidth={2} />
           </Pressable>
         </View>
 
@@ -193,7 +190,7 @@ export function TransportSearchCard({
             accessibilityLabel="Swap locations"
             accessibilityRole="button"
           >
-            <ArrowLeftRight size={Size.iconSm} color={colors.primary} strokeWidth={2.2} />
+            <ArrowLeftRight size={16} color={colors.primary} strokeWidth={2.2} />
           </AnimatedPressable>
         ) : null}
       </View>
@@ -202,7 +199,7 @@ export function TransportSearchCard({
         <View style={styles.metaCell}>
           <SearchField
             compact
-            icon={<Calendar size={Size.iconDetail} color={colors.primary} strokeWidth={2} />}
+            icon={<Calendar size={15} color={colors.primary} strokeWidth={2} />}
             label={isTrip ? 'Going' : 'Date'}
             value={dateLabel}
             onPress={onDate}
@@ -213,7 +210,7 @@ export function TransportSearchCard({
           {isTrip && onReturnDate ? (
             <SearchField
               compact
-              icon={<Calendar size={Size.iconDetail} color={colors.action} strokeWidth={2} />}
+              icon={<Calendar size={15} color={colors.action} strokeWidth={2} />}
               label="Return home"
               value={returnDateLabel || 'Pick return'}
               onPress={onReturnDate}
@@ -221,7 +218,7 @@ export function TransportSearchCard({
           ) : (
             <SearchField
               compact
-              icon={<Users size={Size.iconDetail} color={colors.primary} strokeWidth={2} />}
+              icon={<Users size={15} color={colors.primary} strokeWidth={2} />}
               label="Passengers"
               value={passengersLabel}
               onPress={onPassengers}
@@ -233,7 +230,7 @@ export function TransportSearchCard({
       {isTrip ? (
         <SearchField
           compact
-          icon={<Users size={Size.iconDetail} color={colors.primary} strokeWidth={2} />}
+          icon={<Users size={15} color={colors.primary} strokeWidth={2} />}
           label="Passengers"
           value={passengersLabel}
           onPress={onPassengers}
@@ -254,7 +251,7 @@ export function TransportSearchCard({
         <Button
           title={meta.cta}
           onPress={onSearch}
-          icon={<Search size={Size.iconSm} color={colors.white} strokeWidth={2.4} />}
+          icon={<Search size={16} color={colors.white} strokeWidth={2.4} />}
           style={styles.cta}
         />
       ) : null}
@@ -288,13 +285,12 @@ function CategoryIcon({
           : icon === 'person'
             ? 'person'
             : 'restaurant';
-  return <Ionicons name={name} size={Size.iconSm} color={iconColor} />;
+  return <Ionicons name={name} size={16} color={iconColor} />;
 }
 
 /** Five Banjara service categories on the traveler home heading. */
 export function SearchModeTabs({ mode, onChange, compact = false }: ModeTabsProps) {
   const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
 
   return (
     <ScrollView
@@ -311,28 +307,27 @@ export function SearchModeTabs({ mode, onChange, compact = false }: ModeTabsProp
             style={[
               styles.modeChip,
               {
-                backgroundColor: colors.transparent,
-                borderColor: colors.transparent,
+                backgroundColor: active ? colors.primary : colors.inputBg,
+                borderColor: active ? colors.primary : colors.border,
               },
             ]}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
             accessibilityLabel={`${item.label}. ${item.shortHint}`}
           >
-            <View style={[styles.categoryIcon, { backgroundColor: active ? colors.primarySoft : colors.card, borderColor: active ? colors.primary : colors.border }]}><CategoryIcon icon={item.icon} active={false} colors={colors} /></View>
+            <CategoryIcon icon={item.icon} active={active} colors={colors} />
             <Text
               style={[
                 styles.modeChipText,
                 {
-                  color: active ? colors.primaryText : colors.muted,
+                  color: active ? colors.white : colors.dark,
                   fontFamily: active ? Fonts.bodySemiBold : Fonts.bodyMedium,
                 },
               ]}
-              numberOfLines={2}
+              numberOfLines={1}
             >
               {item.label}
             </Text>
-            <View style={[styles.categoryIndicator, { backgroundColor: active ? colors.primary : colors.transparent }]} />
           </Pressable>
         );
       })}
@@ -349,9 +344,8 @@ export function ProductModeTabs({
   onChange: (mode: CustomerProductMode) => void;
 }) {
   const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
   const { width: windowWidth } = useWindowDimensions();
-  const initialWidth = Math.max(Size.minimumContent, windowWidth - Spacing.screen * 2);
+  const initialWidth = Math.max(280, windowWidth - Spacing.screen * 2);
   const index = Math.max(0, PRODUCT_MODES.findIndex((item) => item.id === mode));
   const [trackW, setTrackW] = useState(initialWidth);
   const MODE_INSET = 3;
@@ -429,12 +423,12 @@ export function ProductModeTabs({
   );
 }
 
-const createStyles = (colors: ColorTokens) => StyleSheet.create({
+const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
+    backgroundColor: Colors.card,
     borderRadius: Radius.xl,
-    borderWidth: Size.border,
-    borderColor: colors.border,
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: Spacing.lg,
     gap: Spacing.md,
     ...Shadows.card,
@@ -442,49 +436,49 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   hintRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.micro,
+    gap: 6,
   },
   hintDot: {
-    width: Size.badgeDot,
-    height: Size.badgeDot,
-    borderRadius: Radius.full,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   intentHint: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: TypeSize.caption,
+    fontSize: 12,
     letterSpacing: 0.1,
   },
   routeBlock: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: Radius.lg,
-    borderWidth: Size.border,
+    borderWidth: 1,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
   },
   connectorCol: {
-    width: Size.icon,
+    width: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.md,
+    paddingVertical: 12,
   },
   routeDot: {
-    width: Size.iconSmall,
-    height: Size.iconSmall,
-    borderRadius: Radius.full,
-    borderWidth: Size.borderActive,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1.8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   routeDotInner: {
-    width: Size.badgeDot,
-    height: Size.badgeDot,
-    borderRadius: Radius.full,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   connectorLine: {
-    width: Size.borderStrong,
-    height: Size.iconLg,
-    marginVertical: Spacing.xxs,
+    width: 1.5,
+    height: 22,
+    marginVertical: 2,
   },
   routeFields: {
     flex: 1,
@@ -493,29 +487,29 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   fieldClean: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: Size.field,
-    paddingVertical: Spacing.xs,
+    minHeight: 46,
+    paddingVertical: 4,
     paddingRight: Spacing.xs,
   },
   field: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: Size.button,
+    minHeight: 48,
     paddingVertical: Spacing.xs,
     paddingHorizontal: Spacing.sm,
     borderRadius: Radius.md,
-    borderWidth: Size.border,
-    borderColor: colors.transparent,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   fieldCompact: {
-    minHeight: Size.field,
-    paddingVertical: Spacing.xs,
+    minHeight: 46,
+    paddingVertical: 4,
   },
   fieldIcon: {
-    width: Size.iconHero,
-    height: Size.iconHero,
-    borderRadius: Radius.sm,
-    borderWidth: Size.border,
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.sm,
@@ -523,27 +517,27 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   fieldCopy: {
     flex: 1,
     minWidth: 0,
-    marginRight: Spacing.xs,
+    marginRight: 4,
   },
   fieldLabel: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: TypeSize.overline,
+    fontSize: 10,
     letterSpacing: 0.3,
     textTransform: 'uppercase',
   },
   fieldValue: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.body,
-    marginTop: Spacing.hairline,
+    fontSize: 14,
+    marginTop: 1,
   },
   divider: {
-    height: Size.border,
+    height: 1,
   },
   swapBtn: {
-    width: Size.compactControl,
-    height: Size.compactControl,
-    borderRadius: Radius.xl,
-    borderWidth: Size.border,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: Spacing.xs,
@@ -562,58 +556,82 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   tripLengthBadge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: Spacing.control,
-    paddingVertical: Spacing.xs,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: Radius.full,
   },
   tripLengthText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.micro,
+    fontSize: 11,
   },
   cta: {
     marginTop: Spacing.xs,
-    minHeight: Size.button,
+    minHeight: 50,
     borderRadius: Radius.full,
   },
   modes: {
     flexDirection: 'row',
     width: '100%',
     borderRadius: Radius.full,
-    padding: Spacing.tight,
+    padding: 3,
     marginBottom: Spacing.sm,
-    borderWidth: Size.border,
+    borderWidth: 1,
     position: 'relative',
     overflow: 'hidden',
   },
   modePill: {
     position: 'absolute',
-    top: Spacing.tight,
-    bottom: Spacing.tight,
-    left: Spacing.tight,
+    top: 3,
+    bottom: 3,
+    left: 3,
     borderRadius: Radius.full,
-    ...Shadows.soft,
+    shadowColor: '#000000',
+    shadowOpacity: 0.16,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
   modeTab: {
     flex: 1,
-    paddingVertical: Spacing.control,
+    paddingVertical: 10,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: Spacing.xs,
-    minHeight: Size.field,
+    paddingHorizontal: 4,
+    minHeight: 46,
     zIndex: 1,
   },
+  modeTabCompact: {
+    paddingVertical: 9,
+    minHeight: 44,
+  },
+  modeTabInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+  },
   modeText: {
-    fontSize: TypeSize.label,
+    fontSize: 13,
     letterSpacing: -0.2,
   },
   modesScroll: {
     paddingHorizontal: Spacing.screen,
-    gap: Spacing.sm,
+    gap: 8,
     paddingBottom: Spacing.sm,
   },
-  categoryIcon: { width: Size.touch, height: Size.touch, borderRadius: Radius.full, borderWidth: Size.border, alignItems: 'center', justifyContent: 'center' },
-  categoryIndicator: { height: Size.borderActive, width: Spacing.xl, borderRadius: Radius.full },
-  modeChip: { width: Size.category, minHeight: Size.category, alignItems: 'center', justifyContent: 'flex-start', gap: Spacing.xs },
-  modeChipText: { fontSize: TypeSize.micro, lineHeight: Leading.compact, textAlign: 'center', minHeight: Spacing['3xl'] },
+  modeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    marginRight: 8,
+  },
+  modeChipText: {
+    fontSize: 13,
+    letterSpacing: -0.2,
+  },
 });

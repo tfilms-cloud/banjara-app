@@ -1,11 +1,10 @@
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { useThemeColors, type ColorTokens } from '@/constants/colors';
+import { useThemeColors } from '@/constants/colors';
 import type { ExploreThumb } from '@/constants/exploreCatalog';
-import { useThemedStyles } from '@/hooks/useThemedStyles';
-import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
-import { Fonts, TypeSize, Leading } from '@/constants/typography';
+import { Radius, Shadows, Spacing } from '@/constants/spacing';
+import { Fonts } from '@/constants/typography';
 import { pushPath } from '@/utils/navigation';
 
 type ThumbnailGridProps = {
@@ -31,7 +30,6 @@ export function ThumbnailGrid({
   onItemPress,
 }: ThumbnailGridProps) {
   const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
   const { width } = useWindowDimensions();
   const pad = Spacing.screen * 2;
   const gap = Spacing.sm;
@@ -76,7 +74,7 @@ export function ThumbnailGrid({
               ) : null}
               {item.rating != null ? (
                 <View style={styles.rating}>
-                  <Ionicons name="star" size={Size.iconTiny} color={colors.warning} />
+                  <Ionicons name="star" size={10} color="#F5B83D" />
                   <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
                 </View>
               ) : null}
@@ -100,7 +98,7 @@ export function ThumbnailGrid({
           accessibilityLabel={showMoreLabel}
         >
           <Text style={[styles.moreText, { color: colors.primary }]}>{showMoreLabel}</Text>
-          <Ionicons name="chevron-forward" size={Size.iconSm} color={colors.primaryText} />
+          <Ionicons name="chevron-forward" size={16} color={colors.primary} />
         </Pressable>
       ) : null}
     </View>
@@ -119,7 +117,6 @@ export function ExploreFilterChips<T extends string>({
   onChange,
 }: FilterChipsProps<T>) {
   const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
   return (
     <View style={[styles.filters, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
       {options.map((option) => {
@@ -154,7 +151,7 @@ export function ExploreFilterChips<T extends string>({
   );
 }
 
-const createStyles = (colors: ColorTokens) => StyleSheet.create({
+const styles = StyleSheet.create({
   wrap: {
     paddingHorizontal: Spacing.screen,
     gap: Spacing.md,
@@ -167,9 +164,9 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   thumbWrap: {
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
     overflow: 'hidden',
-    backgroundColor: colors.inputBg,
+    backgroundColor: '#E2E8F0',
     ...Shadows.soft,
   },
   thumb: {
@@ -178,59 +175,59 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: Spacing.micro,
-    left: Spacing.micro,
-    paddingHorizontal: Spacing.micro,
-    paddingVertical: Spacing.xxs,
+    top: 6,
+    left: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: Radius.full,
   },
   badgeText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.tiny,
-    color: colors.white,
+    fontSize: 9,
+    color: '#fff',
   },
   rating: {
     position: 'absolute',
-    bottom: Spacing.micro,
-    right: Spacing.micro,
+    bottom: 6,
+    right: 6,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xxs,
-    backgroundColor: colors.mediaScrim,
-    paddingHorizontal: Spacing.badge,
-    paddingVertical: Spacing.xxs,
+    gap: 2,
+    backgroundColor: 'rgba(8,17,31,0.75)',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
     borderRadius: Radius.full,
   },
   ratingText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.overline,
-    color: colors.white,
+    fontSize: 10,
+    color: '#fff',
   },
   title: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.micro,
-    marginTop: Spacing.badge,
-    lineHeight: Leading.caption,
+    fontSize: 11,
+    marginTop: 5,
+    lineHeight: 14,
   },
   meta: {
     fontFamily: Fonts.body,
-    fontSize: TypeSize.overline,
-    marginTop: Spacing.hairline,
-    lineHeight: Leading.compact,
+    fontSize: 10,
+    marginTop: 1,
+    lineHeight: 13,
   },
   moreBtn: {
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.control,
+    gap: 4,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
     borderRadius: Radius.full,
-    borderWidth: Size.border,
+    borderWidth: 1,
   },
   moreText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.label,
+    fontSize: 13,
   },
   empty: {
     paddingHorizontal: Spacing.screen,
@@ -238,26 +235,26 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   emptyText: {
     fontFamily: Fonts.body,
-    fontSize: TypeSize.label,
+    fontSize: 13,
     textAlign: 'center',
   },
   filters: {
     flexDirection: 'row',
     marginHorizontal: Spacing.screen,
     borderRadius: Radius.full,
-    borderWidth: Size.border,
-    padding: Spacing.tight,
+    borderWidth: 1,
+    padding: 3,
   },
   filterChip: {
     flex: 1,
-    minHeight: Size.compactControl,
+    minHeight: 40,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: Radius.full,
-    paddingHorizontal: Spacing.micro,
+    paddingHorizontal: 6,
   },
   filterText: {
-    fontSize: TypeSize.caption,
+    fontSize: 12,
     letterSpacing: -0.2,
   },
 });

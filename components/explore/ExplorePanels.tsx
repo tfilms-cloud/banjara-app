@@ -1,4 +1,3 @@
-import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, TextInput, View, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,7 +7,7 @@ import { HomeSection } from '@/components/travel/HomeSection';
 import { DestinationCard } from '@/components/travel/DestinationCard';
 import { AgencyTripSummaryCard } from '@/components/trip/AgencyTripSummaryCard';
 import { LocationPinSheet, formatPickedCity } from '@/components/location/LocationPinSheet';
-import { useThemeColors, type ColorTokens } from '@/constants/colors';
+import { useThemeColors } from '@/constants/colors';
 import {
   GUIDE_GENDERS,
   RESIDENCE_CLASSES,
@@ -24,8 +23,8 @@ import {
   type VehicleClass,
 } from '@/constants/exploreCatalog';
 import { POPULAR_DESTINATIONS, FEATURED_STORIES } from '@/constants/destinations';
-import { Radius, Spacing, Size } from '@/constants/spacing';
-import { Fonts, TypeSize, Leading } from '@/constants/typography';
+import { Radius, Spacing } from '@/constants/spacing';
+import { Fonts } from '@/constants/typography';
 import { useBestTourOperators, useTourCatalog } from '@/hooks/useTourItineraries';
 import { useLocation } from '@/hooks/useLocation';
 import { groupTripsByAgency } from '@/utils/groupTripsByAgency';
@@ -61,7 +60,6 @@ type ExplorePanelsProps = {
 
 function EmptyCatalog({ title, message }: { title: string; message: string }) {
   const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
   return (
     <View style={[styles.emptyBox, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
       <Text style={[styles.emptyTitle, { color: colors.dark }]}>{title}</Text>
@@ -332,7 +330,6 @@ export function ExplorePanels({
   onSearchRestaurants,
 }: ExplorePanelsProps) {
   const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
   const [vehicleClass, setVehicleClass] = useState<VehicleClass | 'all'>('all');
   const [residence, setResidence] = useState<ResidenceClass>('hotel');
   const [guideGender, setGuideGender] = useState<GuideGender>('male');
@@ -498,7 +495,7 @@ export function ExplorePanels({
                     style={{
                       color: vehicleClass === 'all' ? colors.white : colors.dark,
                       fontFamily: Fonts.bodySemiBold,
-                      fontSize: TypeSize.caption,
+                      fontSize: 12,
                     }}
                   >
                     All
@@ -520,7 +517,7 @@ export function ExplorePanels({
                       style={{
                         color: vehicleClass === v.id ? colors.white : colors.dark,
                         fontFamily: Fonts.bodyMedium,
-                        fontSize: TypeSize.caption,
+                        fontSize: 12,
                       }}
                     >
                       {v.label}
@@ -679,7 +676,7 @@ export function ExplorePanels({
                   { borderColor: colors.border, backgroundColor: colors.inputBg },
                 ]}
               >
-                <Ionicons name="location-outline" size={Size.iconMd} color={colors.muted} />
+                <Ionicons name="location-outline" size={18} color={colors.muted} />
                 <TextInput
                   value={restoCity}
                   onChangeText={setRestoCity}
@@ -690,7 +687,7 @@ export function ExplorePanels({
                   returnKeyType="search"
                 />
                 <Pressable onPress={() => setDestinationMapOpen(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel="Pin restaurant destination on map">
-                  <Ionicons name="map-outline" size={Size.icon} color={colors.primary} />
+                  <Ionicons name="map-outline" size={20} color={colors.primary} />
                 </Pressable>
                 {restoCity.length > 0 ? (
                   <Pressable
@@ -702,7 +699,7 @@ export function ExplorePanels({
                     hitSlop={8}
                     accessibilityLabel="Clear destination"
                   >
-                    <Ionicons name="close-circle" size={Size.iconMd} color={colors.muted} />
+                    <Ionicons name="close-circle" size={18} color={colors.muted} />
                   </Pressable>
                 ) : null}
               </View>
@@ -712,7 +709,7 @@ export function ExplorePanels({
                 accessibilityRole="button"
                 accessibilityLabel="Search restaurants by destination"
               >
-                <Ionicons name="search" size={Size.iconMd} color={colors.white} />
+                <Ionicons name="search" size={18} color="#fff" />
                 <Text style={styles.searchBtnText}>Search restaurants by destination</Text>
               </Pressable>
               {userLocation ? (
@@ -954,18 +951,18 @@ export function FloatingCrossSell({
   return null;
 }
 
-const createStyles = (colors: ColorTokens) => StyleSheet.create({
+const styles = StyleSheet.create({
   root: { gap: 0 },
   classRow: {
     paddingHorizontal: Spacing.screen,
-    gap: Spacing.sm,
+    gap: 8,
     paddingBottom: Spacing.sm,
   },
   miniChip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: Radius.full,
-    borderWidth: Size.border,
+    borderWidth: 1,
   },
   stack: {
     paddingHorizontal: Spacing.screen,
@@ -977,16 +974,28 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     marginBottom: Spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    borderWidth: Size.border,
+    gap: 8,
+    borderWidth: 1,
     borderRadius: Radius.full,
-    paddingHorizontal: Spacing.lg,
-    minHeight: Spacing['5xl'],
+    paddingHorizontal: 14,
+    minHeight: 46,
+  },
+  restoSearchRow: {
+    paddingHorizontal: Spacing.screen,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: Spacing.sm,
   },
   restoSearchCol: {
     paddingHorizontal: Spacing.screen,
-    gap: Spacing.md,
+    gap: 10,
     marginBottom: Spacing.sm,
+  },
+  restoSearchField: {
+    flex: 1,
+    marginHorizontal: 0,
+    marginBottom: 0,
   },
   restoSearchFieldFull: {
     marginHorizontal: 0,
@@ -996,34 +1005,41 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.sm,
-    minHeight: Size.button,
+    gap: 8,
+    minHeight: 48,
     borderRadius: Radius.full,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: 16,
   },
   nearHint: {
     fontFamily: Fonts.body,
-    fontSize: TypeSize.caption,
-    paddingHorizontal: Spacing.xs,
+    fontSize: 12,
+    paddingHorizontal: 4,
+  },
+  searchBtn: {
+    paddingHorizontal: 16,
+    minHeight: 46,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   searchBtnText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.label,
-    color: colors.white,
+    fontSize: 13,
+    color: '#fff',
   },
   searchInput: {
     flex: 1,
     fontFamily: Fonts.body,
-    fontSize: TypeSize.body,
-    paddingVertical: Spacing.sm,
+    fontSize: 14,
+    paddingVertical: 8,
   },
   emptyBox: {
     marginHorizontal: Spacing.screen,
     padding: Spacing.lg,
     borderRadius: Radius.xl,
-    borderWidth: Size.border,
-    gap: Spacing.micro,
+    borderWidth: 1,
+    gap: 6,
   },
-  emptyTitle: { fontFamily: Fonts.bodySemiBold, fontSize: TypeSize.medium },
-  emptyBody: { fontFamily: Fonts.body, fontSize: TypeSize.label, lineHeight: Leading.caption },
+  emptyTitle: { fontFamily: Fonts.bodySemiBold, fontSize: 15 },
+  emptyBody: { fontFamily: Fonts.body, fontSize: 13, lineHeight: 18 },
 });

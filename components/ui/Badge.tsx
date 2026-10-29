@@ -1,11 +1,11 @@
 import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { useThemeColors } from '@/constants/colors';
 import { Radius, Spacing } from '@/constants/spacing';
-import { Fonts, TypeSize } from '@/constants/typography';
+import { Fonts } from '@/constants/typography';
 
 interface BadgeProps {
   label: string;
-  tone?: 'navy' | 'blue' | 'amber' | 'green' | 'gray' | 'red' | 'urgent';
+  tone?: 'navy' | 'blue' | 'amber' | 'green' | 'gray' | 'red';
   style?: ViewStyle;
 }
 
@@ -13,12 +13,11 @@ export function Badge({ label, tone = 'blue', style }: BadgeProps) {
   const colors = useThemeColors();
   const tones = {
     navy: { bg: colors.primary, fg: colors.white },
-    blue: { bg: colors.filterBg, fg: colors.primaryText },
+    blue: { bg: colors.filterBg, fg: colors.filterText },
     amber: { bg: colors.softAmber, fg: colors.warning },
     green: { bg: colors.actionSoft, fg: colors.action },
     gray: { bg: colors.surfaceSecondary, fg: colors.dark },
     red: { bg: colors.softDanger, fg: colors.danger },
-    urgent: { bg: colors.coralSoft, fg: colors.coralText },
   };
   const palette = tones[tone];
   return (
@@ -31,12 +30,12 @@ export function Badge({ label, tone = 'blue', style }: BadgeProps) {
 const styles = StyleSheet.create({
   badge: {
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.badge,
-    borderRadius: Radius.full,
+    paddingVertical: 5,
+    borderRadius: Radius.md,
     alignSelf: 'flex-start',
   },
   text: {
     fontFamily: Fonts.secondarySemiBold,
-    fontSize: TypeSize.caption,
+    fontSize: 12,
   },
 });

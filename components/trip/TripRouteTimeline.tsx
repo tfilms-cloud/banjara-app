@@ -1,8 +1,7 @@
-import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { StyleSheet, Text, View } from 'react-native';
-import { type ColorTokens } from '@/constants/colors';
-import { CustomerType, Fonts, Typography, TypeSize } from '@/constants/typography';
-import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
+import { Colors } from '@/constants/colors';
+import { Fonts, Typography } from '@/constants/typography';
+import { Radius, Spacing } from '@/constants/spacing';
 import type { PickupPoint } from '@/types/route';
 import { formatTime } from '@/utils/formatTime';
 
@@ -21,7 +20,6 @@ export function TripRouteTimeline({
   arrivalTime,
   pickups = [],
 }: TripRouteTimelineProps) {
-  const styles = useThemedStyles(createStyles);
   const origin = from.trim();
   const destination = to.trim();
   if (!origin && !destination) return null;
@@ -76,7 +74,6 @@ function TimelineRow({
   last?: boolean;
   branch?: boolean;
 }) {
-  const styles = useThemedStyles(createStyles);
   const formatted = time ? formatTime(time) : '';
   return (
     <View style={styles.row}>
@@ -94,46 +91,45 @@ function TimelineRow({
   );
 }
 
-const createStyles = (colors: ColorTokens) => StyleSheet.create({
+const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
+    backgroundColor: Colors.card,
     borderRadius: Radius['2xl'],
-    borderWidth: Size.border,
-    borderColor: colors.border,
-    ...Shadows.soft,
+    borderWidth: 1,
+    borderColor: Colors.border,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
   },
   row: {
     flexDirection: 'row',
-    minHeight: Size.row,
+    minHeight: 64,
   },
   rail: {
-    width: Size.icon,
+    width: 20,
     alignItems: 'center',
   },
   line: {
-    width: Size.borderActive,
+    width: 2,
     flex: 1,
-    backgroundColor: colors.border,
+    backgroundColor: Colors.border,
   },
-  lineTop: { marginBottom: Spacing.xxs },
-  lineBottom: { marginTop: Spacing.xxs },
+  lineTop: { marginBottom: 2 },
+  lineBottom: { marginTop: 2 },
   lineSpacer: { flex: 1 },
   dot: {
-    width: Size.iconXs,
-    height: Size.iconXs,
-    borderRadius: Radius.full,
-    backgroundColor: colors.primary,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: Colors.primary,
   },
   dotLast: {
-    backgroundColor: colors.action,
+    backgroundColor: Colors.action,
   },
   dotBranch: {
-    width: Size.iconTiny,
-    height: Size.iconTiny,
-    borderRadius: Radius.full,
-    backgroundColor: colors.coral,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: Colors.accent,
   },
   copy: {
     flex: 1,
@@ -141,19 +137,19 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     paddingVertical: Spacing.sm,
   },
   title: {
-    ...CustomerType.card,
-    color: colors.dark,
+    ...Typography.bodyBold,
+    color: Colors.primary,
     flexShrink: 1,
   },
   caption: {
     ...Typography.caption,
-    color: colors.muted,
-    marginTop: Spacing.xxs,
+    color: Colors.muted,
+    marginTop: 2,
   },
   time: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.label,
-    color: colors.dark,
-    marginTop: Spacing.xs,
+    fontSize: 13,
+    color: Colors.dark,
+    marginTop: 4,
   },
 });

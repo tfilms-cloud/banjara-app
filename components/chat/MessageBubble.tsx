@@ -1,12 +1,11 @@
-import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { formatMessageTime } from '@/components/chat/chatTime';
-import { useThemeColors, type ColorTokens } from '@/constants/colors';
-import { Radius, Shadows, Size, Spacing } from '@/constants/spacing';
-import { CustomerType, Typography, Leading, TypeSize } from '@/constants/typography';
+import { Colors, useIsDarkMode } from '@/constants/colors';
+import { Spacing } from '@/constants/spacing';
+import { Typography } from '@/constants/typography';
 import type { ChatMessage } from '@/types/chat';
 import { normalizeMediaUrl } from '@/utils/mediaUrl';
 
@@ -18,25 +17,23 @@ type Props = {
 };
 
 function Receipt({ status }: { status: ChatMessage['status'] }) {
-  const colors = useThemeColors();
   if (status === 'sending') {
-    return <Ionicons name="time-outline" size={Size.iconXs} color={colors.white} />;
+    return <Ionicons name="time-outline" size={12} color="rgba(255,255,255,0.75)" />;
   }
   if (status === 'failed') {
-    return <Ionicons name="alert-circle" size={Size.iconSmall} color={colors.danger} />;
+    return <Ionicons name="alert-circle" size={13} color={Colors.danger} />;
   }
   if (status === 'read') {
-    return <Ionicons name="checkmark-done" size={Size.iconSmall} color={colors.softBlue} />;
+    return <Ionicons name="checkmark-done" size={14} color="#B8D4FF" />;
   }
   if (status === 'delivered') {
-    return <Ionicons name="checkmark-done" size={Size.iconSmall} color={colors.white} />;
+    return <Ionicons name="checkmark-done" size={14} color="rgba(255,255,255,0.85)" />;
   }
-  return <Ionicons name="checkmark" size={Size.iconSmall} color={colors.white} />;
+  return <Ionicons name="checkmark" size={13} color="rgba(255,255,255,0.85)" />;
 }
 
 function MessageBubbleComponent({ message, mine, showTail, onRetry }: Props) {
-  const styles = useThemedStyles(createStyles);
-
+  useIsDarkMode();
   const failed = message.status === 'failed';
   const images = (message.attachments ?? []).filter(Boolean);
   const showText = Boolean(message.text && message.text !== 'Photo');
@@ -83,58 +80,57 @@ function MessageBubbleComponent({ message, mine, showTail, onRetry }: Props) {
 
 export const MessageBubble = memo(MessageBubbleComponent);
 
-const createStyles = (colors: ColorTokens) => StyleSheet.create({
+const styles = StyleSheet.create({
   bubble: {
     maxWidth: '82%',
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.sm + 2,
     paddingBottom: Spacing.sm,
-    borderRadius: Radius.xl,
-    ...Shadows.soft,
-    gap: Spacing.xs,
+    borderRadius: 18,
+    gap: 4,
   },
   mediaBubble: {
-    paddingHorizontal: Spacing.xs,
-    paddingTop: Spacing.xs,
+    paddingHorizontal: 4,
+    paddingTop: 4,
   },
   mine: {
     alignSelf: 'flex-end',
-    backgroundColor: colors.primary,
-    borderBottomRightRadius: Radius.tail,
+    backgroundColor: Colors.action,
+    borderBottomRightRadius: 6,
   },
   theirs: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.card,
-    borderWidth: Size.border,
-    borderColor: colors.border,
-    borderBottomLeftRadius: Radius.tail,
+    backgroundColor: Colors.surfaceSecondary,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderBottomLeftRadius: 6,
   },
-  mineTail: { borderBottomRightRadius: Radius.tail },
-  theirsTail: { borderBottomLeftRadius: Radius.tail },
+  mineTail: { borderBottomRightRadius: 6 },
+  theirsTail: { borderBottomLeftRadius: 6 },
   failed: { opacity: 0.92 },
   image: {
-    width: Size.hero,
-    height: Size.hero,
-    borderRadius: Radius.lg,
-    backgroundColor: colors.border,
+    width: 220,
+    height: 220,
+    borderRadius: 14,
+    backgroundColor: Colors.border,
   },
-  text: { ...CustomerType.body, color: colors.dark, lineHeight: Leading.body, paddingHorizontal: Spacing.sm },
-  mineText: { color: colors.white },
+  text: { ...Typography.body, color: Colors.dark, lineHeight: 20, paddingHorizontal: Spacing.sm },
+  mineText: { color: Colors.white },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    gap: Spacing.xs,
-    marginTop: Spacing.xxs,
+    gap: 4,
+    marginTop: 2,
     paddingHorizontal: Spacing.sm,
   },
-  time: { ...Typography.small, color: colors.muted, fontSize: TypeSize.micro },
-  mineTime: { color: colors.white },
+  time: { ...Typography.small, color: Colors.muted, fontSize: 11 },
+  mineTime: { color: 'rgba(255,255,255,0.75)' },
   retry: {
     ...Typography.caption,
-    color: colors.danger,
+    color: Colors.danger,
     alignSelf: 'flex-end',
-    marginTop: Spacing.xs,
-    marginRight: Spacing.xs,
+    marginTop: 4,
+    marginRight: 4,
   },
 });

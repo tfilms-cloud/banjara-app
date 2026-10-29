@@ -1,12 +1,11 @@
-import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Image } from 'expo-image';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Badge } from '@/components/ui/Badge';
 import { Rating } from '@/components/ui/Rating';
-import { type ColorTokens } from '@/constants/colors';
-import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
-import { CustomerType, Fonts, Typography, TypeSize, Leading } from '@/constants/typography';
+import { Colors } from '@/constants/colors';
+import { Radius, Spacing } from '@/constants/spacing';
+import { Fonts, Typography } from '@/constants/typography';
 import type { Agency } from '@/types/trip';
 import { normalizeMediaUrl } from '@/utils/mediaUrl';
 
@@ -24,7 +23,6 @@ function agencyInitials(name: string) {
 }
 
 export function AgencyCard({ agency, onPress, linkLabel = 'View all trips' }: AgencyCardProps) {
-  const styles = useThemedStyles(createStyles);
   const logoUri = useMemo(
     () => normalizeMediaUrl(agency.logo) ?? (agency.logo || undefined),
     [agency.logo]
@@ -80,55 +78,54 @@ export function AgencyCard({ agency, onPress, linkLabel = 'View all trips' }: Ag
   return <View style={styles.card}>{content}</View>;
 }
 
-const createStyles = (colors: ColorTokens) => StyleSheet.create({
+const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     gap: Spacing.md,
-    backgroundColor: colors.card,
-    borderRadius: Radius.xl,
-    ...Shadows.soft,
+    backgroundColor: Colors.card,
+    borderRadius: Radius.lg,
     padding: Spacing.lg,
-    borderWidth: Size.border,
-    borderColor: colors.border,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   logo: {
-    width: Size.avatar,
-    height: Size.avatar,
-    borderRadius: Radius.md,
-    backgroundColor: colors.border,
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: Colors.border,
   },
   logoFallback: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primarySoft,
+    backgroundColor: Colors.primarySoft,
   },
   logoInitials: {
     fontFamily: Fonts.bodyBold,
-    fontSize: TypeSize.medium,
-    color: colors.primary,
+    fontSize: 15,
+    color: Colors.primary,
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    gap: Spacing.sm,
-    marginBottom: Spacing.xs,
+    gap: 8,
+    marginBottom: 4,
   },
   name: {
-    ...CustomerType.card,
-    color: colors.dark,
+    ...Typography.bodyBold,
+    color: Colors.primary,
     flexShrink: 1,
   },
   desc: {
     ...Typography.caption,
-    color: colors.muted,
-    marginTop: Spacing.micro,
-    lineHeight: Leading.caption,
+    color: Colors.muted,
+    marginTop: 6,
+    lineHeight: 18,
   },
   link: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.label,
-    color: colors.primaryText,
-    marginTop: Spacing.sm,
+    fontSize: 13,
+    color: Colors.action,
+    marginTop: 8,
   },
 });

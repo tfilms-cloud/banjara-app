@@ -1,4 +1,3 @@
-import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
@@ -17,9 +16,6 @@ import { HotelSearchCard } from '@/components/hotels/HotelSearchCard';
 import { LocationPinSheet, formatPickedCity } from '@/components/location/LocationPinSheet';
 import { DestinationCard } from '@/components/travel/DestinationCard';
 import { HomeHeroHeader } from '@/components/travel/HomeHeroHeader';
-import { HomeStories } from '@/components/travel/HomeStories';
-import { RoadStatusChip } from '@/components/travel/RoadStatusChip';
-import { HomeHelpButton } from '@/components/travel/HomeHelpButton';
 import { TrustGrid } from '@/components/travel/TrustGrid';
 import { groupTripsByAgency } from '@/utils/groupTripsByAgency';
 import { HomeSection } from '@/components/travel/HomeSection';
@@ -31,7 +27,7 @@ import { DatePickerModal } from '@/components/ui/DatePickerModal';
 import { PassengerPicker } from '@/components/ui/PassengerPicker';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { HotelCardSkeleton, TripCardSkeleton } from '@/components/ui/Skeleton';
-import { useThemeColors, type ColorTokens } from '@/constants/colors';
+import { Colors, useThemeColors } from '@/constants/colors';
 import {
   POPULAR_DESTINATIONS,
   POPULAR_ROUTE_SUGGESTIONS,
@@ -44,8 +40,8 @@ import {
   type TransportPanel,
   todayIsoDate,
 } from '@/constants/productModes';
-import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
-import { Fonts, TypeSize, Leading } from '@/constants/typography';
+import { Radius, Shadows, Spacing } from '@/constants/spacing';
+import { Fonts } from '@/constants/typography';
 import { usePopularHotels } from '@/hooks/useHotels';
 import { useGuides, useRestaurants, useTourOperators } from '@/hooks/useRestaurants';
 import { useRecommendedTrips } from '@/hooks/useTrips';
@@ -62,11 +58,6 @@ import { formatDuration } from '@/utils/formatTime';
 import { pushPath } from '@/utils/navigation';
 import type { LocationPickerValue } from '@/types/location';
 
-// TODO: enable previews only after content and actions are approved.
-const SHOW_STORIES = false;
-const SHOW_ROAD_STATUS_CHIP = false;
-const SHOW_HELP_BUTTON = false;
-
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 type HomeMode = HomeServiceCategory;
@@ -81,7 +72,6 @@ function SegmentChips<T extends string>({
   onChange: (id: T) => void;
 }) {
   const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
   return (
     <View style={[styles.segmentTrack, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
       {options.map((option) => {
@@ -131,7 +121,6 @@ function RecentHotelRow({
   onPress: () => void;
 }) {
   const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -173,14 +162,13 @@ function RecentHotelRow({
           {shortDate(item.checkIn)} → {shortDate(item.checkOut)} · {nights} night{nights === 1 ? '' : 's'}
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={Size.iconMd} color={colors.mutedLight} />
+      <Ionicons name="chevron-forward" size={17} color={colors.mutedLight} />
     </AnimatedPressable>
   );
 }
 
 function RecentRideRow({ item, onPress }: { item: any; onPress: () => void }) {
   const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -224,7 +212,7 @@ function RecentRideRow({ item, onPress }: { item: any; onPress: () => void }) {
           {shortDate(item.date)} · {item.passengers} passenger{item.passengers === 1 ? '' : 's'}
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={Size.iconMd} color={colors.mutedLight} />
+      <Ionicons name="chevron-forward" size={17} color={colors.mutedLight} />
     </AnimatedPressable>
   );
 }
@@ -241,7 +229,6 @@ function PopularRouteCard({
   onPress: () => void;
 }) {
   const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -295,7 +282,7 @@ function PopularRouteCard({
           <Text style={[styles.routeMeta, { color: colors.mutedLight }]}>Explore corridor</Text>
         )}
       </View>
-      <Ionicons name="chevron-forward" size={Size.iconMd} color={colors.mutedLight} />
+      <Ionicons name="chevron-forward" size={17} color={colors.mutedLight} />
     </AnimatedPressable>
   );
 }
@@ -354,7 +341,6 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
   const notifications = useUserStore((state) => state.notifications);
   const loadNotifications = useUserStore((state) => state.loadNotifications);
   const hasUnread = notifications.some((item) => !item.read);
@@ -622,8 +608,47 @@ export default function HomeScreen() {
   const searchBlock =
     mode === 'tours' || mode === 'guides' || mode === 'restaurants' ? null : (
     <View style={styles.searchFloat}>
-      <>
+      {mode === 'transport' ? (
+        <View
+          style={[
+            styles.transportControls,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
+          <SegmentChips
+            value={transportPanel}
+            onChange={setTransportPanel}
+            options={[
+              { id: 'available' as const, label: 'Available rides' },
+              { id: 'customise' as const, label: 'Customise route' },
+            ]}
+          />
+          {transportPanel === 'customise' ? (
+            <>
+              <SegmentChips
+                value={journeyKind}
+                onChange={onChangeJourney}
+                options={[
+                  { id: 'one_way' as const, label: 'One way' },
+                  { id: 'round_trip' as const, label: 'Two way' },
+                ]}
+              />
+              <SegmentChips
+                value={bookingKind}
+                onChange={setBookingKind}
+                options={[
+                  { id: 'seat' as const, label: 'Seat booking' },
+                  { id: 'vehicle' as const, label: 'Vehicle booking' },
+                ]}
+              />
+            </>
+          ) : null}
+        </View>
+      ) : null}
+
+      {mode === 'transport' && transportPanel === 'available' ? null : (
         <>
+          <HomeSearchKindTabs value={searchKind} onChange={setSearchKind} />
           {searchKind === 'name' ? (
             <NameSearchCard
               value={query}
@@ -708,46 +733,7 @@ export default function HomeScreen() {
             </>
           )}
         </>
-      </>
-      {mode === 'transport' ? (
-        <View
-          style={[
-            styles.transportControls,
-            { backgroundColor: colors.card, borderColor: colors.border },
-          ]}
-        >
-          <SegmentChips
-            value={transportPanel}
-            onChange={setTransportPanel}
-            options={[
-              { id: 'available' as const, label: 'Available rides' },
-              { id: 'customise' as const, label: 'Customise route' },
-            ]}
-          />
-          {transportPanel === 'customise' ? (
-            <>
-              <SegmentChips
-                value={journeyKind}
-                onChange={onChangeJourney}
-                options={[
-                  { id: 'one_way' as const, label: 'One way' },
-                  { id: 'round_trip' as const, label: 'Two way' },
-                ]}
-              />
-              <SegmentChips
-                value={bookingKind}
-                onChange={setBookingKind}
-                options={[
-                  { id: 'seat' as const, label: 'Seat booking' },
-                  { id: 'vehicle' as const, label: 'Vehicle booking' },
-                ]}
-              />
-            </>
-          ) : null}
-        </View>
-      ) : null}
-
-      <HomeSearchKindTabs value={searchKind} onChange={setSearchKind} />
+      )}
     </View>
   );
 
@@ -852,7 +838,7 @@ export default function HomeScreen() {
         </ScrollView>
       </HomeSection>
     );
-  }, [hotels, mode, trips, styles.hRow]);
+  }, [hotels, mode, trips]);
 
   const inspirationFromProviders = useMemo(() => {
     return groupTripsByAgency(trips)
@@ -1041,8 +1027,6 @@ export default function HomeScreen() {
         }
       >
         <HomeHeroHeader
-          stories={SHOW_STORIES ? <HomeStories /> : undefined}
-          roadStatus={SHOW_ROAD_STATUS_CHIP ? <RoadStatusChip /> : undefined}
           mode={mode}
           onChangeMode={onChangeMode}
           from={from}
@@ -1181,7 +1165,7 @@ export default function HomeScreen() {
                   </View>
                   {item.rating > 0 ? (
                     <View style={[styles.ratingPill, { backgroundColor: colors.softGreen }]}>
-                      <Ionicons name="star" size={Size.iconXs} color={colors.action} />
+                      <Ionicons name="star" size={12} color={colors.action} />
                       <Text style={[styles.ratingText, { color: colors.action }]}>
                         {item.rating.toFixed(1)}
                       </Text>
@@ -1201,25 +1185,23 @@ export default function HomeScreen() {
           <TrustGrid />
         </HomeSection>
       </ScrollView>
-      {SHOW_HELP_BUTTON ? <HomeHelpButton /> : null}
     </View>
   );
 }
-const createStyles = (colors: ColorTokens) => StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: Colors.background },
   container: { flex: 1 },
   feed: {
     paddingBottom: Spacing['4xl'],
   },
   searchFloat: {
-    marginTop: -Spacing.overlap,
+    marginTop: Spacing.sm,
     marginHorizontal: Spacing.screen,
     gap: Spacing.md,
-    zIndex: 1,
   },
   transportControls: {
     borderRadius: Radius.xl,
-    borderWidth: Size.border,
+    borderWidth: 1,
     padding: Spacing.sm,
     gap: Spacing.sm,
     ...Shadows.soft,
@@ -1229,32 +1211,70 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     width: '100%',
     alignItems: 'stretch',
     borderRadius: Radius.full,
-    borderWidth: Size.border,
-    padding: Spacing.tight,
+    borderWidth: 1,
+    padding: 3,
     gap: 0,
   },
   segmentChip: {
     flex: 1,
-    minHeight: Size.touch,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.control,
+    minHeight: 42,
+    paddingHorizontal: 8,
+    paddingVertical: 10,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
   segmentChipText: {
-    fontSize: TypeSize.caption,
+    fontSize: 12,
     letterSpacing: -0.2,
     textAlign: 'center',
   },
   hRow: {
     paddingHorizontal: Spacing.screen,
   },
-  testimonialCard: {
-    width: Size.testimonialCard,
+  blogCard: {
+    width: 268,
     marginRight: Spacing.sm,
     borderRadius: Radius.xl,
-    borderWidth: Size.border,
+    borderWidth: 1,
+    overflow: 'hidden',
+    ...Shadows.card,
+  },
+  blogImage: {
+    width: '100%',
+    height: 120,
+    backgroundColor: Colors.border,
+  },
+  blogCopy: {
+    padding: Spacing.md,
+    gap: 4,
+  },
+  blogPlace: {
+    fontFamily: Fonts.bodySemiBold,
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  blogTitle: {
+    fontFamily: Fonts.bodySemiBold,
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  blogExcerpt: {
+    fontFamily: Fonts.body,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  blogMeta: {
+    fontFamily: Fonts.bodyMedium,
+    fontSize: 11,
+    marginTop: 4,
+  },
+  testimonialCard: {
+    width: 300,
+    marginRight: Spacing.sm,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
     padding: Spacing.lg,
     gap: Spacing.md,
     ...Shadows.card,
@@ -1265,36 +1285,36 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     gap: Spacing.sm,
   },
   testimonialAvatar: {
-    width: Size.touch,
-    height: Size.touch,
-    borderRadius: Radius.full,
-    backgroundColor: colors.border,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.border,
   },
   testimonialName: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.body,
+    fontSize: 14,
   },
   testimonialMeta: {
     fontFamily: Fonts.body,
-    fontSize: TypeSize.micro,
-    marginTop: Spacing.xxs,
+    fontSize: 11,
+    marginTop: 2,
   },
   ratingPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.tight,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    gap: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: Radius.full,
   },
   ratingText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.caption,
+    fontSize: 12,
   },
   testimonialQuote: {
     fontFamily: Fonts.body,
-    fontSize: TypeSize.label,
-    lineHeight: Leading.body,
+    fontSize: 13,
+    lineHeight: 19,
   },
   stack: {
     paddingHorizontal: Spacing.screen,
@@ -1310,103 +1330,154 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   recentRowCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
+    backgroundColor: Colors.card,
     borderRadius: Radius.xl,
-    borderWidth: Size.border,
-    borderColor: colors.border,
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: Spacing.sm,
     gap: Spacing.md,
     ...Shadows.card,
   },
   recentThumb: {
-    width: Size.thumbnail,
-    height: Size.thumbnail,
+    width: 68,
+    height: 68,
     borderRadius: Radius.md,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: Colors.primarySoft,
   },
   recentBody: { flex: 1, minWidth: 0 },
   recentTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: Spacing.micro,
+    gap: 6,
   },
   recentPlace: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.medium,
+    fontSize: 15,
   },
   recentTypeChip: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xxs,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
     borderRadius: Radius.full,
   },
   recentTypeText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.overline,
+    fontSize: 10,
     letterSpacing: 0.3,
   },
   recentDetails: {
     fontFamily: Fonts.body,
-    fontSize: TypeSize.caption,
-    marginTop: Spacing.xs,
+    fontSize: 12,
+    marginTop: 4,
   },
   routeCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
+    backgroundColor: Colors.card,
     borderRadius: Radius.xl,
-    borderWidth: Size.border,
-    borderColor: colors.border,
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: Spacing.sm,
     gap: Spacing.md,
     ...Shadows.card,
   },
   routeThumb: {
-    width: Size.row,
-    height: Size.row,
+    width: 64,
+    height: 64,
     borderRadius: Radius.md,
-    backgroundColor: colors.border,
+    backgroundColor: Colors.border,
   },
   routeCopy: { flex: 1, minWidth: 0 },
   routeHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: Spacing.micro,
+    gap: 6,
   },
   routeTitle: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.medium,
+    fontSize: 15,
     flex: 1,
   },
   routeDurationBadge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.tight,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: Radius.full,
   },
   routeDurationText: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: TypeSize.micro,
+    fontSize: 11,
   },
   routeMeta: {
     fontFamily: Fonts.body,
-    fontSize: TypeSize.caption,
-    marginTop: Spacing.tight,
+    fontSize: 12,
+    marginTop: 3,
   },
   routeLiveRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.badge,
-    marginTop: Spacing.xs,
+    gap: 5,
+    marginTop: 4,
   },
   routeLiveDot: {
-    width: Size.badgeDot,
-    height: Size.badgeDot,
-    borderRadius: Radius.full,
-    backgroundColor: colors.action,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#20C978',
   },
   routeLive: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.caption,
+    fontSize: 12,
+  },
+  storyCard: {
+    width: 260,
+    height: 180,
+    marginRight: Spacing.sm,
+    borderRadius: Radius['3xl'],
+    overflow: 'hidden',
+    backgroundColor: Colors.border,
+  },
+  storyImage: { ...StyleSheet.absoluteFill },
+  storyOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: Spacing.lg,
+  },
+  storyTitle: {
+    fontFamily: Fonts.display,
+    fontSize: 20,
+    color: Colors.card,
+  },
+  storySub: {
+    fontFamily: Fonts.body,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.86)',
+    marginTop: 4,
+  },
+  finalCta: {
+    marginHorizontal: Spacing.screen,
+    marginTop: Spacing.xl,
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.hero,
+    padding: Spacing.xl,
+    gap: Spacing.sm,
+  },
+  finalCtaTitle: {
+    fontFamily: Fonts.display,
+    fontSize: 24,
+    lineHeight: 30,
+    color: Colors.white,
+  },
+  finalCtaSub: {
+    fontFamily: Fonts.body,
+    fontSize: 14,
+    lineHeight: 20,
+    color: 'rgba(255,255,255,0.78)',
+    marginBottom: Spacing.sm,
+  },
+  finalCtaBtn: {
+    backgroundColor: '#08111F',
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.xl,
   },
 });

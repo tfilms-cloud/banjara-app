@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import {
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -9,24 +10,20 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { ExplorePanels, FloatingCrossSell } from '@/components/explore/ExplorePanels';
-import { CustomerHeader } from '@/components/travel/CustomerHeader';
-import { SearchModeTabs } from '@/components/travel/SearchCard';
-import { useAuthStore } from '@/store/authStore';
-import { useUserStore } from '@/store/userStore';
+import { ScreenHeader } from '@/components/navigation/ScreenHeader';
 import { Colors, useThemeColors } from '@/constants/colors';
 import {
+  EXPLORE_SERVICE_TABS,
   type ExploreServiceTab,
 } from '@/constants/exploreCatalog';
-import { Spacing } from '@/constants/spacing';
-import { CustomerType, Fonts, TypeSize } from '@/constants/typography';
+import { Radius, Shadows, Spacing } from '@/constants/spacing';
+import { Fonts } from '@/constants/typography';
 import { usePopularHotels } from '@/hooks/useHotels';
 import { useGuides, useRestaurants, useTourOperators } from '@/hooks/useRestaurants';
 import { useRecommendedTrips } from '@/hooks/useTrips';
 import { pushPath } from '@/utils/navigation';
 
 export default function ExploreScreen() {
-  const user = useAuthStore(state => state.user);
-  const notifications = useUserStore(state => state.notifications);
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const [tab, setTab] = useState<ExploreServiceTab>('transport');
@@ -83,9 +80,13 @@ export default function ExploreScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <CustomerHeader userName={user?.name} userAvatar={user?.avatar} hasUnread={notifications.some(item => !item.read)} onOpenSearch={() => pushPath('/(customer)/results')} onNotifications={() => pushPath('/(customer)/(tabs)/notifications')} onProfile={() => pushPath('/(customer)/(tabs)/profile')} />
+      <ScreenHeader
+        title="Explore"
+        showNotifications
+        onNotificationsPress={() => pushPath('/(customer)/(tabs)/notifications')}
+      />
       <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + Spacing['3xl'] }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         refreshControl={
@@ -97,7 +98,42 @@ export default function ExploreScreen() {
           <Text style={[styles.introSub, { color: colors.muted }]}>{subtitle}</Text>
         </View>
 
-        <SearchModeTabs mode={tab} onChange={setTab} compact />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabsRow}
+        >
+          {EXPLORE_SERVICE_TABS.map((item) => {
+            const active = tab === item.id;
+            return (
+              <Pressable
+                key={item.id}
+                onPress={() => setTab(item.id)}
+                style={[
+                  styles.tabChip,
+                  {
+                    backgroundColor: active ? colors.primary : colors.card,
+                    borderColor: active ? colors.primary : colors.border,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+              >
+                <Text
+                  style={[
+                    styles.tabText,
+                    {
+                      color: active ? colors.white : colors.dark,
+                      fontFamily: active ? Fonts.bodySemiBold : Fonts.bodyMedium,
+                    },
+                  ]}
+                >
+                  {item.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
 
         <ExplorePanels
           tab={tab}
@@ -134,20 +170,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.screen,
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.md,
-    gap: Spacing.xs,
+    gap: 4,
   },
   introTitle: {
-    ...CustomerType.section,
+    fontFamily: Fonts.display,
+    fontSize: 22,
     letterSpacing: -0.3,
   },
   introSub: {
     fontFamily: Fonts.body,
-    fontSize: TypeSize.label,
+    fontSize: 13,
+  },
+  tabsRow: {
+    paddingHorizontal: Spacing.screen,
+    gap: 8,
+    paddingBottom: Spacing.sm,
+  },
+  tabChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    ...Shadows.soft,
+  },
+  tabText: {
+    fontSize: 13,
   },
   loadingHint: {
     textAlign: 'center',
     fontFamily: Fonts.body,
-    fontSize: TypeSize.caption,
+    fontSize: 12,
     marginTop: Spacing.md,
   },
 });

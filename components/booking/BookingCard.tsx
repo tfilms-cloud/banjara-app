@@ -1,10 +1,9 @@
-import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Badge } from '@/components/ui/Badge';
-import { useThemeColors, type ColorTokens } from '@/constants/colors';
+import { Colors, useThemeColors } from '@/constants/colors';
 import { journeyTypeMeta } from '@/constants/journeyTypes';
-import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
-import { CustomerType, Fonts, TypeSize, Leading } from '@/constants/typography';
+import { Radius, Spacing } from '@/constants/spacing';
+import { Fonts } from '@/constants/typography';
 import type { Booking } from '@/types/booking';
 import type { TripWithDetails } from '@/types/trip';
 import {
@@ -26,7 +25,6 @@ interface BookingCardProps {
 }
 
 export function BookingCard({ booking, trip, onPress, onViewTicket }: BookingCardProps) {
-  const styles = useThemedStyles(createStyles);
   const colors = useThemeColors();
   const needsPay = bookingNeedsPaymentAction(booking);
   const canOpenPay = canOpenBookingPayment(booking);
@@ -71,7 +69,7 @@ export function BookingCard({ booking, trip, onPress, onViewTicket }: BookingCar
         </View>
       </View>
       {canOpenPay ? (
-        <Text style={[styles.pendingHint, { color: colors.warning }]}>
+        <Text style={[styles.pendingHint, { color: colors.warning ?? '#B45309' }]}>
           {paymentActionHint(booking.paymentStatus)}
         </Text>
       ) : booking.status === 'pending' ? (
@@ -86,7 +84,7 @@ export function BookingCard({ booking, trip, onPress, onViewTicket }: BookingCar
         {booking.seats?.length ? ` · Seat ${booking.seats.join(', ')}` : ''}
       </Text>
       <View style={styles.footer}>
-        <Text style={[styles.price, { color: colors.action }]}>
+        <Text style={[styles.price, { color: colors.dark }]}>
           {formatCurrency(booking.priceBreakdown.total, booking.priceBreakdown.currency)}
         </Text>
         <View style={styles.actions}>
@@ -118,15 +116,14 @@ export function BookingCard({ booking, trip, onPress, onViewTicket }: BookingCar
   );
 }
 
-const createStyles = (colors: ColorTokens) => StyleSheet.create({
+const styles = StyleSheet.create({
   card: {
-    ...Shadows.soft,
-    backgroundColor: colors.card,
+    backgroundColor: Colors.card,
     borderRadius: Radius.xl,
     padding: Spacing.lg,
     gap: Spacing.sm,
-    borderWidth: Size.border,
-    borderColor: colors.border,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   top: {
     flexDirection: 'row',
@@ -135,64 +132,60 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     gap: Spacing.md,
   },
   badges: {
-    alignItems: 'flex-start',
-    flexShrink: 1,
-    maxWidth: '48%',
-    gap: Spacing.xs,
+    alignItems: 'flex-end',
+    gap: 6,
   },
   provider: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: TypeSize.caption,
-    color: colors.muted,
+    fontSize: 12,
+    color: Colors.muted,
   },
   route: {
-    ...CustomerType.card,
-    color: colors.dark,
-    marginTop: Spacing.xxs,
+    fontFamily: Fonts.bodyBold,
+    fontSize: 16,
+    color: Colors.dark,
+    marginTop: 2,
   },
   journeyHint: {
     fontFamily: Fonts.body,
-    fontSize: TypeSize.caption,
-    color: colors.muted,
+    fontSize: 12,
+    color: Colors.muted,
   },
   pendingHint: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: TypeSize.caption,
-    marginTop: Spacing.xs,
-    lineHeight: Leading.compact,
+    fontSize: 12,
+    marginTop: 4,
+    lineHeight: 16,
   },
   meta: {
     fontFamily: Fonts.body,
-    fontSize: TypeSize.label,
-    color: colors.muted,
+    fontSize: 13,
+    color: Colors.muted,
   },
   footer: {
-    marginTop: Spacing.xs,
+    marginTop: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: Spacing.md,
   },
   price: {
     fontFamily: Fonts.bodyBold,
-    fontSize: TypeSize.card,
-    color: colors.action,
+    fontSize: 16,
+    color: Colors.action,
   },
   actions: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
     gap: Spacing.md,
   },
   link: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.label,
-    color: colors.primaryText,
+    fontSize: 13,
+    color: Colors.primary,
   },
   cta: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.label,
-    color: colors.action,
+    fontSize: 13,
+    color: Colors.action,
   },
 });

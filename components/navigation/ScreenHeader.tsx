@@ -6,8 +6,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BrandMark } from '@/components/brand/BrandMark';
 import { useThemeColors } from '@/constants/colors';
-import { Radius, Size, Spacing } from '@/constants/spacing';
-import { Brand, Fonts, TypeSize, Leading } from '@/constants/typography';
+import { Spacing } from '@/constants/spacing';
+import { Brand, Fonts } from '@/constants/typography';
 import { shouldSkipHistoryBack } from '@/utils/navigation';
 
 type ScreenHeaderProps = {
@@ -69,7 +69,7 @@ export function ScreenHeader({
         styles.container,
         {
           paddingTop: insets.top + Spacing.sm,
-          backgroundColor: transparent ? colors.transparent : colors.background,
+          backgroundColor: transparent ? 'transparent' : colors.background,
         },
       ]}
     >
@@ -81,7 +81,7 @@ export function ScreenHeader({
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
-            <ArrowLeft size={Size.iconLg} color={iconColor} strokeWidth={2} />
+            <ArrowLeft size={22} color={iconColor} strokeWidth={2} />
           </Pressable>
         ) : showMenu ? (
           <Pressable
@@ -89,7 +89,7 @@ export function ScreenHeader({
             style={[styles.iconBtn, { backgroundColor: colors.inputBg, borderColor: colors.border }]}
             accessibilityLabel="Menu"
           >
-            <Menu size={Size.iconLg} color={iconColor} strokeWidth={2} />
+            <Menu size={22} color={iconColor} strokeWidth={2} />
           </Pressable>
         ) : (
           <View style={styles.sideSlot} />
@@ -98,7 +98,7 @@ export function ScreenHeader({
         <View style={styles.center}>
           {showBrand ? (
             <View style={styles.brandRow}>
-              <BrandMark size={Size.iconHero} />
+              <BrandMark size={28} />
               <Text style={[styles.brand, { color: titleColor }]}>{Brand.name}</Text>
             </View>
           ) : title ? (
@@ -122,7 +122,7 @@ export function ScreenHeader({
               style={[styles.iconBtn, { backgroundColor: colors.inputBg, borderColor: colors.border }]}
               accessibilityLabel="Search"
             >
-              <Search size={Size.icon} color={iconColor} strokeWidth={2} />
+              <Search size={20} color={iconColor} strokeWidth={2} />
             </Pressable>
           ) : null}
           {showNotifications ? (
@@ -131,7 +131,7 @@ export function ScreenHeader({
               style={[styles.iconBtn, { backgroundColor: colors.inputBg, borderColor: colors.border }]}
               accessibilityLabel="Notifications"
             >
-              <Bell size={Size.icon} color={iconColor} strokeWidth={2} />
+              <Bell size={20} color={iconColor} strokeWidth={2} />
             </Pressable>
           ) : null}
           {right}
@@ -151,21 +151,21 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.md,
   },
   row: {
-    minHeight: Size.touch,
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
   },
   iconBtn: {
-    width: Size.touch,
-    height: Size.touch,
-    borderRadius: Radius.full,
-    borderWidth: Size.border,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sideSlot: {
-    width: Size.sideSlot,
-    height: Size.touch,
+    width: 44,
+    height: 44,
   },
   center: {
     flex: 1,
@@ -175,27 +175,27 @@ const styles = StyleSheet.create({
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: 8,
   },
   brand: {
     fontFamily: Fonts.displayBold,
-    fontSize: TypeSize.heading,
+    fontSize: 22,
     letterSpacing: 1.6,
   },
   title: {
-    fontFamily: Fonts.display,
-    fontSize: TypeSize.subtitle,
-    lineHeight: Leading.title,
+    fontFamily: Fonts.bodySemiBold,
+    fontSize: 18,
+    lineHeight: 22,
   },
   subtitle: {
     fontFamily: Fonts.body,
-    fontSize: TypeSize.label,
-    marginTop: Spacing.hairline,
+    fontSize: 13,
+    marginTop: 1,
   },
   right: {
     flexDirection: 'row',
     alignItems: 'center',
-    minWidth: Size.compactControl,
+    minWidth: 40,
     justifyContent: 'flex-end',
   },
 });

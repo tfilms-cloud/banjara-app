@@ -24,28 +24,6 @@ export const AuthFonts = {
   bodyBold: Fonts.bodyBold,
 } as const;
 
-/** Customer typography scale; compact labels still allow English/Urdu wrapping. */
-export const TypeSize = {
-  tiny: 9, overline: 10, micro: 11, caption: 12, label: 13,
-  body: 14, medium: 15, card: 16, subtitle: 18, section: 19,
-  title: 20, heading: 22, hero: 24, display: 26,
-} as const;
-
-export const Leading = {
-  compact: 16, caption: 18, body: 20, card: 22,
-  title: 24, section: 26, hero: 30, display: 32,
-} as const;
-
-export const CustomerType = {
-  hero: { fontFamily: Fonts.displayBold, fontSize: 24, lineHeight: 32 },
-  section: { fontFamily: Fonts.display, fontSize: 19, lineHeight: 26 },
-  card: { fontFamily: Fonts.display, fontSize: 16, lineHeight: 22 },
-  body: { fontFamily: Fonts.body, fontSize: 14, lineHeight: 20 },
-  label: { fontFamily: Fonts.bodySemiBold, fontSize: 13, lineHeight: 18 },
-  caption: { fontFamily: Fonts.bodyMedium, fontSize: 12, lineHeight: 18 },
-  micro: { fontFamily: Fonts.bodyMedium, fontSize: 11, lineHeight: 16 },
-} as const;
-
 function makeTypography(c: ColorTokens) {
   return {
     display: {

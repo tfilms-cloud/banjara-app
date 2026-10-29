@@ -1,10 +1,9 @@
-import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { formatConversationTime, formatPresenceLabel } from '@/components/chat/chatTime';
 import { Avatar } from '@/components/ui/Avatar';
-import { type ColorTokens } from '@/constants/colors';
-import { Radius, Shadows, Size, Spacing } from '@/constants/spacing';
-import { CustomerType, Fonts, Typography, TypeSize, Leading } from '@/constants/typography';
+import { Colors } from '@/constants/colors';
+import { Radius, Spacing } from '@/constants/spacing';
+import { Fonts, Typography } from '@/constants/typography';
 import type { ChatConversation } from '@/types/chat';
 
 type Props = {
@@ -23,7 +22,6 @@ function roleLabel(role?: string) {
 }
 
 export function ConversationRow({ item, onPress }: Props) {
-  const styles = useThemedStyles(createStyles);
   const unread = item.unreadCount > 0;
   const role = roleLabel(item.otherUserRole);
 
@@ -35,7 +33,7 @@ export function ConversationRow({ item, onPress }: Props) {
       accessibilityLabel={`Conversation with ${item.otherUserName}${unread ? `, ${item.unreadCount} unread` : ''}`}
     >
       <View style={styles.avatarWrap}>
-        <Avatar uri={item.otherUserAvatar} name={item.otherUserName} size={Size.avatar} />
+        <Avatar uri={item.otherUserAvatar} name={item.otherUserName} size={52} />
         {item.online ? <View style={styles.online} /> : null}
       </View>
       <View style={styles.body}>
@@ -78,85 +76,85 @@ export function ConversationRow({ item, onPress }: Props) {
   );
 }
 
-const createStyles = (colors: ColorTokens) => StyleSheet.create({
+const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     gap: Spacing.md,
-    backgroundColor: colors.card,
+    backgroundColor: Colors.card,
     borderRadius: Radius.xl,
-    padding: Spacing.lg,
-    ...Shadows.soft,
-    borderWidth: Size.border,
-    borderColor: colors.border,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
     alignItems: 'flex-start',
   },
   cardUnread: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primarySoft,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primarySoft,
   },
-  avatarWrap: { position: 'relative', marginTop: Spacing.xxs },
+  avatarWrap: { position: 'relative', marginTop: 2 },
   online: {
     position: 'absolute',
-    right: Spacing.hairline,
-    bottom: Spacing.hairline,
-    width: Size.iconXs,
-    height: Size.iconXs,
-    borderRadius: Radius.full,
-    backgroundColor: colors.success,
-    borderWidth: Size.borderActive,
-    borderColor: colors.white,
+    right: 1,
+    bottom: 1,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: Colors.success,
+    borderWidth: 2,
+    borderColor: Colors.white,
   },
-  body: { flex: 1, gap: Spacing.xs, minWidth: 0 },
-  top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: Spacing.sm },
+  body: { flex: 1, gap: 4, minWidth: 0 },
+  top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
   title: {
-    ...CustomerType.card,
-    color: colors.dark,
+    fontFamily: Fonts.bodyBold,
+    fontSize: 16,
+    color: Colors.dark,
     flex: 1,
   },
-  titleUnread: { color: colors.primaryText },
-  time: { ...Typography.caption, color: colors.muted },
-  timeUnread: { color: colors.primaryText, fontFamily: Fonts.bodySemiBold },
+  titleUnread: { color: Colors.primary },
+  time: { ...Typography.caption, color: Colors.muted },
+  timeUnread: { color: Colors.action, fontFamily: Fonts.bodySemiBold },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: 8,
   },
   rolePill: {
-    backgroundColor: colors.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     borderRadius: Radius.full,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xxs,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
   roleText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.micro,
-    color: colors.muted,
+    fontSize: 11,
+    color: Colors.muted,
   },
-  presence: { ...Typography.small, color: colors.muted, flex: 1 },
-  bottom: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm, marginTop: Spacing.xxs },
+  presence: { ...Typography.small, color: Colors.muted, flex: 1 },
+  bottom: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 2 },
   preview: {
     fontFamily: Fonts.body,
-    fontSize: TypeSize.label,
-    color: colors.muted,
+    fontSize: 13,
+    color: Colors.muted,
     flex: 1,
-    lineHeight: Leading.caption,
+    lineHeight: 18,
   },
-  previewUnread: { color: colors.dark, fontFamily: Fonts.bodySemiBold },
+  previewUnread: { color: Colors.dark, fontFamily: Fonts.bodySemiBold },
   badge: {
-    minWidth: Size.iconLg,
-    height: Size.iconLg,
-    borderRadius: Radius.full,
-    backgroundColor: colors.primary,
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: Colors.action,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: Spacing.micro,
-    marginTop: Spacing.xxs,
+    paddingHorizontal: 6,
+    marginTop: 2,
   },
-  badgeText: { ...Typography.small, color: colors.white, fontWeight: '700' },
+  badgeText: { ...Typography.small, color: Colors.white, fontWeight: '700' },
   bookingHint: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: TypeSize.micro,
-    color: colors.primary,
-    marginTop: Spacing.xxs,
+    fontSize: 11,
+    color: Colors.primary,
+    marginTop: 2,
   },
 });

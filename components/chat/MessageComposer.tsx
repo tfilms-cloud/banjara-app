@@ -1,9 +1,8 @@
-import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useThemeColors, type ColorTokens } from '@/constants/colors';
-import { Radius, Size, Spacing } from '@/constants/spacing';
-import { CustomerType } from '@/constants/typography';
+import { Colors } from '@/constants/colors';
+import { Radius, Spacing } from '@/constants/spacing';
+import { Typography } from '@/constants/typography';
 
 type Props = {
   value: string;
@@ -24,8 +23,6 @@ export function MessageComposer({
   bottomInset = 0,
   onAttachPress,
 }: Props) {
-  const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
   const canSend = Boolean(value.trim()) && !sending && !disabled;
 
   return (
@@ -38,7 +35,7 @@ export function MessageComposer({
         accessibilityLabel="Attachments"
         hitSlop={8}
       >
-        <Ionicons name="add" size={Size.iconLg} color={onAttachPress ? colors.action : colors.muted} />
+        <Ionicons name="add" size={22} color={onAttachPress ? Colors.action : Colors.muted} />
       </Pressable>
 
       <TextInput
@@ -46,7 +43,7 @@ export function MessageComposer({
         value={value}
         onChangeText={onChangeText}
         placeholder="Type a message..."
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={Colors.muted}
         editable={!disabled && !sending}
         multiline
         maxLength={4000}
@@ -62,57 +59,55 @@ export function MessageComposer({
         accessibilityLabel={sending ? 'Sending' : 'Send message'}
         hitSlop={6}
       >
-        <Ionicons name={sending ? 'hourglass-outline' : 'send'} size={Size.iconMd} color={colors.white} />
+        <Ionicons name={sending ? 'hourglass-outline' : 'send'} size={18} color={Colors.white} />
       </Pressable>
     </View>
   );
 }
 
-const createStyles = (colors: ColorTokens) => StyleSheet.create({
+const styles = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: Spacing.sm,
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.md,
-    borderTopWidth: Size.border,
-    borderTopColor: colors.border,
-    backgroundColor: colors.card,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+    backgroundColor: Colors.background,
   },
   attach: {
-    width: Size.touch,
-    height: Size.touch,
-    borderRadius: Radius.full,
-    backgroundColor: colors.surfaceSecondary,
-    borderWidth: Size.border,
-    borderColor: colors.border,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.inputBg,
+    borderWidth: 1,
+    borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   input: {
     flex: 1,
-    minHeight: Size.touch,
-    maxHeight: Size.photoSmall,
-    backgroundColor: colors.inputBg,
+    minHeight: 44,
+    maxHeight: 120,
+    backgroundColor: Colors.inputBg,
     borderRadius: Radius.xl,
-    borderWidth: Size.border,
-    borderColor: colors.border,
+    borderWidth: 1,
+    borderColor: Colors.border,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    textAlignVertical: 'top',
-    includeFontPadding: false,
-    ...CustomerType.body,
-    color: colors.dark,
+    paddingVertical: Spacing.sm + 2,
+    ...Typography.body,
+    color: Colors.dark,
   },
   send: {
-    width: Size.touch,
-    height: Size.touch,
-    borderRadius: Radius.full,
-    backgroundColor: colors.action,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.action,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sendDisabled: {
-    backgroundColor: colors.border,
+    backgroundColor: Colors.border,
   },
 });

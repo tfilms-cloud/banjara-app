@@ -1,10 +1,9 @@
-import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import { journeyTypeMeta, type JourneyType } from '@/constants/journeyTypes';
-import { useThemeColors, type ColorTokens } from '@/constants/colors';
-import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
-import { CustomerType, Fonts, TypeSize, Leading } from '@/constants/typography';
+import { Colors } from '@/constants/colors';
+import { Radius, Spacing } from '@/constants/spacing';
+import { Fonts } from '@/constants/typography';
 import { formatDate } from '@/utils/formatDate';
 import { formatTime } from '@/utils/formatTime';
 
@@ -25,8 +24,6 @@ export function JourneyTypePanel({
   returnTime,
   compact,
 }: JourneyTypePanelProps) {
-  const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
   const journey = journeyTypeMeta(journeyType);
   const isRound = journey.value === 'round_trip';
 
@@ -36,8 +33,8 @@ export function JourneyTypePanel({
         <View style={[styles.iconWrap, isRound ? styles.iconRound : styles.iconOne]}>
           <Ionicons
             name={isRound ? 'swap-horizontal' : 'arrow-forward'}
-            size={Size.iconMd}
-            color={isRound ? colors.actionDark : colors.primary}
+            size={18}
+            color={isRound ? Colors.actionDark : Colors.primary}
           />
         </View>
         <View style={{ flex: 1 }}>
@@ -89,11 +86,9 @@ function PathRow({
   title: string;
   detail: string;
 }) {
-  const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.pathRow}>
-      <Ionicons name={icon} size={Size.iconSm} color={colors.action} />
+      <Ionicons name={icon} size={16} color={Colors.action} />
       <View style={{ flex: 1 }}>
         <Text style={styles.pathTitle}>{title}</Text>
         <Text style={styles.pathDetail}>{detail}</Text>
@@ -102,12 +97,11 @@ function PathRow({
   );
 }
 
-const createStyles = (colors: ColorTokens) => StyleSheet.create({
+const styles = StyleSheet.create({
   card: {
     borderRadius: Radius.xl,
-    borderWidth: Size.border,
-    padding: Spacing.lg,
-    ...Shadows.soft,
+    borderWidth: 1,
+    padding: Spacing.md,
     gap: Spacing.md,
   },
   compact: {
@@ -115,12 +109,12 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     gap: Spacing.sm,
   },
   cardOne: {
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.border,
+    backgroundColor: Colors.primarySoft,
+    borderColor: Colors.border,
   },
   cardRound: {
-    backgroundColor: colors.actionSoft,
-    borderColor: colors.border,
+    backgroundColor: Colors.actionSoft,
+    borderColor: Colors.action,
   },
   header: {
     flexDirection: 'row',
@@ -128,43 +122,44 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     gap: Spacing.sm,
   },
   iconWrap: {
-    width: Size.avatarRing,
-    height: Size.avatarRing,
-    borderRadius: Radius.xl,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconOne: { backgroundColor: colors.card },
-  iconRound: { backgroundColor: colors.card },
+  iconOne: { backgroundColor: Colors.card },
+  iconRound: { backgroundColor: Colors.card },
   label: {
-    ...CustomerType.card,
-    color: colors.dark,
+    fontFamily: Fonts.bodyBold,
+    fontSize: 15,
+    color: Colors.dark,
   },
   hint: {
     fontFamily: Fonts.body,
-    fontSize: TypeSize.caption,
-    color: colors.muted,
-    marginTop: Spacing.xxs,
-    lineHeight: Leading.body,
+    fontSize: 12,
+    color: Colors.muted,
+    marginTop: 2,
+    lineHeight: 17,
   },
   path: { gap: Spacing.sm },
   pathRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: Spacing.sm,
-    backgroundColor: colors.card,
+    backgroundColor: Colors.surfaceSecondary,
     borderRadius: Radius.lg,
     padding: Spacing.sm,
   },
   pathTitle: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.caption,
-    color: colors.dark,
+    fontSize: 12,
+    color: Colors.dark,
   },
   pathDetail: {
     fontFamily: Fonts.body,
-    fontSize: TypeSize.caption,
-    color: colors.muted,
-    marginTop: Spacing.hairline,
+    fontSize: 12,
+    color: Colors.muted,
+    marginTop: 1,
   },
 });

@@ -1,4 +1,3 @@
-import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
@@ -19,8 +18,8 @@ import { TypingDots } from '@/components/chat/TypingDots';
 import { Avatar } from '@/components/ui/Avatar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Header } from '@/components/ui/Header';
-import { type ColorTokens } from '@/constants/colors';
-import { Radius, Size, Spacing } from '@/constants/spacing';
+import { Colors } from '@/constants/colors';
+import { Spacing } from '@/constants/spacing';
 import { Typography } from '@/constants/typography';
 import { getApiErrorMessage } from '@/services/apiError';
 import * as uploadService from '@/services/uploadService';
@@ -41,7 +40,6 @@ type Props = {
 };
 
 export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, avatarUri }: Props) {
-  const styles = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const me = useAuthStore((s) => s.user?.id);
   const messages = useChatStore((s) => s.messages);
@@ -206,7 +204,7 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
             accessibilityRole="button"
             accessibilityLabel={`${title} profile`}
           >
-            <Avatar uri={avatarUri ?? conversation?.otherUserAvatar} name={title} size={Size.avatarRing} />
+            <Avatar uri={avatarUri ?? conversation?.otherUserAvatar} name={title} size={36} />
             {presence?.online ? <View style={styles.onlineDot} /> : null}
           </Pressable>
         }
@@ -242,7 +240,7 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
             contentContainerStyle={{
               paddingHorizontal: Spacing.lg,
               paddingTop: Spacing.md,
-              paddingBottom: insets.bottom + Spacing.md,
+              paddingBottom: insets.bottom + 12,
               flexGrow: 1,
               gap: Spacing.xs,
             }}
@@ -276,9 +274,9 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
               return (
                 <View style={[styles.row, mine ? styles.rowMine : styles.rowTheirs]}>
                   {!mine && item.showAvatar ? (
-                    <Avatar uri={avatarUri} name={title} size={Size.iconHero} />
+                    <Avatar uri={avatarUri} name={title} size={28} />
                   ) : !mine ? (
-                    <View style={{ width: Size.iconHero }} />
+                    <View style={{ width: 28 }} />
                   ) : null}
                   <MessageBubble
                     message={item.message}
@@ -331,26 +329,26 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
   );
 }
 
-const createStyles = (colors: ColorTokens) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  chatBg: { flex: 1, backgroundColor: colors.background },
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: Colors.background },
+  chatBg: { flex: 1, backgroundColor: Colors.background },
   headerRight: { position: 'relative' },
   onlineDot: {
     position: 'absolute',
     right: 0,
     bottom: 0,
-    width: Size.iconTiny,
-    height: Size.iconTiny,
-    borderRadius: Radius.full,
-    backgroundColor: colors.success,
-    borderWidth: Size.borderActive,
-    borderColor: colors.background,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: Colors.success,
+    borderWidth: 2,
+    borderColor: Colors.background,
   },
   skeletonWrap: { flex: 1, padding: Spacing.lg, gap: Spacing.md },
-  skeleton: { height: Size.touch, borderRadius: Radius.lg, backgroundColor: colors.border, opacity: 0.55 },
+  skeleton: { height: 44, borderRadius: 16, backgroundColor: Colors.border, opacity: 0.55 },
   skeletonMine: { alignSelf: 'flex-end', width: '58%' },
   skeletonTheirs: { alignSelf: 'flex-start', width: '64%' },
-  row: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.sm, marginVertical: Spacing.xxs },
+  row: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginVertical: 2 },
   rowMine: { justifyContent: 'flex-end' },
   rowTheirs: { justifyContent: 'flex-start' },
   separator: {
@@ -359,29 +357,29 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     gap: Spacing.sm,
     marginVertical: Spacing.md,
   },
-  sepLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
-  sepText: { ...Typography.caption, color: colors.muted },
+  sepLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: Colors.border },
+  sepText: { ...Typography.caption, color: Colors.muted },
   typingBar: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xs,
   },
-  typingText: { ...Typography.caption, color: colors.muted },
+  typingText: { ...Typography.caption, color: Colors.muted },
   loadingOlder: {
     ...Typography.caption,
-    color: colors.primaryText,
+    color: Colors.muted,
     textAlign: 'center',
     marginBottom: Spacing.sm,
   },
   newPill: {
     position: 'absolute',
     alignSelf: 'center',
-    bottom: Spacing.md,
-    backgroundColor: colors.primary,
+    bottom: 12,
+    backgroundColor: Colors.primary,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
+    borderRadius: 999,
   },
-  newPillText: { ...Typography.caption, color: colors.white, fontWeight: '600' },
+  newPillText: { ...Typography.caption, color: Colors.white, fontWeight: '600' },
 });

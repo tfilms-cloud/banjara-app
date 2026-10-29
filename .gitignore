@@ -40,10 +40,6 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
-.eslintcache
-lint-before.json
-lint-baseline.json
-step-check.log
 
 # generated native folders
 /ios

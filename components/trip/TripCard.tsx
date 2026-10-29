@@ -1,4 +1,3 @@
-import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { ArrowRight, CheckCircle2, Star } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -6,9 +5,9 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Button } from '@/components/ui/Button';
-import { useThemeColors, type ColorTokens } from '@/constants/colors';
-import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
-import { CustomerType, Fonts, TypeSize } from '@/constants/typography';
+import { Colors, useThemeColors } from '@/constants/colors';
+import { Radius, Shadows, Spacing } from '@/constants/spacing';
+import { Fonts } from '@/constants/typography';
 import type { TripWithDetails, VehicleType } from '@/types/trip';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDuration, formatTime } from '@/utils/formatTime';
@@ -38,9 +37,9 @@ function vehicleLine(trip: TripWithDetails) {
 
 function VehicleGlyph({ type, color }: { type: VehicleType; color: string }) {
   if (type === 'car' || type === 'private') {
-    return <Ionicons name="car" size={Size.iconSmall} color={color} />;
+    return <Ionicons name="car" size={14} color={color} />;
   }
-  return <Ionicons name="bus" size={Size.iconSmall} color={color} />;
+  return <Ionicons name="bus" size={14} color={color} />;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -62,7 +61,6 @@ export const TripCard = memo(function TripCard({ trip, onPress, compact }: TripC
   }, [logoUri]);
 
   const colors = useThemeColors();
-  const styles = useThemedStyles(createStyles);
   const showLogo = Boolean(logoUri) && !logoFailed;
   const stops = [...(trip.stops ?? [])].sort((a, b) => a.order - b.order).slice(0, 3);
   const hasRating = typeof trip.rating === 'number' && !Number.isNaN(trip.rating);
@@ -73,14 +71,14 @@ export const TripCard = memo(function TripCard({ trip, onPress, compact }: TripC
     seats <= 0
       ? colors.inputBg
       : seats <= 3
-        ? colors.coralSoft
+        ? colors.softDanger
         : colors.softGreen;
 
   const seatColor =
     seats <= 0
       ? colors.mutedLight
       : seats <= 3
-        ? colors.coralText
+        ? colors.danger
         : colors.action;
 
   const seatLabel =
@@ -134,17 +132,17 @@ export const TripCard = memo(function TripCard({ trip, onPress, compact }: TripC
 
           <View style={styles.agencyCopy}>
             <View style={styles.nameRow}>
-              <Text style={[styles.agency, { color: colors.dark }]} numberOfLines={2}>
+              <Text style={[styles.agency, { color: colors.dark }]} numberOfLines={1}>
                 {trip.agency.name}
               </Text>
               {trip.agency.verified ? (
-                <CheckCircle2 size={Size.iconDetail} color={colors.action} strokeWidth={2.4} />
+                <CheckCircle2 size={15} color={colors.action} strokeWidth={2.4} />
               ) : null}
             </View>
             <View style={styles.ratingRow}>
               {hasRating ? (
                 <View style={styles.ratingChip}>
-                  <Star size={Size.iconXs} color={colors.warning} fill={colors.warning} strokeWidth={0} />
+                  <Star size={11} color={colors.warning} fill={colors.warning} strokeWidth={0} />
                   <Text style={[styles.rating, { color: colors.dark }]}>
                     {trip.rating.toFixed(1)}
                   </Text>
@@ -208,10 +206,10 @@ export const TripCard = memo(function TripCard({ trip, onPress, compact }: TripC
         </View>
 
         <View style={styles.footer}>
-          <View style={{ flex: 1, minWidth: 0 }}>
+          <View>
             <Text style={[styles.fromLabel, { color: colors.mutedLight }]}>FROM</Text>
             <View style={styles.priceRow}>
-              <Text style={[styles.price, { color: colors.action }]}>
+              <Text style={[styles.price, { color: colors.dark }]}>
                 {formatCurrency(trip.price, trip.currency)}
               </Text>
               <Text style={[styles.perSeat, { color: colors.mutedLight }]}> / seat</Text>
@@ -222,7 +220,7 @@ export const TripCard = memo(function TripCard({ trip, onPress, compact }: TripC
             onPress={onPress}
             compact
             fullWidth={false}
-            icon={<ArrowRight size={Size.iconSmall} color={colors.white} strokeWidth={2.4} />}
+            icon={<ArrowRight size={14} color={colors.white} strokeWidth={2.4} />}
             iconPosition="right"
             style={styles.bookBtn}
           />
@@ -232,19 +230,19 @@ export const TripCard = memo(function TripCard({ trip, onPress, compact }: TripC
   );
 });
 
-const createStyles = (colors: ColorTokens) => StyleSheet.create({
+const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
+    backgroundColor: Colors.card,
     borderRadius: Radius.xl,
     padding: Spacing.lg,
-    borderWidth: Size.border,
-    borderColor: colors.border,
+    borderWidth: 1,
+    borderColor: Colors.border,
     marginBottom: Spacing.md,
     gap: Spacing.md,
     ...Shadows.card,
   },
   compact: {
-    width: Size.compactCard,
+    width: 320,
     marginRight: Spacing.md,
     marginBottom: 0,
   },
@@ -253,12 +251,12 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: Size.touch,
-    height: Size.touch,
+    width: 44,
+    height: 44,
     borderRadius: Radius.md,
-    backgroundColor: colors.border,
+    backgroundColor: Colors.border,
     marginRight: Spacing.md,
-    borderWidth: Size.border,
+    borderWidth: 1,
   },
   logoFallback: {
     alignItems: 'center',
@@ -266,58 +264,59 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   logoInitials: {
     fontFamily: Fonts.bodyBold,
-    fontSize: TypeSize.body,
+    fontSize: 14,
   },
   agencyCopy: { flex: 1, minWidth: 0, marginRight: Spacing.sm },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.micro,
+    gap: 6,
   },
   agency: {
-    ...CustomerType.card,
+    fontFamily: Fonts.bodySemiBold,
+    fontSize: 15,
     flexShrink: 1,
   },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: Spacing.xs,
-    gap: Spacing.micro,
+    marginTop: 4,
+    gap: 6,
     flexWrap: 'wrap',
   },
   ratingChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.tight,
+    gap: 3,
   },
   rating: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.caption,
+    fontSize: 12,
   },
   seatBadge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xxs,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
     borderRadius: Radius.full,
   },
   seatText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.micro,
+    fontSize: 11,
   },
   journeyPill: {
-    minHeight: Size.badge,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    minHeight: 26,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
   journeyPillText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: TypeSize.micro,
+    fontSize: 11,
   },
   routeBox: {
     borderRadius: Radius.lg,
-    borderWidth: Size.border,
+    borderWidth: 1,
     padding: Spacing.md,
     gap: Spacing.xs,
   },
@@ -325,33 +324,33 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  timeCol: { flex: 1, minWidth: 0 },
+  timeCol: { width: 84 },
   timeEnd: { alignItems: 'flex-end' },
   time: {
     fontFamily: Fonts.display,
-    fontSize: TypeSize.subtitle,
+    fontSize: 18,
     letterSpacing: -0.2,
   },
   city: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: TypeSize.caption,
-    marginTop: Spacing.xxs,
+    fontSize: 12,
+    marginTop: 2,
   },
   mid: {
     flex: 1,
     alignItems: 'center',
-    paddingHorizontal: Spacing.xs,
+    paddingHorizontal: 4,
   },
   durationChip: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xxs,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
     borderRadius: Radius.full,
-    borderWidth: Size.border,
-    marginBottom: Spacing.xs,
+    borderWidth: 1,
+    marginBottom: 4,
   },
   duration: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: TypeSize.overline,
+    fontSize: 10,
     letterSpacing: 0.1,
   },
   line: {
@@ -361,67 +360,68 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   dash: {
     flex: 1,
-    height: Size.borderStrong,
-    marginHorizontal: Spacing.tight,
-    borderRadius: Radius.full,
+    height: 1.5,
+    marginHorizontal: 3,
+    borderRadius: 1,
   },
   dot: {
-    width: Size.photoDot,
-    height: Size.photoDot,
-    borderRadius: Radius.full,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
   },
   vehicleCapsule: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.tight,
+    gap: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
     borderRadius: Radius.full,
-    borderWidth: Size.border,
+    borderWidth: 1,
     ...Shadows.soft,
   },
   vehicle: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: TypeSize.micro,
-    maxWidth: Size.thumbnail,
+    fontSize: 11,
+    maxWidth: 68,
   },
   stopsRow: {
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingTop: Spacing.xs,
-    marginTop: Spacing.xxs,
+    marginTop: 2,
   },
   stops: {
     fontFamily: Fonts.body,
-    fontSize: TypeSize.micro,
+    fontSize: 11,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: Spacing.sm,
-    paddingTop: Spacing.xxs,
+    paddingTop: 2,
   },
   fromLabel: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: TypeSize.overline,
+    fontSize: 10,
     letterSpacing: 0.4,
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    flexWrap: 'wrap',
-    marginTop: Spacing.hairline,
+    marginTop: 1,
   },
   price: {
-    ...CustomerType.hero,
+    fontFamily: Fonts.display,
+    fontSize: 20,
+    letterSpacing: -0.3,
   },
   perSeat: {
     fontFamily: Fonts.body,
-    fontSize: TypeSize.caption,
+    fontSize: 12,
   },
   bookBtn: {
     borderRadius: Radius.full,
-    paddingHorizontal: Spacing.lg,
-    minHeight: Size.compactControl,
+    paddingHorizontal: 16,
+    minHeight: 40,
   },
 });
