@@ -59,6 +59,7 @@ export function PlaceAutocompleteSelect({
   const [error, setError] = useState<string | null>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [mapOpen, setMapOpen] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState<PlaceSearchResult | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const suggestionRows = useMemo(
@@ -126,6 +127,7 @@ export function PlaceAutocompleteSelect({
   };
 
   const pickName = (name: string, place?: PlaceSearchResult) => {
+    setSelectedPlace(place ?? null);
     onChange(name, place);
     close();
   };
@@ -142,24 +144,27 @@ export function PlaceAutocompleteSelect({
   return (
     <View style={styles.wrapper}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
-      <Pressable
-        style={[styles.field, !label && styles.fieldFlush]}
-        onPress={() => setOpen(true)}
-        accessibilityRole="button"
-      >
-        <Ionicons name={leftIcon} size={18} color={label ? Colors.muted : Colors.primary} />
-        {label ? (
-          <Text style={[styles.value, !value && styles.placeholder]} numberOfLines={1}>
-            {value || placeholder}
-          </Text>
-        ) : (
-          <View style={styles.valueWrap}>
-            <Text style={styles.fieldCaption}>Destination</Text>
+      <View style={[styles.field, !label && styles.fieldFlush]}>
+        <Pressable
+          style={styles.fieldMain}
+          onPress={() => setOpen(true)}
+          accessibilityRole="button"
+        >
+          <Ionicons name={leftIcon} size={18} color={label ? Colors.muted : Colors.primary} />
+          {label ? (
             <Text style={[styles.value, !value && styles.placeholder]} numberOfLines={1}>
               {value || placeholder}
             </Text>
-          </View>
-        )}
+          ) : (
+            <View style={styles.valueWrap}>
+              <Text style={styles.fieldCaption}>Destination</Text>
+              <Text style={[styles.value, !value && styles.placeholder]} numberOfLines={1}>
+                {value || placeholder}
+              </Text>
+            </View>
+          )}
+          <Ionicons name="chevron-down" size={18} color={Colors.muted} />
+        </Pressable>
         <Pressable
           onPress={() => setMapOpen(true)}
           hitSlop={8}
@@ -169,8 +174,7 @@ export function PlaceAutocompleteSelect({
         >
           <Ionicons name="map-outline" size={18} color={Colors.action} />
         </Pressable>
-        <Ionicons name="chevron-down" size={18} color={Colors.muted} />
-      </Pressable>
+      </View>
       {hint ? <Text style={styles.hint}>{hint}</Text> : null}
 
       <Modal visible={open} animationType="slide" transparent onRequestClose={close}>
@@ -282,7 +286,9 @@ export function PlaceAutocompleteSelect({
         visible={mapOpen}
         onClose={() => setMapOpen(false)}
         title={label || 'Pin location'}
+        initial={selectedPlace && selectedPlace.name === value ? { ...selectedPlace, placeName: selectedPlace.name } : undefined}
         onConfirm={(picked) => {
+          setSelectedPlace(toPlaceSearchResult(picked));
           onChange(formatPickedPlace(picked), toPlaceSearchResult(picked));
           setMapOpen(false);
         }}
@@ -308,6 +314,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
+  },
+  fieldMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    minHeight: 52,
   },
   fieldFlush: {
     borderWidth: 0,

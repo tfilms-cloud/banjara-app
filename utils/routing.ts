@@ -1,8 +1,6 @@
 import type { Href } from 'expo-router';
 import type { User } from '@/types/user';
 
-const PROVIDER_ONBOARDING_HREF = '/(provider)/register/services' as Href;
-
 /** Provider account exists, but they have not submitted a service profile yet. */
 export function needsProviderOnboarding(user: User | null | undefined): boolean {
   return user?.role === 'provider' && !user.providerId;
@@ -13,12 +11,12 @@ export function getHomeHref(user: User | null | undefined): Href {
   if (!user) return '/(auth)/login';
   if (user.role === 'provider') {
     if (needsProviderOnboarding(user)) {
-      return PROVIDER_ONBOARDING_HREF;
+      return '/(provider)/resume' as Href;
     }
     if (user.providerStatus === 'rejected' || user.providerStatus === 'suspended') {
       return '/(provider)/status' as Href;
     }
-    return '/(provider)/(tabs)' as Href;
+    return '/(provider)/resume' as Href;
   }
   if (user.role === 'admin') {
     return '/(customer)/(tabs)';

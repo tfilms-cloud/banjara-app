@@ -1,15 +1,17 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ScreenHeader } from '@/components/navigation/ScreenHeader';
 import { NotificationCard } from '@/components/profile/NotificationCard';
 import { EmptyState, LoadingState } from '@/components/ui/EmptyState';
-import { Colors } from '@/constants/colors';
+import { useThemeColors } from '@/constants/colors';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
+import { useAuthStore } from '@/store/authStore';
 import { useUserStore } from '@/store/userStore';
 import type { AppNotification } from '@/types/booking';
-import { pushPath } from '@/utils/navigation';
+import { openFromNotificationData } from '@/utils/notificationRouting';
 
 type Category = 'all' | 'bookings' | 'messages' | 'offers';
 
@@ -18,28 +20,25 @@ function matchCategory(type: AppNotification['type'], category: Category) {
   if (category === 'bookings') {
     return (
       type === 'booking_confirmed' ||
+      type === 'booking_pending' ||
+      type === 'booking_request' ||
+      type === 'booking_reminder' ||
       type === 'trip_reminder' ||
       type === 'pickup_reminder' ||
       type === 'booking_cancelled' ||
-      type === 'payment_received'
+      type === 'payment_received' ||
+      type === 'payment_failed' ||
+      type === 'payment_expired'
     );
   }
   if (category === 'offers') return type === 'new_offer';
-  if (category === 'messages') return false;
+  if (category === 'messages') return type === 'new_message';
   return true;
 }
 
-function openNotification(item: AppNotification) {
-  if (item.bookingId) {
-    pushPath(`/(customer)/booking-details/${item.bookingId}`);
-    return;
-  }
-  if (item.type === 'new_offer') {
-    router.push('/(customer)/(tabs)/search');
-  }
-}
-
 export default function NotificationsScreen() {
+  const colors = useThemeColors();
+  const role = useAuthStore((s) => s.user?.role);
   const { notifications, loadNotifications, markRead, markAllRead, isLoading } = useUserStore();
   const [category, setCategory] = useState<Category>('all');
 
@@ -52,14 +51,27 @@ export default function NotificationsScreen() {
     [notifications, category]
   );
 
+  const unread = notifications.filter((n) => !n.read).length;
+
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <ScreenHeader
         title="Notifications"
         right={
-          <Pressable onPress={() => void markAllRead()} hitSlop={8}>
-            <Text style={styles.link}>Mark all read</Text>
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              onPress={() => router.push('/(customer)/notification-settings' as never)}
+              hitSlop={8}
+              accessibilityLabel="Notification settings"
+            >
+              <Ionicons name="options-outline" size={22} color={colors.primary} />
+            </Pressable>
+            {unread > 0 ? (
+              <Pressable onPress={() => void markAllRead()} hitSlop={8}>
+                <Text style={[styles.link, { color: colors.action }]}>Mark all read</Text>
+              </Pressable>
+            ) : null}
+          </View>
         }
       />
 
@@ -71,17 +83,31 @@ export default function NotificationsScreen() {
             { key: 'messages', label: 'Messages' },
             { key: 'offers', label: 'Offers' },
           ] as const
-        ).map((item) => (
-          <Pressable
-            key={item.key}
-            style={[styles.chip, category === item.key && styles.chipActive]}
-            onPress={() => setCategory(item.key)}
-          >
-            <Text style={[styles.chipText, category === item.key && styles.chipTextActive]}>
-              {item.label}
-            </Text>
-          </Pressable>
-        ))}
+        ).map((item) => {
+          const active = category === item.key;
+          return (
+            <Pressable
+              key={item.key}
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: active ? colors.action : colors.card,
+                  borderColor: active ? colors.action : colors.border,
+                },
+              ]}
+              onPress={() => setCategory(item.key)}
+            >
+              <Text
+                style={[
+                  styles.chipText,
+                  { color: active ? colors.white : colors.muted },
+                ]}
+              >
+                {item.label}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
 
       {isLoading && notifications.length === 0 ? (
@@ -94,7 +120,8 @@ export default function NotificationsScreen() {
           ListEmptyComponent={
             <EmptyState
               title="You're all caught up"
-              message="New trip updates and offers will show here."
+              message="Booking updates, messages, and offers will show here."
+              icon="notifications-outline"
             />
           }
           renderItem={({ item }) => (
@@ -102,7 +129,16 @@ export default function NotificationsScreen() {
               notification={item}
               onPress={() => {
                 void markRead(item.id);
-                openNotification(item);
+                openFromNotificationData(
+                  {
+                    type: item.type,
+                    bookingId: item.bookingId,
+                    conversationId: item.conversationId,
+                    offerId: item.offerId,
+                    otherUserId: item.otherUserId,
+                  },
+                  role
+                );
               }}
             />
           )}
@@ -113,11 +149,15 @@ export default function NotificationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1 },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
   link: {
     fontFamily: Fonts.bodySemiBold,
     fontSize: 13,
-    color: Colors.action,
   },
   chips: {
     flexDirection: 'row',
@@ -130,21 +170,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: 8,
     borderRadius: Radius.md,
-    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  chipActive: {
-    backgroundColor: Colors.action,
-    borderColor: Colors.action,
   },
   chipText: {
     fontFamily: Fonts.bodyMedium,
     fontSize: 13,
-    color: Colors.muted,
-  },
-  chipTextActive: {
-    color: Colors.white,
   },
   list: {
     paddingHorizontal: Spacing.screen,

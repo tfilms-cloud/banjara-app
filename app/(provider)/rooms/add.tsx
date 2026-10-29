@@ -26,6 +26,7 @@ export default function AddRoomScreen() {
   const rooms = useProviderStore((s) => s.rooms);
   const refreshDashboard = useProviderStore((s) => s.refreshDashboard);
   const existing = useMemo(() => rooms.find((room) => room.id === roomId), [rooms, roomId]);
+  const [removingImage, setRemovingImage] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>(existing?.images ?? []);
@@ -40,6 +41,8 @@ export default function AddRoomScreen() {
     amenities: existing?.amenities?.join(', ') ?? 'WiFi, Breakfast',
     breakfastIncluded: existing?.breakfastIncluded ?? true,
     freeCancellation: existing?.freeCancellation ?? true,
+    discountPercent: String(existing?.discountPercent ?? ''),
+    offerNote: existing?.offerNote ?? '',
   });
 
   useEffect(() => {
@@ -59,6 +62,8 @@ export default function AddRoomScreen() {
       amenities: existing.amenities.join(', '),
       breakfastIncluded: existing.breakfastIncluded,
       freeCancellation: existing.freeCancellation,
+      discountPercent: String(existing.discountPercent ?? ''),
+      offerNote: existing.offerNote ?? '',
     });
     if (existing.images.length) setImageUrls(existing.images);
   }, [existing]);
@@ -79,6 +84,7 @@ export default function AddRoomScreen() {
   };
 
   const onSave = async () => {
+    if (removingImage || loading || uploadingImages) return;
     if (!provider) return;
     if (!form.name) {
       Alert.alert('Missing name', 'Enter a room name.');
@@ -104,6 +110,9 @@ export default function AddRoomScreen() {
         freeCancellation: form.freeCancellation,
         images: imageUrls,
         available: true,
+        availableCount: Number(form.quantity) || 1,
+        discountPercent: Number(form.discountPercent) || 0,
+        offerNote: form.offerNote.trim() || undefined,
       };
       if (isEditing) {
         await providerService.updateRoom(roomId, payload);
@@ -143,6 +152,18 @@ export default function AddRoomScreen() {
         <Input label="Room size (m²)" keyboardType="number-pad" value={form.sizeSqm} onChangeText={(v) => setForm({ ...form, sizeSqm: v })} />
         <Input label="Price per night" keyboardType="number-pad" value={form.pricePerNight} onChangeText={(v) => setForm({ ...form, pricePerNight: v })} />
         <Input label="Number of rooms" keyboardType="number-pad" value={form.quantity} onChangeText={(v) => setForm({ ...form, quantity: v })} />
+        <Input
+          label="Discount %"
+          keyboardType="number-pad"
+          value={form.discountPercent}
+          onChangeText={(v) => setForm({ ...form, discountPercent: v.replace(/[^0-9]/g, '') })}
+        />
+        <Input
+          label="Offer / promo"
+          value={form.offerNote}
+          onChangeText={(v) => setForm({ ...form, offerNote: v })}
+          placeholder="e.g. Free breakfast for 2 nights"
+        />
         <Input label="Amenities" value={form.amenities} onChangeText={(v) => setForm({ ...form, amenities: v })} />
         <View style={styles.toggle}>
           <Text style={styles.toggleLabel}>Breakfast included</Text>
@@ -153,6 +174,8 @@ export default function AddRoomScreen() {
           <Switch value={form.freeCancellation} onValueChange={(freeCancellation) => setForm({ ...form, freeCancellation })} />
         </View>
         <ImagePickerField
+          disabled={loading || uploadingImages || removingImage}
+          onRemovingChange={setRemovingImage}
           label="Room photos"
           urls={imageUrls}
           uploading={uploadingImages}
@@ -162,6 +185,7 @@ export default function AddRoomScreen() {
         />
         <Button
           title={isEditing ? 'Save changes' : 'Save Room'}
+          disabled={removingImage}
           loading={loading || uploadingImages}
           onPress={() => void onSave()}
         />

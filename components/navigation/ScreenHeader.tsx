@@ -4,6 +4,7 @@ import { router, useNavigation } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BrandMark } from '@/components/brand/BrandMark';
 import { useThemeColors } from '@/constants/colors';
 import { Spacing } from '@/constants/spacing';
 import { Brand, Fonts } from '@/constants/typography';
@@ -96,7 +97,10 @@ export function ScreenHeader({
 
         <View style={styles.center}>
           {showBrand ? (
-            <Text style={[styles.brand, { color: titleColor }]}>{Brand.name}</Text>
+            <View style={styles.brandRow}>
+              <BrandMark size={28} />
+              <Text style={[styles.brand, { color: titleColor }]}>{Brand.name}</Text>
+            </View>
           ) : title ? (
             <>
               <Text style={[styles.title, { color: titleColor }]} numberOfLines={1}>
@@ -167,6 +171,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingHorizontal: Spacing.sm,
+  },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   brand: {
     fontFamily: Fonts.displayBold,

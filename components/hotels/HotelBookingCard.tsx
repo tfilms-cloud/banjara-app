@@ -16,12 +16,15 @@ interface HotelBookingCardProps {
 }
 
 export function HotelBookingCard({ booking, hotel, room, onPress }: HotelBookingCardProps) {
+  const pending = booking.status === 'pending';
   const tone =
     booking.status === 'cancelled'
       ? 'red'
       : booking.status === 'completed'
         ? 'green'
-        : 'blue';
+        : pending
+          ? 'amber'
+          : 'blue';
 
   return (
     <Pressable onPress={onPress} style={styles.card}>
@@ -33,7 +36,7 @@ export function HotelBookingCard({ booking, hotel, room, onPress }: HotelBooking
           <Text style={styles.name} numberOfLines={1}>
             {hotel?.name ?? 'Hotel booking'}
           </Text>
-          <Badge label={booking.status} tone={tone} />
+          <Badge label={pending ? 'Awaiting approval' : booking.status} tone={tone} />
         </View>
         <Text style={styles.meta}>{room?.name ?? 'Room'}</Text>
         <Text style={styles.meta}>
@@ -43,6 +46,9 @@ export function HotelBookingCard({ booking, hotel, room, onPress }: HotelBooking
           {booking.adults + booking.children} guests · {booking.rooms} room
           {booking.rooms > 1 ? 's' : ''}
         </Text>
+        {pending ? (
+          <Text style={styles.pendingHint}>Waiting for the lodging provider to approve.</Text>
+        ) : null}
         <Text style={styles.code}>{booking.bookingCode}</Text>
         <View style={styles.footer}>
           <Text style={styles.price}>
@@ -68,6 +74,12 @@ const styles = StyleSheet.create({
   top: { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.md, alignItems: 'center' },
   name: { ...Typography.h3, color: Colors.primary, flex: 1 },
   meta: { ...Typography.caption, color: Colors.muted },
+  pendingHint: {
+    ...Typography.caption,
+    color: '#B45309',
+    fontWeight: '600',
+    marginTop: 2,
+  },
   code: { ...Typography.small, color: Colors.secondary, fontWeight: '700', marginTop: 4 },
   footer: {
     marginTop: Spacing.sm,

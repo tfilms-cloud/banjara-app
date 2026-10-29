@@ -19,6 +19,7 @@ interface SearchState {
   passengers: number;
   /** Last travel product tab used for search (not hotels) */
   productMode: 'transport' | 'trips';
+  query: string;
   filters: TripFilters;
   sortBy: TripSortBy;
   recentSearches: RecentSearch[];
@@ -28,6 +29,7 @@ interface SearchState {
   setReturnDate: (date: string) => void;
   setPassengers: (count: number) => void;
   setProductMode: (mode: 'transport' | 'trips') => void;
+  setQuery: (query: string) => void;
   swapLocations: () => void;
   setFilters: (filters: TripFilters) => void;
   setSortBy: (sortBy: TripSortBy) => void;
@@ -58,6 +60,7 @@ export const useSearchStore = create<SearchState>()(
       returnDate: defaultReturn(),
       passengers: 1,
       productMode: 'transport',
+      query: '',
       filters: {},
       sortBy: 'departure',
       recentSearches: [],
@@ -82,6 +85,7 @@ export const useSearchStore = create<SearchState>()(
           filters: { ...get().filters, journeyType },
         });
       },
+      setQuery: (query) => set({ query }),
       swapLocations: () => {
         const { from, to } = get();
         set({ from: to, to: from });
@@ -122,7 +126,7 @@ export const useSearchStore = create<SearchState>()(
         });
       },
       getSearchParams: () => {
-        const { from, to, date, passengers, returnDate, productMode } = get();
+        const { from, to, date, passengers, returnDate, productMode, query } = get();
         return {
           from,
           to,
@@ -130,6 +134,7 @@ export const useSearchStore = create<SearchState>()(
           passengers,
           returnDate,
           journeyType: journeyFilterForMode(productMode),
+          query: query.trim() || undefined,
         };
       },
       resetFilters: () => {

@@ -1,15 +1,19 @@
-import { MapPin, Star } from 'lucide-react-native';
+import { ArrowRight, MapPin, Star } from 'lucide-react-native';
 import { Image } from 'expo-image';
+import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { FavoriteButton } from '@/components/hotels/FavoriteButton';
 import { Button } from '@/components/ui/Button';
 import { Colors, useThemeColors } from '@/constants/colors';
-import { Radius, Spacing } from '@/constants/spacing';
+import { Radius, Shadows, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 import type { Hotel } from '@/types/hotel';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { calculateNights } from '@/utils/hotelPricing';
 import { normalizeMediaUrl } from '@/utils/mediaUrl';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface HotelCardProps {
   hotel: Hotel;
@@ -23,13 +27,48 @@ function hotelTypeLabel(type: Hotel['hotelType']) {
   return type.replace('_', ' ');
 }
 
-export function HotelCard({ hotel, checkIn, checkOut, onPress, compact }: HotelCardProps) {
+function formatHotelLocation(area: string, city: string) {
+  const cleanArea = area?.trim() || '';
+  const cleanCity = city?.trim() || '';
+  if (!cleanArea) return cleanCity;
+  if (!cleanCity) return cleanArea;
+  if (cleanArea.toLowerCase().includes(cleanCity.toLowerCase())) {
+    return cleanArea;
+  }
+  return `${cleanArea}, ${cleanCity}`;
+}
+
+export const HotelCard = memo(function HotelCard({
+  hotel,
+  checkIn,
+  checkOut,
+  onPress,
+  compact,
+}: HotelCardProps) {
   const nights = checkIn && checkOut ? calculateNights(checkIn, checkOut) : 1;
   const image = normalizeMediaUrl(hotel.images[0]) ?? hotel.images[0];
   const colors = useThemeColors();
+  const scale = useSharedValue(1);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const locationLabel = formatHotelLocation(hotel.location.area, hotel.location.city);
 
   return (
-    <Pressable onPress={onPress} accessibilityRole="button">
+    <AnimatedPressable
+      onPress={onPress}
+      onPressIn={() => {
+        scale.value = withSpring(0.985, { damping: 16, stiffness: 280 });
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, { damping: 16, stiffness: 280 });
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={`${hotel.name}, ${locationLabel}, from ${formatCurrency(hotel.priceFrom)} per night`}
+      style={animStyle}
+    >
       <View
         style={[
           styles.card,
@@ -38,47 +77,67 @@ export function HotelCard({ hotel, checkIn, checkOut, onPress, compact }: HotelC
         ]}
       >
         <View style={[styles.imageWrap, compact && styles.imageWrapCompact]}>
-          <Image source={{ uri: image }} style={styles.image} contentFit="cover" />
-          <View style={styles.fav}>
-            <FavoriteButton hotelId={hotel.id} />
+          <Image source={{ uri: image }} style={styles.image} contentFit="cover" transition={250} />
+
+          <View style={styles.topRow}>
+            <View style={[styles.typeBadge, { backgroundColor: 'rgba(8,17,31,0.65)' }]}>
+              <Text style={styles.typeBadgeText}>{hotelTypeLabel(hotel.hotelType)}</Text>
+            </View>
+            <View style={styles.favWrap}>
+              <FavoriteButton hotelId={hotel.id} />
+            </View>
           </View>
+
           <View style={[styles.ratingBadge, { backgroundColor: 'rgba(8,17,31,0.72)' }]}>
             <Star size={11} color={colors.warning} fill={colors.warning} strokeWidth={0} />
             <Text style={styles.ratingBadgeText}>
-              {hotel.rating} ({hotel.reviewCount})
+              {hotel.rating} {hotel.reviewCount > 0 ? `(${hotel.reviewCount})` : ''}
             </Text>
           </View>
         </View>
 
         <View style={[styles.body, compact && styles.bodyCompact]}>
-          <Text style={[styles.type, { color: colors.primary }]}>{hotelTypeLabel(hotel.hotelType)}</Text>
           <Text style={[styles.name, { color: colors.dark }]} numberOfLines={1}>
             {hotel.name}
           </Text>
+
           <View style={styles.locRow}>
-            <MapPin size={13} color={colors.primary} strokeWidth={2} />
+            <MapPin size={13} color={colors.primary} strokeWidth={2.2} />
             <Text style={[styles.location, { color: colors.muted }]} numberOfLines={1}>
-              {hotel.location.area}, {hotel.location.city}
+              {locationLabel}
             </Text>
           </View>
+
           <View style={styles.footer}>
             <View>
-              <Text style={[styles.from, { color: colors.mutedLight }]}>From</Text>
-              <Text style={[styles.price, { color: colors.dark }]}>
-                {formatCurrency(hotel.priceFrom)}
-                <Text style={[styles.night, { color: colors.muted }]}> / night</Text>
-              </Text>
+              <Text style={[styles.from, { color: colors.mutedLight }]}>FROM</Text>
+              <View style={styles.priceRow}>
+                <Text style={[styles.price, { color: colors.dark }]}>
+                  {formatCurrency(hotel.priceFrom)}
+                </Text>
+                <Text style={[styles.night, { color: colors.mutedLight }]}> / night</Text>
+              </View>
               {nights > 1 ? (
-                <Text style={[styles.total, { color: colors.muted }]}>{nights} nights</Text>
+                <Text style={[styles.total, { color: colors.muted }]}>
+                  {formatCurrency(hotel.priceFrom * nights)} total · {nights} nights
+                </Text>
               ) : null}
             </View>
-            <Button title="Book stay" onPress={onPress} compact fullWidth={false} style={styles.bookBtn} />
+            <Button
+              title="Book stay"
+              onPress={onPress}
+              compact
+              fullWidth={false}
+              icon={<ArrowRight size={14} color={colors.white} strokeWidth={2.4} />}
+              iconPosition="right"
+              style={styles.bookBtn}
+            />
           </View>
         </View>
       </View>
-    </Pressable>
+    </AnimatedPressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {
@@ -88,9 +147,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     marginBottom: Spacing.md,
+    ...Shadows.card,
   },
   compact: {
-    width: 268,
+    width: 272,
     marginRight: Spacing.md,
     marginBottom: 0,
   },
@@ -98,12 +158,39 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 16 / 10,
     backgroundColor: Colors.border,
+    position: 'relative',
   },
   imageWrapCompact: {
     aspectRatio: 16 / 11,
   },
   image: { width: '100%', height: '100%' },
-  fav: { position: 'absolute', top: 10, right: 10 },
+  topRow: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    right: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  typeBadge: {
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+  },
+  typeBadgeText: {
+    fontFamily: Fonts.bodySemiBold,
+    fontSize: 10,
+    textTransform: 'uppercase',
+    color: '#FFFFFF',
+    letterSpacing: 0.4,
+  },
+  favWrap: {
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
   ratingBadge: {
     position: 'absolute',
     left: 12,
@@ -114,6 +201,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 5,
     borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.16)',
   },
   ratingBadgeText: {
     fontFamily: Fonts.bodySemiBold,
@@ -122,15 +211,10 @@ const styles = StyleSheet.create({
   },
   body: { padding: Spacing.lg },
   bodyCompact: { padding: Spacing.md },
-  type: {
-    fontFamily: Fonts.bodySemiBold,
-    fontSize: 11,
-    textTransform: 'capitalize',
-    marginBottom: 4,
-  },
   name: {
-    fontFamily: Fonts.bodyMedium,
-    fontSize: 15,
+    fontFamily: Fonts.display,
+    fontSize: 17,
+    letterSpacing: -0.2,
   },
   locRow: {
     flexDirection: 'row',
@@ -139,7 +223,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   location: {
-    fontFamily: Fonts.body,
+    fontFamily: Fonts.bodyMedium,
     fontSize: 12,
     flex: 1,
   },
@@ -151,12 +235,19 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   from: {
-    fontFamily: Fonts.body,
-    fontSize: 11,
+    fontFamily: Fonts.bodyMedium,
+    fontSize: 10,
+    letterSpacing: 0.4,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginTop: 1,
   },
   price: {
-    fontFamily: Fonts.bodySemiBold,
-    fontSize: 16,
+    fontFamily: Fonts.display,
+    fontSize: 18,
+    letterSpacing: -0.3,
   },
   night: {
     fontFamily: Fonts.body,
@@ -169,7 +260,7 @@ const styles = StyleSheet.create({
   },
   bookBtn: {
     borderRadius: Radius.full,
-    paddingHorizontal: 14,
-    minHeight: 36,
+    paddingHorizontal: 16,
+    minHeight: 38,
   },
 });

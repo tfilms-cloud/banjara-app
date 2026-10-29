@@ -1,5 +1,5 @@
-import { useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SeatMap } from '@/components/seat/SeatMap';
@@ -29,6 +29,8 @@ export default function SeatSelectionScreen() {
   const selectedPickup = useBookingStore((state) => state.selectedPickup);
   const selectedSeats = useBookingStore((state) => state.selectedSeats);
   const toggleSeat = useBookingStore((state) => state.toggleSeat);
+  const pruneUnavailableSeats = useBookingStore((state) => state.pruneUnavailableSeats);
+  const lastBooking = useBookingStore((state) => state.lastBooking);
   const priceBreakdown = useBookingStore((state) => state.priceBreakdown);
   const [layout, setLayout] = useState<SeatLayout | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,6 +50,19 @@ export default function SeatSelectionScreen() {
         if (bustCache) tripService.invalidateTripCache(id);
         const data = await tripService.getVehicleSeats(id);
         setLayout(data);
+
+        // Drop local picks taken by others. Keep seats held by our own pending booking.
+        if (data) {
+          const ownHold = new Set(lastBooking?.seats ?? []);
+          const unavailable = data.seats
+            .filter(
+              (seat) =>
+                (seat.status === 'occupied' || seat.status === 'reserved') &&
+                !ownHold.has(seat.label)
+            )
+            .map((seat) => seat.label);
+          if (unavailable.length) pruneUnavailableSeats(unavailable);
+        }
       } catch (err) {
         setLayout(null);
         setError(getApiErrorMessage(err));
@@ -55,25 +70,44 @@ export default function SeatSelectionScreen() {
         setLoading(false);
       }
     },
-    [id]
+    [id, lastBooking?.seats, pruneUnavailableSeats]
   );
 
-  useEffect(() => {
-    void loadSeats();
-  }, [loadSeats]);
+  // Fresh seat map whenever this screen is focused (e.g. back from payment).
+  // Do NOT auto-cancel lastBooking here — that was wiping real pending bookings
+  // (and notifying the customer/provider) whenever the user revisited seats.
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      void (async () => {
+        if (active) await loadSeats(true);
+      })();
+      return () => {
+        active = false;
+      };
+    }, [loadSeats])
+  );
 
   const onToggle = (seat: Seat) => {
+    if (seat.status === 'occupied' || seat.status === 'reserved') return;
     toggleSeat(seat.label, selectedTrip?.price ?? seat.price);
   };
 
-  const availableCount = useMemo(
-    () => layout?.seats.filter((seat) => seat.status === 'available').length ?? 0,
-    [layout]
-  );
+  const freeSeatCount = useMemo(() => {
+    if (!layout) return 0;
+    const ownHold = new Set(lastBooking?.seats ?? []);
+    return layout.seats.filter(
+      (seat) =>
+        seat.status === 'available' ||
+        selectedSeats.includes(seat.label) ||
+        ownHold.has(seat.label)
+    ).length;
+  }, [layout, lastBooking?.seats, selectedSeats]);
+
   const tripUnavailable = ['cancelled', 'completed', 'departed'].includes(
     String(selectedTrip?.status ?? '').toLowerCase()
   );
-  const soldOut = Boolean(layout && availableCount === 0);
+  const soldOut = Boolean(layout && freeSeatCount === 0);
   const canContinue =
     selectedSeats.length > 0 &&
     Boolean(selectedTrip) &&

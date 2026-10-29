@@ -1,0 +1,2276 @@
+diff --git a/constants/spacing.ts b/constants/spacing.ts
+--- a/constants/spacing.ts
++++ b/constants/spacing.ts
+@@ -26,6 +26,13 @@ export const Radius = {
+ } as const;
+ 
+ export const Shadows = {
++  premium: {
++    shadowColor: '#08111F',
++    shadowOpacity: 0.055,
++    shadowRadius: 12,
++    shadowOffset: { width: 0, height: 4 },
++    elevation: 1,
++  },
+   soft: {
+     shadowColor: '#000000',
+     shadowOpacity: 0.18,
+
+diff --git a/components/agency/ContactCard.tsx b/components/agency/ContactCard.tsx
+--- a/components/agency/ContactCard.tsx
++++ b/components/agency/ContactCard.tsx
+@@ -8,6 +8,7 @@ import {
+   View,
+ } from 'react-native';
+ import { useThemeColors } from '@/constants/colors';
++import { Radius, Shadows, Spacing } from '@/constants/spacing';
+ import { Fonts } from '@/constants/typography';
+ import type { Agency } from '@/types/trip';
+ import type { Provider } from '@/types/provider';
+@@ -44,16 +45,19 @@ function ContactMethod({
+       accessibilityRole="link"
+       accessibilityLabel={`${action}: ${value}`}
+       activeOpacity={0.7}
+-      style={[styles.method, { borderColor: colors.border }]}
++      style={[
++        styles.method,
++        {
++          borderColor: colors.border,
++          backgroundColor: colors.surfaceSecondary,
++        },
++      ]}
+     >
+       <View style={[styles.icon, { backgroundColor: colors.surfaceSecondary }]}>
+         <Ionicons name={icon} size={19} color={colors.primary} />
+       </View>
+-      <View style={styles.flex}>
++      <View style={styles.methodCopy}>
+         <Text style={[styles.label, { color: colors.muted }]}>{label}</Text>
+-        <Text selectable style={[styles.value, { color: colors.dark }]}>
+-          {value}
+-        </Text>
+         <Text style={[styles.actionText, { color: colors.primary }]}>
+           {action} <Ionicons name="arrow-forward" size={12} />
+         </Text>
+@@ -93,9 +97,7 @@ export function ContactCard({
+     return null;
+   return (
+     <View style={styles.section}>
+-      <Text style={[styles.title, { color: colors.dark }]}>
+-        Contact & location
+-      </Text>
++      <Text style={[styles.title, { color: colors.dark }]}>Get in touch</Text>
+       <Text style={[styles.description, { color: colors.muted }]}>
+         Ask about your journey or find the provider’s business location.
+       </Text>
+@@ -160,25 +162,26 @@ export function ContactCard({
+             </Text>
+           </View>
+         ) : null}
+-        {phone ? (
+-          <ContactMethod
+-            icon="call-outline"
+-            label="Business phone"
+-            value={phone}
+-            action="Call provider"
+-            url={'tel:' + phone.replace(/[^\d+]/g, '')}
+-          />
+-        ) : null}
+-        {email ? (
+-          <ContactMethod
+-            icon="mail-outline"
+-            label="Email address"
+-            value={email}
+-            action="Write an email"
+-            url={'mailto:' + encodeURIComponent(email)}
+-          />
+-        ) : null}
+-        {website ? (
++        <View style={[styles.methods, { borderColor: colors.border }]}>
++          {phone ? (
++            <ContactMethod
++              icon="call-outline"
++              label="Phone"
++              value={phone}
++              action="Call provider"
++              url={'tel:' + phone.replace(/[^\d+]/g, '')}
++            />
++          ) : null}
++          {email ? (
++            <ContactMethod
++              icon="mail-outline"
++              label="Email"
++              value={email}
++              action="Write an email"
++              url={'mailto:' + encodeURIComponent(email)}
++            />
++          ) : null}
++          {website ? (
+           <ContactMethod
+             icon="globe-outline"
+             label="Website"
+@@ -187,23 +190,56 @@ export function ContactCard({
+             url={website}
+           />
+         ) : null}
++        </View>
++        {phone || email || website ? (
++          <View style={styles.contactDetails}>
++            {phone ? (
++              <Text selectable style={[styles.value, { color: colors.dark }]}>
++                {phone}
++              </Text>
++            ) : null}
++            {email ? (
++              <Text selectable style={[styles.value, { color: colors.muted }]}>
++                {email}
++              </Text>
++            ) : null}
++            {website ? (
++              <Text selectable style={[styles.value, { color: colors.muted }]}>
++                {website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
++              </Text>
++            ) : null}
++          </View>
++        ) : null}
+       </View>
+     </View>
+   );
+ }
+ 
+ const styles = StyleSheet.create({
+-  section: { marginTop: 24, gap: 8 },
+-  title: { fontFamily: Fonts.displayBold, fontSize: 23, lineHeight: 30 },
++  section: { marginTop: Spacing.xl, gap: Spacing.sm },
++  title: {
++    fontFamily: Fonts.display,
++    fontSize: 24,
++    lineHeight: 32,
++    letterSpacing: -0.4,
++  },
+   description: {
+     fontFamily: Fonts.body,
+     fontSize: 13,
+-    lineHeight: 21,
+-    marginBottom: 5,
++    lineHeight: 22,
++    marginBottom: Spacing.xs,
++  },
++  card: {
++    borderWidth: StyleSheet.hairlineWidth,
++    borderRadius: Radius.xl,
++    ...Shadows.premium,
++  },
++  location: { padding: Spacing.xl, gap: Spacing.md },
++  locationHeading: {
++    flexDirection: 'row',
++    alignItems: 'center',
++    gap: Spacing.md,
+   },
+-  card: { borderWidth: 1, borderRadius: 22, overflow: 'hidden' },
+-  location: { padding: 18, gap: 12 },
+-  locationHeading: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+   locationTitle: {
+     fontFamily: Fonts.display,
+     fontSize: 18,
+@@ -213,13 +249,18 @@ const styles = StyleSheet.create({
+   icon: {
+     width: 40,
+     height: 40,
+-    borderRadius: 13,
++    borderRadius: Radius.md,
+     alignItems: 'center',
+     justifyContent: 'center',
+     flexShrink: 0,
+   },
+   flex: { flex: 1, minWidth: 0 },
+-  label: { fontFamily: Fonts.bodyMedium, fontSize: 11, lineHeight: 18 },
++  label: {
++    fontFamily: Fonts.bodyMedium,
++    fontSize: 11,
++    lineHeight: 18,
++    letterSpacing: 0.3,
++  },
+   address: {
+     fontFamily: Fonts.body,
+     fontSize: 14,
+@@ -229,32 +270,49 @@ const styles = StyleSheet.create({
+   value: {
+     fontFamily: Fonts.bodySemiBold,
+     fontSize: 14,
+-    lineHeight: 23,
++    lineHeight: 24,
+     writingDirection: 'auto',
+     flexShrink: 1,
+   },
+   mapButton: {
+-    minHeight: 44,
+-    borderRadius: 12,
+-    padding: 12,
++    minHeight: 48,
++    borderRadius: Radius.md,
++    padding: Spacing.md,
+     flexDirection: 'row',
+     alignItems: 'center',
+-    gap: 8,
++    gap: Spacing.sm,
+   },
+   mapText: { fontFamily: Fonts.bodySemiBold, fontSize: 12, flex: 1 },
+   hint: { fontFamily: Fonts.body, fontSize: 11, lineHeight: 18 },
+   method: {
+-    flexDirection: 'row',
+-    gap: 12,
+-    padding: 18,
+-    borderTopWidth: StyleSheet.hairlineWidth,
+-    alignItems: 'flex-start',
+-    minHeight: 90,
++    flexGrow: 1,
++    flexBasis: '28%',
++    minWidth: 80,
++    gap: Spacing.sm,
++    padding: Spacing.sm,
++    borderWidth: StyleSheet.hairlineWidth,
++    borderRadius: Radius.md,
++    alignItems: 'center',
++    minHeight: 110,
+   },
+   actionText: {
+     fontFamily: Fonts.bodySemiBold,
+-    fontSize: 11,
+-    lineHeight: 18,
+-    marginTop: 5,
++    fontSize: 12,
++    lineHeight: 20,
++    marginTop: Spacing.xs,
++    textAlign: 'center',
++  },
++  methods: {
++    flexDirection: 'row',
++    flexWrap: 'wrap',
++    gap: Spacing.sm,
++    padding: Spacing.lg,
++    borderTopWidth: StyleSheet.hairlineWidth,
++  },
++  contactDetails: {
++    paddingHorizontal: Spacing.xl,
++    paddingBottom: Spacing.xl,
++    gap: Spacing.xs,
+   },
++  methodCopy: { alignItems: 'center', width: '100%' },
+ });
+
+diff --git a/components/agency/DriverCard.tsx b/components/agency/DriverCard.tsx
+--- a/components/agency/DriverCard.tsx
++++ b/components/agency/DriverCard.tsx
+@@ -4,6 +4,7 @@ import { useState } from 'react';
+ import { StyleSheet, Text, View } from 'react-native';
+ import { Avatar } from '@/components/ui/Avatar';
+ import { useThemeColors } from '@/constants/colors';
++import { Radius, Shadows, Spacing } from '@/constants/spacing';
+ import { Fonts } from '@/constants/typography';
+ import type { ProviderTransportSetup } from '@/types/provider';
+ import { normalizeMediaUrl } from '@/utils/mediaUrl';
+@@ -25,9 +26,7 @@ export function DriverCard({ driver }: { driver?: PublicDriver }) {
+ 
+   return (
+     <View style={styles.section}>
+-      <Text style={[styles.heading, { color: colors.dark }]}>
+-        Driver details
+-      </Text>
++      <Text style={[styles.heading, { color: colors.dark }]}>Your driver</Text>
+       <View
+         style={[
+           styles.card,
+@@ -73,15 +72,22 @@ export function DriverCard({ driver }: { driver?: PublicDriver }) {
+ }
+ 
+ const styles = StyleSheet.create({
+-  section: { marginTop: 24 },
+-  heading: { fontFamily: Fonts.displayBold, fontSize: 22, marginBottom: 12 },
++  section: { marginTop: Spacing.xl },
++  heading: {
++    fontFamily: Fonts.display,
++    fontSize: 24,
++    lineHeight: 32,
++    letterSpacing: -0.4,
++    marginBottom: Spacing.md,
++  },
+   card: {
+-    borderWidth: 1,
+-    borderRadius: 22,
+-    padding: 18,
++    borderWidth: StyleSheet.hairlineWidth,
++    borderRadius: Radius.xl,
++    padding: Spacing.xl,
+     flexDirection: 'row',
+     alignItems: 'center',
+-    gap: 16,
++    gap: Spacing.lg,
++    ...Shadows.premium,
+   },
+   portrait: {
+     width: 88,
+@@ -91,14 +97,25 @@ const styles = StyleSheet.create({
+     flexShrink: 0,
+   },
+   photo: { width: 88, height: 88 },
+-  details: { flex: 1, minWidth: 0, gap: 6 },
+-  role: { fontFamily: Fonts.bodySemiBold, fontSize: 12 },
+-  name: { fontFamily: Fonts.display, fontSize: 21, lineHeight: 28 },
++  details: { flex: 1, minWidth: 0, gap: Spacing.xs },
++  role: {
++    fontFamily: Fonts.bodySemiBold,
++    fontSize: 11,
++    lineHeight: 18,
++    letterSpacing: 0.8,
++    textTransform: 'uppercase',
++  },
++  name: {
++    fontFamily: Fonts.display,
++    fontSize: 23,
++    lineHeight: 32,
++    writingDirection: 'auto',
++  },
+   experience: {
+     flexDirection: 'row',
+     alignItems: 'flex-start',
+-    gap: 6,
+-    marginTop: 3,
++    gap: Spacing.xs,
++    marginTop: Spacing.sm,
+   },
+-  caption: { fontFamily: Fonts.body, fontSize: 13, lineHeight: 20, flex: 1 },
++  caption: { fontFamily: Fonts.body, fontSize: 12, lineHeight: 22, flex: 1 },
+ });
+
+diff --git a/components/agency/FleetPricingCard.tsx b/components/agency/FleetPricingCard.tsx
+--- a/components/agency/FleetPricingCard.tsx
++++ b/components/agency/FleetPricingCard.tsx
+@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
+ import { useState } from 'react';
+ import { TouchableOpacity, StyleSheet, Text, View } from 'react-native';
+ import { useThemeColors } from '@/constants/colors';
++import { Radius, Shadows, Spacing } from '@/constants/spacing';
+ import { Fonts } from '@/constants/typography';
+ import type { ProviderTransportSetup } from '@/types/provider';
+ import type { TripWithDetails } from '@/types/trip';
+@@ -46,7 +47,7 @@ export function FleetPricingCard({
+   return (
+     <View style={styles.section}>
+       <Text style={[styles.title, { color: colors.dark }]}>
+-        Fleet & pricing
++        Our fleet & pricing
+       </Text>
+       <Text style={[styles.description, { color: colors.muted }]}>
+         Get to know the vehicles and how your fare is charged.
+@@ -199,7 +200,7 @@ export function FleetPricingCard({
+                   Provider’s listed pricing
+                 </Text>
+                 <View style={styles.priceLine}>
+-                  <Text style={[styles.price, { color: colors.dark }]}>
++                  <Text style={[styles.price, { color: colors.action }]}>
+                     {method === 'negotiable'
+                       ? 'Price on request'
+                       : hasRate
+@@ -229,7 +230,7 @@ export function FleetPricingCard({
+                 {fares.map((fare) => (
+                   <Text
+                     key={fare.currency + fare.unit}
+-                    style={[styles.tripFare, { color: colors.dark }]}
++                    style={[styles.tripFare, { color: colors.action }]}
+                   >
+                     From {formatCurrency(fare.amount, fare.currency)}{' '}
+                     <Text style={styles.fareUnit}>/ {fare.unit}</Text>
+@@ -278,16 +279,25 @@ export function FleetPricingCard({
+ }
+ 
+ const styles = StyleSheet.create({
+-  section: { marginTop: 24, gap: 8 },
+-  title: { fontFamily: Fonts.displayBold, fontSize: 23, lineHeight: 30 },
++  section: { marginTop: Spacing.xl, gap: Spacing.sm },
++  title: {
++    fontFamily: Fonts.display,
++    fontSize: 24,
++    lineHeight: 32,
++    letterSpacing: -0.4,
++  },
+   description: {
+     fontFamily: Fonts.body,
+     fontSize: 13,
+-    lineHeight: 21,
+-    marginBottom: 5,
++    lineHeight: 22,
++    marginBottom: Spacing.xs,
++  },
++  card: {
++    borderWidth: StyleSheet.hairlineWidth,
++    borderRadius: Radius.xl,
++    ...Shadows.premium,
+   },
+-  card: { borderWidth: 1, borderRadius: 22, overflow: 'hidden' },
+-  vehicleSection: { padding: 18, gap: 16 },
++  vehicleSection: { padding: Spacing.xl, gap: Spacing.lg },
+   hero: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+   heroIcon: {
+     width: 56,
+@@ -296,7 +306,12 @@ const styles = StyleSheet.create({
+     alignItems: 'center',
+     justifyContent: 'center',
+   },
+-  vehiclePhoto: { width: 84, height: 74, borderRadius: 14, flexShrink: 0 },
++  vehiclePhoto: {
++    width: 96,
++    height: 88,
++    borderRadius: Radius.lg,
++    flexShrink: 0,
++  },
+   flex: { flex: 1, minWidth: 0 },
+   eyebrow: {
+     fontFamily: Fonts.bodySemiBold,
+@@ -305,15 +320,15 @@ const styles = StyleSheet.create({
+     lineHeight: 16,
+   },
+   vehicleTitle: { fontFamily: Fonts.display, fontSize: 22, lineHeight: 30 },
+-  caption: { fontFamily: Fonts.body, fontSize: 11, lineHeight: 18 },
+-  facts: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
++  caption: { fontFamily: Fonts.body, fontSize: 12, lineHeight: 20 },
++  facts: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+   fact: {
+     flexBasis: '45%',
+     flexGrow: 1,
+     minWidth: 110,
+-    borderRadius: 12,
+-    padding: 12,
+-    gap: 5,
++    borderRadius: Radius.md,
++    padding: Spacing.md,
++    gap: Spacing.xs,
+   },
+   factLabel: { fontFamily: Fonts.bodyMedium, fontSize: 11, lineHeight: 18 },
+   factValue: {
+@@ -345,7 +360,13 @@ const styles = StyleSheet.create({
+     lineHeight: 20,
+     marginBottom: 2,
+   },
+-  pricing: { borderTopWidth: 1, padding: 18, gap: 14 },
++  pricing: {
++    borderTopWidth: StyleSheet.hairlineWidth,
++    borderBottomLeftRadius: Radius.xl,
++    borderBottomRightRadius: Radius.xl,
++    padding: Spacing.xl,
++    gap: Spacing.lg,
++  },
+   pricingHeading: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+   pricingTitle: { fontFamily: Fonts.bodyBold, fontSize: 14, lineHeight: 22 },
+   rate: { gap: 5 },
+@@ -355,7 +376,12 @@ const styles = StyleSheet.create({
+     flexWrap: 'wrap',
+     columnGap: 7,
+   },
+-  price: { fontFamily: Fonts.displayBold, fontSize: 26, lineHeight: 34 },
++  price: {
++    fontFamily: Fonts.displayBold,
++    fontSize: 30,
++    lineHeight: 40,
++    letterSpacing: -0.5,
++  },
+   priceUnit: { fontFamily: Fonts.bodyMedium, fontSize: 13 },
+   explanation: { fontFamily: Fonts.body, fontSize: 12, lineHeight: 20 },
+   tripFares: {
+@@ -363,18 +389,18 @@ const styles = StyleSheet.create({
+     paddingTop: 12,
+     gap: 5,
+   },
+-  tripFare: { fontFamily: Fonts.bodySemiBold, fontSize: 15, lineHeight: 24 },
++  tripFare: { fontFamily: Fonts.bodySemiBold, fontSize: 16, lineHeight: 26 },
+   fareUnit: { fontFamily: Fonts.body, fontSize: 12 },
+   note: { flexDirection: 'row', alignItems: 'flex-start', gap: 7 },
+   noteText: { flex: 1, fontFamily: Fonts.body, fontSize: 11, lineHeight: 18 },
+   cta: {
+-    minHeight: 46,
++    minHeight: 48,
+     flexDirection: 'row',
+     alignItems: 'center',
+     justifyContent: 'center',
+-    gap: 8,
+-    borderRadius: 12,
+-    padding: 12,
++    gap: Spacing.sm,
++    borderRadius: Radius.md,
++    padding: Spacing.md,
+   },
+   ctaText: { fontFamily: Fonts.bodySemiBold, fontSize: 13, flexShrink: 1 },
+ });
+
+diff --git a/components/agency/ServiceArea.tsx b/components/agency/ServiceArea.tsx
+--- a/components/agency/ServiceArea.tsx
++++ b/components/agency/ServiceArea.tsx
+@@ -2,7 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
+ import { useMemo, useState } from 'react';
+ import { Pressable, StyleSheet, Text, View } from 'react-native';
+ import { useThemeColors } from '@/constants/colors';
++import { Radius, Shadows, Spacing } from '@/constants/spacing';
+ import { Fonts } from '@/constants/typography';
++import { InAppWebMap } from '@/components/map/InAppWebMap';
++import { isValidCoord } from '@/components/map/mapHelpers';
++import type { TripWithDetails } from '@/types/trip';
+ import {
+   groupServiceArea,
+   uniqueAreaNames,
+@@ -231,11 +235,13 @@ export function ServiceArea({
+   routes,
+   pickups,
+   dropoffs,
++  previewTrip,
+ }: {
+   cities: string[];
+   routes: string[];
+   pickups: string[];
+   dropoffs: string[];
++  previewTrip?: TripWithDetails;
+ }) {
+   const colors = useThemeColors();
+   const groups = useMemo(
+@@ -243,45 +249,79 @@ export function ServiceArea({
+     [routes, pickups, dropoffs],
+   );
+   const servedCities = useMemo(() => uniqueAreaNames(cities), [cities]);
++  const markers = useMemo(() => {
++    if (
++      !isValidCoord(previewTrip?.originCoordinates) ||
++      !isValidCoord(previewTrip?.destinationCoordinates)
++    )
++      return [];
++    return [
++      {
++        id: 'origin',
++        title: previewTrip.from,
++        coordinate: previewTrip.originCoordinates,
++      },
++      {
++        id: 'destination',
++        title: previewTrip.to,
++        coordinate: previewTrip.destinationCoordinates,
++      },
++    ];
++  }, [previewTrip]);
+   const routeCount = groups.filter((route) => route.from && route.to).length;
+   if (!servedCities.length && !groups.length) return null;
+   return (
+     <View style={styles.section}>
+       <View style={styles.intro}>
+         <Text style={[styles.title, { color: colors.dark }]}>
+-          Pickup & drop-off
++          Service areas
+         </Text>
+         <Text style={[styles.description, { color: colors.muted }]}>
+           Find your route and see where you can board and get off.
+         </Text>
+       </View>
+-      {servedCities.length ? (
+-        <View style={styles.coverage}>
+-          <Text style={[styles.coverageTitle, { color: colors.muted }]}>
++      <View style={styles.coverageRow}>
++        {servedCities.length ? (
++          <View style={styles.coverage}>
++            <Text style={[styles.coverageTitle, { color: colors.muted }]}>
+             Operating in
+           </Text>
+-          <View style={styles.chips}>
+-            {servedCities.map((city) => (
+-              <View
+-                key={city}
+-                style={[
+-                  styles.chip,
+-                  { backgroundColor: colors.card, borderColor: colors.border },
+-                ]}
+-              >
+-                <Ionicons
+-                  name="location-outline"
+-                  size={14}
+-                  color={colors.primary}
+-                />
+-                <Text style={[styles.chipLabel, { color: colors.dark }]}>
++            <View style={styles.chips}>
++              {servedCities.map((city) => (
++                <View
++                  key={city}
++                  style={[
++                    styles.chip,
++                    {
++                      backgroundColor: colors.card,
++                      borderColor: colors.border,
++                    },
++                  ]}
++                >
++                  <Ionicons name="ellipse" size={6} color={colors.action} />
++                  <Text style={[styles.chipLabel, { color: colors.dark }]}>
+                   {city}
+                 </Text>
+-              </View>
+-            ))}
++                </View>
++              ))}
++            </View>
+           </View>
+-        </View>
+-      ) : null}
++        ) : null}
++        {markers.length === 2 ? (
++          <View style={styles.mapPreview}>
++            <View
++              pointerEvents="none"
++              accessible
++              accessibilityLabel={`Trip endpoints: ${previewTrip?.from} to ${previewTrip?.to}`}
++            >
++              <InAppWebMap markers={markers} height={144} showRoute={false} />
++            </View>
++            <Text style={[styles.mapCaption, { color: colors.muted }]}>
++              Trip endpoints
++            </Text>
++          </View>
++        ) : null}
++      </View>
+       {routeCount ? (
+         <Text style={[styles.listLabel, { color: colors.muted }]}>
+           {routeCount} {routeCount === 1 ? 'route' : 'routes'} listed by this
+@@ -310,34 +350,56 @@ export function ServiceArea({
+ }
+ 
+ const styles = StyleSheet.create({
+-  section: { gap: 14, marginTop: 24 },
++  section: { gap: Spacing.md, marginTop: Spacing.xl },
+   intro: { gap: 6 },
+-  title: { fontFamily: Fonts.displayBold, fontSize: 23, lineHeight: 30 },
+-  description: { fontFamily: Fonts.body, fontSize: 13, lineHeight: 21 },
+-  coverage: { gap: 8, marginVertical: 2 },
++  title: {
++    fontFamily: Fonts.display,
++    fontSize: 24,
++    lineHeight: 32,
++    letterSpacing: -0.4,
++  },
++  description: { fontFamily: Fonts.body, fontSize: 13, lineHeight: 22 },
++  coverage: {
++    flex: 1,
++    minWidth: 0,
++    gap: Spacing.sm,
++    marginVertical: Spacing.xs,
++  },
++  coverageRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
++  mapPreview: { flex: 1, minWidth: 0, gap: Spacing.xs },
++  mapCaption: {
++    fontFamily: Fonts.body,
++    fontSize: 10,
++    lineHeight: 16,
++    textAlign: 'center',
++  },
+   coverageTitle: { fontFamily: Fonts.bodyMedium, fontSize: 12 },
+-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
++  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+   chip: {
+     flexDirection: 'row',
+     alignItems: 'center',
+-    gap: 5,
+-    borderRadius: 10,
+-    borderWidth: 1,
+-    paddingVertical: 7,
+-    paddingHorizontal: 10,
++    gap: Spacing.sm,
++    borderRadius: Radius.md,
++    borderWidth: StyleSheet.hairlineWidth,
++    paddingVertical: Spacing.sm,
++    paddingHorizontal: Spacing.md,
+     maxWidth: '100%',
+   },
+   chipLabel: { fontFamily: Fonts.bodyMedium, fontSize: 12, flexShrink: 1 },
+   listLabel: { fontFamily: Fonts.bodyMedium, fontSize: 12, marginTop: 4 },
+-  card: { borderWidth: 1, borderRadius: 20, overflow: 'hidden' },
++  card: {
++    borderWidth: StyleSheet.hairlineWidth,
++    borderRadius: Radius.xl,
++    ...Shadows.premium,
++  },
+   cardHeading: {
+     flexDirection: 'row',
+     alignItems: 'center',
+     justifyContent: 'space-between',
+     flexWrap: 'wrap',
+-    gap: 8,
+-    paddingHorizontal: 16,
+-    paddingVertical: 12,
++    gap: Spacing.sm,
++    paddingHorizontal: Spacing.xl,
++    paddingVertical: Spacing.md,
+     borderBottomWidth: StyleSheet.hairlineWidth,
+   },
+   routeLabel: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+@@ -347,7 +409,7 @@ const styles = StyleSheet.create({
+     letterSpacing: 0.8,
+   },
+   stopCount: { fontFamily: Fonts.bodySemiBold, fontSize: 11 },
+-  cardBody: { padding: 16 },
++  cardBody: { padding: Spacing.xl },
+   journeyRow: { flexDirection: 'row', gap: 12 },
+   rail: { width: 32, alignItems: 'center' },
+   marker: {
+@@ -374,12 +436,17 @@ const styles = StyleSheet.create({
+   },
+   city: {
+     fontFamily: Fonts.display,
+-    fontSize: 19,
+-    lineHeight: 26,
++    fontSize: 21,
++    lineHeight: 30,
+     writingDirection: 'auto',
+-    marginTop: 2,
++    marginTop: Spacing.xs,
++  },
++  places: {
++    borderRadius: Radius.md,
++    padding: Spacing.md,
++    marginTop: Spacing.sm,
++    gap: Spacing.sm,
+   },
+-  places: { borderRadius: 12, padding: 12, marginTop: 10, gap: 10 },
+   placeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+   stopNumber: {
+     fontFamily: Fonts.bodyMedium,
+@@ -392,7 +459,7 @@ const styles = StyleSheet.create({
+     minWidth: 0,
+     fontFamily: Fonts.bodyMedium,
+     fontSize: 13,
+-    lineHeight: 22,
++    lineHeight: 24,
+     writingDirection: 'auto',
+   },
+   missing: {
+@@ -445,9 +512,9 @@ const styles = StyleSheet.create({
+   note: {
+     flexDirection: 'row',
+     alignItems: 'flex-start',
+-    gap: 10,
+-    padding: 14,
+-    borderRadius: 14,
++    gap: Spacing.sm,
++    padding: Spacing.lg,
++    borderRadius: Radius.lg,
+   },
+   noteTitle: {
+     fontFamily: Fonts.bodySemiBold,
+
+diff --git a/app/(customer)/agency/[id].tsx b/app/(customer)/agency/[id].tsx
+--- a/app/(customer)/agency/[id].tsx
++++ b/app/(customer)/agency/[id].tsx
+@@ -47,7 +47,10 @@ import { formatDate } from '@/utils/formatDate';
+ import { vehicleTypeLabel } from '@/utils/helpers';
+ import { normalizeMediaUrl } from '@/utils/mediaUrl';
+ import { paramId, pushPath, safeBack } from '@/utils/navigation';
+-import { isGuideService, isTourOperatorService } from '@/constants/providerOptions';
++import {
++  isGuideService,
++  isTourOperatorService,
++} from '@/constants/providerOptions';
+ 
+ const SERVICE_LABELS: Record<string, string> = {
+   transport: 'Transport',
+@@ -100,7 +103,10 @@ function agencyFromProvider(provider: Provider): Agency {
+   };
+ }
+ 
+-function collectGallery(provider: Provider | null, trips: TripWithDetails[]): string[] {
++function collectGallery(
++  provider: Provider | null,
++  trips: TripWithDetails[],
++): string[] {
+   const collected: string[] = [];
+   const push = (uri?: string | null) => {
+     const raw = String(uri ?? '').trim();
+@@ -150,7 +156,9 @@ function InfoRow({
+         <Text style={[styles.infoLabel, { color: colors.muted }]}>{label}</Text>
+         <Text style={[styles.infoValue, { color: colors.dark }]}>{value}</Text>
+       </View>
+-      {onPress ? <Ionicons name="chevron-forward" size={16} color={colors.mutedLight} /> : null}
++      {onPress ? (
++        <Ionicons name="chevron-forward" size={16} color={colors.mutedLight} />
++      ) : null}
+     </View>
+   );
+   if (onPress) {
+@@ -169,15 +177,29 @@ function AgencyGallery({ images }: { images: string[] }) {
+   const [active, setActive] = useState<string | null>(null);
+   const [failed, setFailed] = useState<Record<string, boolean>>({});
+   const uris = useMemo(
+-    () => uniqueStrings(images.map((uri) => normalizeMediaUrl(uri) ?? uri).filter(Boolean)),
+-    [images]
++    () =>
++      uniqueStrings(
++        images.map((uri) => normalizeMediaUrl(uri) ?? uri).filter(Boolean),
++      ),
++    [images],
+   );
+ 
+   if (!uris.length) {
+     return (
+-      <View style={[styles.galleryEmpty, { backgroundColor: colors.card, borderColor: colors.border }]}>
++      <View
++        style={[
++          styles.galleryEmpty,
++          { backgroundColor: colors.card, borderColor: colors.border },
++        ]}
++      >
+         <Ionicons name="images-outline" size={28} color={colors.muted} />
+-        <Text style={{ color: colors.muted, fontFamily: Fonts.bodyMedium, fontSize: 13 }}>
++        <Text
++          style={{
++            color: colors.muted,
++            fontFamily: Fonts.bodyMedium,
++            fontSize: 13,
++          }}
++        >
+           No photos uploaded yet
+         </Text>
+       </View>
+@@ -231,7 +253,11 @@ function AgencyGallery({ images }: { images: string[] }) {
+           {active ? (
+             <Image
+               source={{ uri: active }}
+-              style={{ width: width - 32, height: height * 0.7, borderRadius: Radius.lg }}
++              style={{
++                width: width - 32,
++                height: height * 0.7,
++                borderRadius: Radius.lg,
++              }}
+               contentFit="contain"
+             />
+           ) : null}
+@@ -280,7 +306,7 @@ export default function AgencyProfileScreen() {
+ 
+       const nextAgency = publicProvider
+         ? agencyFromProvider(publicProvider)
+-        : list[0]?.agency ?? null;
++        : (list[0]?.agency ?? null);
+ 
+       setTrips(list);
+       setItineraries(packages);
+@@ -303,7 +329,9 @@ export default function AgencyProfileScreen() {
+           .filter(Boolean)
+           .forEach((uri) => collected.push(String(uri)));
+       }
+-      setGalleryImages(withoutDriverPhoto(collected, publicProvider?.transport?.driverPhoto));
++      setGalleryImages(
++        withoutDriverPhoto(collected, publicProvider?.transport?.driverPhoto),
++      );
+     } catch (err) {
+       setError(getApiErrorMessage(err));
+     } finally {
+@@ -329,15 +357,21 @@ export default function AgencyProfileScreen() {
+   const serviceChips = useMemo(() => {
+     if (provider?.services?.length) {
+       return uniqueStrings(
+-        provider.services.map((service) => SERVICE_LABELS[service] ?? vehicleTypeLabel(service))
++        provider.services.map(
++          (service) => SERVICE_LABELS[service] ?? vehicleTypeLabel(service),
++        ),
+       );
+     }
+     if (agency?.services?.length) {
+       return uniqueStrings(
+-        agency.services.map((service) => SERVICE_LABELS[service] ?? vehicleTypeLabel(service))
++        agency.services.map(
++          (service) => SERVICE_LABELS[service] ?? vehicleTypeLabel(service),
++        ),
+       );
+     }
+-    return uniqueStrings(trips.map((trip) => vehicleTypeLabel(trip.vehicleType)));
++    return uniqueStrings(
++      trips.map((trip) => vehicleTypeLabel(trip.vehicleType)),
++    );
+   }, [agency?.services, provider?.services, trips]);
+ 
+   const reviewCount = agency?.reviewCount || reviews.length;
+@@ -359,14 +393,23 @@ export default function AgencyProfileScreen() {
+     !error &&
+     (isGuide || trips.length > 0 || itineraries.length > 0);
+ 
+-  const bannerImages = galleryImages.length ? galleryImages : [];
++  const { width: screenWidth } = useWindowDimensions();
++  const profileWidth = screenWidth - Spacing.screen * 2;
++  const bannerImages = uniqueStrings(
++    [
++      normalizeMediaUrl(transport?.vehicleImageFront) ?? '',
++      ...galleryImages,
++    ].filter(Boolean),
++  );
+ 
+   const fromPackagePrice = useMemo(() => {
+     if (!itineraries.length) return null;
+     return Math.min(...itineraries.map((item) => item.pricePerPerson));
+   }, [itineraries]);
+ 
+-  const operatingCities = (transport?.operatingCities ?? []).filter(isCityLabel);
++  const operatingCities = (transport?.operatingCities ?? []).filter(
++    isCityLabel,
++  );
+   const pickupLocations = transport?.pickupLocations ?? [];
+   const dropoffLocations = transport?.dropoffLocations ?? [];
+ 
+@@ -407,7 +450,10 @@ export default function AgencyProfileScreen() {
+   ]);
+ 
+   const scrollToTrips = () => {
+-    scrollRef.current?.scrollTo({ y: Math.max(0, tripsOffset.current - 8), animated: true });
++    scrollRef.current?.scrollTo({
++      y: Math.max(0, tripsOffset.current - 8),
++      animated: true,
++    });
+   };
+ 
+   const openTrip = (trip: TripWithDetails) => {
+@@ -443,21 +489,6 @@ export default function AgencyProfileScreen() {
+             }
+             showsVerticalScrollIndicator={false}
+           >
+-            {bannerImages.length ? (
+-              <HotelImageGallery images={bannerImages} height={280} />
+-            ) : (
+-              <View style={[styles.bannerFallback, { backgroundColor: colors.primarySoft }]}>
+-                <Ionicons
+-                  name={isGuide ? 'walk-outline' : isTourOperator ? 'compass-outline' : 'bus-outline'}
+-                  size={48}
+-                  color={colors.primary}
+-                />
+-                <Text style={{ color: colors.primary, fontFamily: Fonts.bodySemiBold }}>
+-                  {agency?.name ?? 'Provider'}
+-                </Text>
+-              </View>
+-            )}
+-
+             <View style={styles.content}>
+               <View style={styles.topRow}>
+                 <Avatar uri={agency?.logo} name={agency?.name ?? 'P'} size={64} />
+@@ -465,29 +496,68 @@ export default function AgencyProfileScreen() {
+                   <Text style={[styles.name, { color: colors.dark }]}>
+                     {agency?.name ?? 'Provider'}
+                   </Text>
+-                  {agency && (agency.rating > 0 || reviewCount > 0) ? (
+-                    <Rating value={agency.rating} count={reviewCount || undefined} />
+-                  ) : (
+-                    <Text style={[styles.metaMuted, { color: colors.muted }]}>New on Banjara</Text>
+-                  )}
+                 </View>
+               </View>
+ 
+               <View style={styles.badgeRow}>
+-                {agency?.verified ? <Badge label="Verified" tone="green" /> : null}
++                {agency?.verified ? (
++                  <Badge label="Verified" tone="green" />
++                ) : null}
+                 {serviceChips.slice(0, 3).map((chip) => (
+                   <Badge key={chip} label={chip} tone="blue" />
+                 ))}
+                 {agency?.yearsExperience ? (
+-                  <Badge label={`${agency.yearsExperience}y exp`} tone="amber" />
++                  <Badge
++                    label={`${agency.yearsExperience}y exp`}
++                    tone="amber"
++                  />
+                 ) : null}
+               </View>
+ 
++              <View style={styles.heroFrame}>
++                {bannerImages.length ? (
++                  <HotelImageGallery
++                    images={bannerImages}
++                    height={260}
++                    width={profileWidth}
++                  />
++                ) : (
++                  <View
++                    style={[
++                      styles.bannerFallback,
++                      { backgroundColor: colors.primarySoft },
++                    ]}
++                  >
++                    <Ionicons
++                  name={isGuide ? 'walk-outline' : isTourOperator ? 'compass-outline' : 'bus-outline'}
++                  size={48}
++                  color={colors.primary}
++                />
++                    <Text
++                      style={{
++                        color: colors.primary,
++                        fontFamily: Fonts.bodySemiBold,
++                      }}
++                    >
++                      {agency?.name ?? 'Provider'}
++                    </Text>
++                  </View>
++                )}
++              </View>
++              {agency && (agency.rating > 0 || reviewCount > 0) ? (
++                    <Rating value={agency.rating} count={reviewCount || undefined} />
++                  ) : (
++                    <Text style={[styles.metaMuted, { color: colors.muted }]}>New on Banjara</Text>
++                  )}
++
+               {locationLabel ? (
+                 <View
+                   style={[
+                     styles.locationCard,
+-                    { backgroundColor: colors.card, borderColor: colors.border },
++                    {
++                      backgroundColor: colors.card,
++                      borderColor: colors.border,
++                    },
+                   ]}
+                 >
+                   <Ionicons name="location" size={18} color={colors.secondary} />
+@@ -499,8 +569,18 @@ export default function AgencyProfileScreen() {
+                 <View style={styles.actions}>
+                   {canCall ? (
+                     <Pressable
+-                      style={[styles.actionBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
+-                      onPress={() => Linking.openURL(`tel:${agency.phone.replace(/\s/g, '')}`)}
++                      style={[
++                        styles.actionBtn,
++                        {
++                          borderColor: colors.border,
++                          backgroundColor: colors.card,
++                        },
++                      ]}
++                      onPress={() =>
++                        Linking.openURL(
++                          `tel:${agency.phone.replace(/\s/g, '')}`,
++                        )
++                      }
+                     >
+                       <Ionicons name="call-outline" size={18} color={colors.primary} />
+                       <Text style={[styles.actionLabel, { color: colors.primary }]}>Call</Text>
+@@ -510,9 +590,13 @@ export default function AgencyProfileScreen() {
+                     <Pressable
+                       style={[
+                         styles.actionBtn,
+-                        { borderColor: colors.primarySoft, backgroundColor: colors.primarySoft },
++                        {
++                          borderColor: colors.primarySoft,
++                          backgroundColor: colors.primarySoft,
++                        },
+                       ]}
+-                      onPress={() => pushPath(`/(customer)/messages/${agency.userId}`)}
++                      onPress={() => pushPath(`/(customer)/messages/${agency.userId}`)
++                      }
+                     >
+                       <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.primary} />
+                       <Text style={[styles.actionLabel, { color: colors.primary }]}>Message</Text>
+@@ -525,13 +609,21 @@ export default function AgencyProfileScreen() {
+                 <View
+                   style={[
+                     styles.statsRow,
+-                    { backgroundColor: colors.card, borderColor: colors.border },
++                    {
++                      backgroundColor: colors.card,
++                      borderColor: colors.border,
++                    },
+                   ]}
+                 >
+                   {stats.map((stat, index) => (
+                     <View key={stat.label} style={styles.statCell}>
+                       {index > 0 ? (
+-                        <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
++                        <View
++                          style={[
++                            styles.statDivider,
++                            { backgroundColor: colors.border },
++                          ]}
++                        />
+                       ) : null}
+                       <View style={styles.stat}>
+                         <Text style={[styles.statValue, { color: colors.primary }]}>{stat.value}</Text>
+@@ -542,12 +634,8 @@ export default function AgencyProfileScreen() {
+                 </View>
+               ) : null}
+ 
+-              <Text style={[styles.sectionTitle, { color: colors.dark }]}>Gallery</Text>
+-              <AgencyGallery images={galleryImages} />
+-
+               <DriverCard driver={transport} />
+ 
+-              <ContactCard agency={agency} provider={provider} />
+               <FleetPricingCard transport={transport} trips={trips} onSeeTrips={scrollToTrips} />
+ 
+               {transport?.ownerName && (
+@@ -556,7 +644,10 @@ export default function AgencyProfileScreen() {
+                   <View
+                     style={[
+                       styles.cardBlock,
+-                      { backgroundColor: colors.card, borderColor: colors.border },
++                      {
++                        backgroundColor: colors.card,
++                        borderColor: colors.border,
++                      },
+                     ]}
+                   >
+                     {transport?.ownerName ? (
+@@ -571,8 +662,17 @@ export default function AgencyProfileScreen() {
+                 routes={routes}
+                 pickups={pickupLocations}
+                 dropoffs={dropoffLocations}
++                previewTrip={trips.find(
++                  (trip) =>
++                    trip.originCoordinates && trip.destinationCoordinates,
++                )}
+               />
+ 
++              <ContactCard agency={agency} provider={provider} />
++
++              <Text style={[styles.sectionTitle, { color: colors.dark }]}>Gallery</Text>
++              <AgencyGallery images={galleryImages} />
++
+               <View
+                 onLayout={(event) => {
+                   tripsOffset.current = event.nativeEvent.layout.y;
+@@ -581,16 +681,31 @@ export default function AgencyProfileScreen() {
+                 {isGuide ? (
+                   <>
+                     <View style={styles.sectionHead}>
+-                      <Text style={[styles.sectionTitle, { color: colors.dark, marginTop: 0 }]}>
++                      <Text
++                        style={[
++                          styles.sectionTitle,
++                          { color: colors.dark, marginTop: 0 },
++                        ]}
++                      >
+                         Hire this guide
+                       </Text>
+                     </View>
+-                    <Text style={[styles.listItem, { color: colors.muted, marginBottom: Spacing.md }]}>
++                    <Text
++                      style={[
++                        styles.listItem,
++                        { color: colors.muted, marginBottom: Spacing.md },
++                      ]}
++                    >
+                       Available for hire as a tour guide — not a trip or package operator.
+                     </Text>
+                     {provider?.tour?.specialties?.length ? (
+                       <View style={{ marginBottom: Spacing.md, gap: 4 }}>
+-                        <Text style={[styles.sectionTitle, { color: colors.dark, fontSize: 15 }]}>
++                        <Text
++                          style={[
++                            styles.sectionTitle,
++                            { color: colors.dark, fontSize: 15 },
++                          ]}
++                        >
+                           Specialties
+                         </Text>
+                         {provider.tour.specialties.map((item) => (
+@@ -600,10 +715,15 @@ export default function AgencyProfileScreen() {
+                         ))}
+                       </View>
+                     ) : null}
+-                    {(provider?.tour?.regionalLanguages?.length ||
+-                      provider?.tour?.internationalLanguages?.length) ? (
++                    {provider?.tour?.regionalLanguages?.length ||
++                      provider?.tour?.internationalLanguages?.length ? (
+                       <View style={{ marginBottom: Spacing.md, gap: 4 }}>
+-                        <Text style={[styles.sectionTitle, { color: colors.dark, fontSize: 15 }]}>
++                        <Text
++                          style={[
++                            styles.sectionTitle,
++                            { color: colors.dark, fontSize: 15 },
++                          ]}
++                        >
+                           Languages
+                         </Text>
+                         <Text style={[styles.listItem, { color: colors.muted }]}>
+@@ -622,7 +742,12 @@ export default function AgencyProfileScreen() {
+                     ) : null}
+                     {provider?.tour?.operatingAreas?.length ? (
+                       <View style={{ marginBottom: Spacing.md, gap: 4 }}>
+-                        <Text style={[styles.sectionTitle, { color: colors.dark, fontSize: 15 }]}>
++                        <Text
++                          style={[
++                            styles.sectionTitle,
++                            { color: colors.dark, fontSize: 15 },
++                          ]}
++                        >
+                           Operating areas
+                         </Text>
+                         <Text style={[styles.listItem, { color: colors.muted }]}>
+@@ -630,10 +755,23 @@ export default function AgencyProfileScreen() {
+                         </Text>
+                       </View>
+                     ) : null}
+-                    {(provider?.tour?.dailyHireRate || provider?.tour?.price) ? (
+-                      <Text style={[styles.packagePrice, { color: colors.primary, marginBottom: Spacing.lg }]}>
+-                        {formatCurrency(provider.tour.dailyHireRate || provider.tour.price || 0)}
+-                        <Text style={{ color: colors.muted, fontFamily: Fonts.body, fontSize: 12 }}>
++                    {provider?.tour?.dailyHireRate || provider?.tour?.price ? (
++                      <Text
++                        style={[
++                          styles.packagePrice,
++                          { color: colors.primary, marginBottom: Spacing.lg },
++                        ]}
++                      >
++                        {formatCurrency(
++                          provider.tour.dailyHireRate || provider.tour.price || 0,
++                        )}
++                        <Text
++                          style={{
++                            color: colors.muted,
++                            fontFamily: Fonts.body,
++                            fontSize: 12,
++                          }}
++                        >
+                           {' '}
+                           / day hire
+                         </Text>
+@@ -643,12 +781,14 @@ export default function AgencyProfileScreen() {
+                       <View style={{ gap: Spacing.sm, marginBottom: Spacing.lg }}>
+                         <Button
+                           title="Book this guide"
+-                          onPress={() => pushPath(`/(customer)/guides/book/${agencyId}`)}
++                          onPress={() => pushPath(`/(customer)/guides/book/${agencyId}`)
++                          }
+                         />
+                         <Button
+                           title="View full profile"
+                           variant="outline"
+-                          onPress={() => pushPath(`/(customer)/guides/${agencyId}`)}
++                          onPress={() => pushPath(`/(customer)/guides/${agencyId}`)
++                          }
+                         />
+                       </View>
+                     ) : null}
+@@ -657,14 +797,22 @@ export default function AgencyProfileScreen() {
+                 {isTourOperator ? (
+                   <>
+                     <View style={styles.sectionHead}>
+-                      <Text style={[styles.sectionTitle, { color: colors.dark, marginTop: 0 }]}>
++                      <Text
++                        style={[
++                          styles.sectionTitle,
++                          { color: colors.dark, marginTop: 0 },
++                        ]}
++                      >
+                         Tour packages
+                       </Text>
+                       {fromPackagePrice != null ? (
+                         <Text
+                           style={[
+                             styles.pricePill,
+-                            { backgroundColor: colors.actionSoft, color: colors.action },
++                            {
++                              backgroundColor: colors.actionSoft,
++                              color: colors.action,
++                            },
+                           ]}
+                         >
+                           From {formatCurrency(fromPackagePrice)}
+@@ -678,9 +826,13 @@ export default function AgencyProfileScreen() {
+                             key={pkg.id}
+                             style={[
+                               styles.packageCard,
+-                              { backgroundColor: colors.card, borderColor: colors.border },
++                              {
++                                backgroundColor: colors.card,
++                                borderColor: colors.border,
++                              },
+                             ]}
+-                            onPress={() => pushPath(`/(customer)/tours/${pkg.id}`)}
++                            onPress={() => pushPath(`/(customer)/tours/${pkg.id}`)
++                            }
+                           >
+                             <Image
+                               source={{
+@@ -694,24 +846,53 @@ export default function AgencyProfileScreen() {
+                               contentFit="cover"
+                             />
+                             <View style={styles.packageBody}>
+-                              <Text style={[styles.packageType, { color: colors.primary }]}>
++                              <Text
++                                style={[
++                                  styles.packageType,
++                                  { color: colors.primary },
++                                ]}
++                              >
+                                 {pkg.tourType}
+                                 {pkg.featured ? ' · Featured' : ''}
+                               </Text>
+                               <Text
+-                                style={[styles.packageTitle, { color: colors.dark }]}
++                                style={[
++                                  styles.packageTitle,
++                                  { color: colors.dark },
++                                ]}
+                                 numberOfLines={2}
+                               >
+                                 {pkg.title}
+                               </Text>
+-                              <Text style={[styles.packageMeta, { color: colors.muted }]} numberOfLines={1}>
+-                                {[pkg.destination, `${pkg.durationDays} days`, pkg.difficulty]
++                              <Text
++                                style={[
++                                  styles.packageMeta,
++                                  { color: colors.muted },
++                                ]}
++                                numberOfLines={1}
++                              >
++                                {[
++                                  pkg.destination,
++                                  `${pkg.durationDays} days`,
++                                  pkg.difficulty,
++                                ]
+                                   .filter(Boolean)
+                                   .join(' · ')}
+                               </Text>
+-                              <Text style={[styles.packagePrice, { color: colors.primary }]}>
++                              <Text
++                                style={[
++                                  styles.packagePrice,
++                                  { color: colors.primary },
++                                ]}
++                              >
+                                 {formatCurrency(pkg.pricePerPerson)}
+-                                <Text style={{ color: colors.muted, fontFamily: Fonts.body, fontSize: 12 }}>
++                                <Text
++                                  style={{
++                                    color: colors.muted,
++                                    fontFamily: Fonts.body,
++                                    fontSize: 12,
++                                  }}
++                                >
+                                   {' '}
+                                   / person
+                                 </Text>
+@@ -734,17 +915,29 @@ export default function AgencyProfileScreen() {
+                 {!isGuide && (!isTourOperator || trips.length > 0) ? (
+                   <>
+                     <View style={styles.sectionHead}>
+-                      <Text style={[styles.sectionTitle, { color: colors.dark, marginTop: 0 }]}>
++                      <Text
++                        style={[
++                          styles.sectionTitle,
++                          { color: colors.dark, marginTop: 0 },
++                        ]}
++                      >
+                         Available trips
+                       </Text>
+                       {fromPrice != null ? (
+                         <Text
+                           style={[
+                             styles.pricePill,
+-                            { backgroundColor: colors.actionSoft, color: colors.action },
++                            {
++                              backgroundColor: colors.actionSoft,
++                              color: colors.action,
++                            },
+                           ]}
+                         >
+-                          From {formatCurrency(fromPrice, trips[0]?.currency || 'PKR')}
++                          From{' '}
++                          {formatCurrency(
++                            fromPrice,
++                            trips[0]?.currency || 'PKR',
++                          )}
+                         </Text>
+                       ) : null}
+                     </View>
+@@ -771,7 +964,10 @@ export default function AgencyProfileScreen() {
+                   <View
+                     style={[
+                       styles.cardBlock,
+-                      { backgroundColor: colors.card, borderColor: colors.border },
++                      {
++                        backgroundColor: colors.card,
++                        borderColor: colors.border,
++                      },
+                     ]}
+                   >
+                     <ExpandableText text={aboutText} />
+@@ -792,16 +988,31 @@ export default function AgencyProfileScreen() {
+                           key={route}
+                           style={[
+                             styles.routeRow,
+-                            { backgroundColor: colors.card, borderColor: colors.border },
++                            {
++                              backgroundColor: colors.card,
++                              borderColor: colors.border,
++                            },
+                           ]}
+                         >
+-                          <View style={[styles.routeIcon, { backgroundColor: colors.primarySoft }]}>
++                          <View
++                            style={[
++                              styles.routeIcon,
++                              { backgroundColor: colors.primarySoft },
++                            ]}
++                          >
+                             <Ionicons name="navigate-outline" size={16} color={colors.primary} />
+                           </View>
+                           <View style={{ flex: 1 }}>
+                             <Text style={[styles.routeFrom, { color: colors.dark }]}>{from}</Text>
+                             {to ? (
+-                              <Text style={[styles.routeTo, { color: colors.muted }]}>{to}</Text>
++                              <Text
++                                style={[
++                                  styles.routeTo,
++                                  { color: colors.muted },
++                                ]}
++                              >
++                                {to}
++                              </Text>
+                             ) : null}
+                           </View>
+                           <Ionicons name="chevron-forward" size={16} color={colors.mutedLight} />
+@@ -823,19 +1034,36 @@ export default function AgencyProfileScreen() {
+                         <View style={styles.reviewHead}>
+                           <Avatar uri={review.userAvatar} name={displayName} size={40} />
+                           <View style={{ flex: 1 }}>
+-                            <Text style={[styles.reviewName, { color: colors.dark }]}>
++                            <Text
++                              style={[
++                                styles.reviewName,
++                                { color: colors.dark },
++                              ]}
++                            >
+                               {displayName}
+                             </Text>
+                             {review.date ? (
+-                              <Text style={[styles.reviewDate, { color: colors.muted }]}>
++                              <Text
++                                style={[
++                                  styles.reviewDate,
++                                  { color: colors.muted },
++                                ]}
++                              >
+                                 {formatDate(review.date, false)}
+                               </Text>
+                             ) : null}
+                           </View>
+-                          {review.rating > 0 ? <Rating value={review.rating} /> : null}
++                          {review.rating > 0 ? (
++                            <Rating value={review.rating} />
++                          ) : null}
+                         </View>
+                         {review.comment.trim() ? (
+-                          <Text style={[styles.reviewComment, { color: colors.muted }]}>
++                          <Text
++                            style={[
++                              styles.reviewComment,
++                              { color: colors.muted },
++                            ]}
++                          >
+                             {review.comment}
+                           </Text>
+                         ) : null}
+@@ -870,7 +1098,7 @@ export default function AgencyProfileScreen() {
+                       ? `${itineraries.length} package${itineraries.length === 1 ? '' : 's'} available`
+                       : `${trips.length} trip${trips.length === 1 ? '' : 's'} available`}
+                 </Text>
+-                <Text style={[styles.ctaPrice, { color: colors.dark }]}>
++                <Text style={[styles.ctaPrice, { color: colors.action }]}>
+                   {isGuide
+                     ? provider?.tour?.dailyHireRate || provider?.tour?.price
+                       ? `From ${formatCurrency(provider.tour.dailyHireRate || provider.tour.price || 0)} / day`
+@@ -912,19 +1140,19 @@ const styles = StyleSheet.create({
+     justifyContent: 'center',
+     gap: Spacing.sm,
+   },
+-  content: {
+-    padding: Spacing.screen,
+-    gap: Spacing.md,
+-  },
++  content: { padding: Spacing.screen, gap: Spacing.md },
+   topRow: {
+     flexDirection: 'row',
+     alignItems: 'center',
+     gap: Spacing.md,
++    paddingTop: Spacing.sm,
+   },
+   name: {
+     fontFamily: Fonts.displayBold,
+-    fontSize: 24,
+-    letterSpacing: -0.3,
++    fontSize: 30,
++    lineHeight: 40,
++    letterSpacing: -0.6,
++    writingDirection: 'auto',
+   },
+   metaMuted: {
+     fontFamily: Fonts.body,
+@@ -939,15 +1167,14 @@ const styles = StyleSheet.create({
+     flexDirection: 'row',
+     alignItems: 'flex-start',
+     gap: Spacing.sm,
+-    borderWidth: 1,
+-    borderRadius: Radius.xl,
+-    padding: Spacing.md,
++    paddingVertical: Spacing.xs,
+   },
+   locationText: {
+     flex: 1,
+-    fontFamily: Fonts.bodyMedium,
++    fontFamily: Fonts.body,
+     fontSize: 13,
+-    lineHeight: 19,
++    lineHeight: 24,
++    writingDirection: 'auto',
+   },
+   actions: {
+     flexDirection: 'row',
+@@ -955,13 +1182,13 @@ const styles = StyleSheet.create({
+   },
+   actionBtn: {
+     flex: 1,
+-    minHeight: 46,
+-    borderRadius: Radius.lg,
+-    borderWidth: 1.5,
++    minHeight: 48,
++    borderRadius: Radius.md,
++    borderWidth: StyleSheet.hairlineWidth,
+     flexDirection: 'row',
+     alignItems: 'center',
+     justifyContent: 'center',
+-    gap: 8,
++    gap: Spacing.sm,
+   },
+   actionLabel: {
+     fontFamily: Fonts.bodyBold,
+@@ -970,9 +1197,8 @@ const styles = StyleSheet.create({
+   statsRow: {
+     flexDirection: 'row',
+     borderRadius: Radius.xl,
+-    borderWidth: 1,
+-    overflow: 'hidden',
+-    ...Shadows.soft,
++    borderWidth: StyleSheet.hairlineWidth,
++    ...Shadows.premium,
+   },
+   statCell: {
+     flex: 1,
+@@ -1000,9 +1226,10 @@ const styles = StyleSheet.create({
+   },
+   sectionTitle: {
+     fontFamily: Fonts.display,
+-    fontSize: 20,
+-    letterSpacing: -0.2,
+-    marginTop: Spacing.sm,
++    fontSize: 24,
++    lineHeight: 32,
++    letterSpacing: -0.4,
++    marginTop: Spacing.xl,
+   },
+   sectionHead: {
+     flexDirection: 'row',
+@@ -1021,9 +1248,10 @@ const styles = StyleSheet.create({
+   },
+   cardBlock: {
+     borderRadius: Radius.xl,
+-    borderWidth: 1,
+-    padding: Spacing.lg,
++    borderWidth: StyleSheet.hairlineWidth,
++    padding: Spacing.xl,
+     gap: Spacing.md,
++    ...Shadows.premium,
+   },
+   infoRow: {
+     flexDirection: 'row',
+@@ -1201,20 +1429,23 @@ const styles = StyleSheet.create({
+     flexDirection: 'row',
+     alignItems: 'center',
+     gap: Spacing.md,
+-    borderTopWidth: 1,
++    borderTopWidth: StyleSheet.hairlineWidth,
+     paddingHorizontal: Spacing.screen,
+-    paddingTop: Spacing.md,
+-    ...Shadows.float,
++    paddingTop: Spacing.lg,
++    ...Shadows.premium,
+   },
+   ctaLabel: {
+     fontFamily: Fonts.body,
+     fontSize: 12,
+   },
+-  ctaPrice: {
+-    fontFamily: Fonts.displayBold,
+-    fontSize: 17,
+-  },
++  ctaPrice: { fontFamily: Fonts.displayBold, fontSize: 21, lineHeight: 28 },
+   ctaButton: {
+     minWidth: 120,
+   },
++  heroFrame: {
++    borderRadius: Radius.xl,
++    overflow: 'hidden',
++    backgroundColor: Colors.surfaceSecondary,
++  },
++  identity: { gap: Spacing.md, paddingTop: Spacing.sm },
+ });
+
+diff --git a/app/(provider)/(tabs)/index.tsx b/app/(provider)/(tabs)/index.tsx
+--- a/app/(provider)/(tabs)/index.tsx
++++ b/app/(provider)/(tabs)/index.tsx
+@@ -1,6 +1,13 @@
+ import { Ionicons } from '@expo/vector-icons';
+ import { useCallback, useMemo, useState } from 'react';
+-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
++import {
++  Pressable,
++  RefreshControl,
++  ScrollView,
++  StyleSheet,
++  Text,
++  View,
++} from 'react-native';
+ import { useSafeAreaInsets } from 'react-native-safe-area-context';
+ import { router, useFocusEffect } from 'expo-router';
+ import CreateTripScreen from '@/app/(provider)/transport/trips/create';
+@@ -23,7 +30,7 @@ import {
+   isRestaurantService,
+   isTourOperatorService,
+ } from '@/constants/providerOptions';
+-import { Radius, Spacing } from '@/constants/spacing';
++import { Radius, Shadows, Spacing } from '@/constants/spacing';
+ import { Fonts, Typography } from '@/constants/typography';
+ import { useAuthStore } from '@/store/authStore';
+ import { useProviderStore } from '@/store/providerStore';
+@@ -101,7 +108,7 @@ export default function ProviderDashboardScreen() {
+         }
+       })();
+       return () => { live = false; };
+-    }, [user?.id, user?.providerId, loadProvider, loadProviderByUser, recheck])
++    }, [user?.id, user?.providerId, loadProvider, loadProviderByUser, recheck]),
+   );
+ 
+   const hasOfferedService = useMemo(() => {
+@@ -138,10 +145,10 @@ export default function ProviderDashboardScreen() {
+         .filter(
+           (item) =>
+             item.kind === 'transport' &&
+-            (item.status === 'pending' || item.paymentStatus === 'pending')
++            (item.status === 'pending' || item.paymentStatus === 'pending'),
+         )
+         .slice(0, 6),
+-    [bookings]
++    [bookings],
+   );
+ 
+   const liveTrips = useMemo(() => {
+@@ -169,11 +176,14 @@ export default function ProviderDashboardScreen() {
+           (trip) =>
+             trip.origin === booking.origin &&
+             trip.destination === booking.destination &&
+-            trip.departureDate === booking.date
++            trip.departureDate === booking.date,
+         )?.id;
+       }
+       if (!tripId) continue;
+-      const current = statsMap.get(tripId) ?? { bookingCount: 0, pendingCount: 0 };
++      const current = statsMap.get(tripId) ?? {
++        bookingCount: 0,
++        pendingCount: 0,
++      };
+       current.bookingCount += 1;
+       if (booking.status === 'pending' || booking.paymentStatus === 'pending') {
+         current.pendingCount += 1;
+@@ -184,7 +194,9 @@ export default function ProviderDashboardScreen() {
+   }, [bookings, liveTrips]);
+ 
+   const seatTotals = useMemo(() => {
+-    const openTrips = liveTrips.filter((t) => t.status === 'upcoming' || t.status === 'active');
++    const openTrips = liveTrips.filter(
++      (t) => t.status === 'upcoming' || t.status === 'active',
++    );
+     const list = openTrips.length ? openTrips : liveTrips;
+     const capacity = list.reduce((sum, t) => sum + t.totalSeats, 0);
+     const booked = list.reduce((sum, t) => sum + t.bookedSeats, 0);
+@@ -196,7 +208,14 @@ export default function ProviderDashboardScreen() {
+       bookingCount += row?.bookingCount ?? 0;
+       pendingCount += row?.pendingCount ?? 0;
+     }
+-    return { capacity, booked, available, bookingCount, pendingCount, tripCount: list.length };
++    return {
++      capacity,
++      booked,
++      available,
++      bookingCount,
++      pendingCount,
++      tripCount: list.length,
++    };
+   }, [liveTrips, tripBookingStats]);
+ 
+   const mostVisitedRoutes = useMemo(() => {
+@@ -241,7 +260,11 @@ export default function ProviderDashboardScreen() {
+       <View
+         style={[
+           styles.container,
+-          { paddingTop: insets.top + Spacing.xl, padding: Spacing.lg, gap: Spacing.md },
++          {
++            paddingTop: insets.top + Spacing.xl,
++            padding: Spacing.lg,
++            gap: Spacing.md,
++          },
+         ]}
+       >
+         <Text style={styles.heading}>{error ? 'Could not load your profile' : 'Provider profile missing'}</Text>
+@@ -277,7 +300,11 @@ export default function ProviderDashboardScreen() {
+       <View
+         style={[
+           styles.container,
+-          { paddingTop: insets.top + Spacing.xl, padding: Spacing.lg, gap: Spacing.md },
++          {
++            paddingTop: insets.top + Spacing.xl,
++            padding: Spacing.lg,
++            gap: Spacing.md,
++          },
+         ]}
+       >
+         <Text style={styles.heading}>Add your service</Text>
+@@ -352,7 +379,8 @@ export default function ProviderDashboardScreen() {
+         <View style={styles.header}>
+           <View style={{ flex: 1 }}>
+             <Text style={styles.greeting}>
+-              {greeting()}, {provider?.ownerName?.split(' ')[0] ?? user?.name?.split(' ')[0] ?? 'Provider'}
++              {greeting()},{' '}
++              {provider?.ownerName?.split(' ')[0] ?? user?.name?.split(' ')[0] ?? 'Provider'}
+             </Text>
+             <Text style={styles.business}>{provider?.businessName ?? 'Banjara Provider'}</Text>
+           </View>
+@@ -396,26 +424,32 @@ export default function ProviderDashboardScreen() {
+       <View style={styles.header}>
+         <View style={{ flex: 1 }}>
+           <Text style={styles.greeting}>
+-            {greeting()}, {provider?.ownerName?.split(' ')[0] ?? user?.name?.split(' ')[0] ?? 'Driver'}
++            {greeting()},{' '}
++            {provider?.ownerName?.split(' ')[0] ?? user?.name?.split(' ')[0] ?? 'Driver'}
+           </Text>
+           <Text style={styles.business}>{provider?.businessName ?? 'Transporter'}</Text>
+         </View>
+         <MessagesHeaderActions
+-          messagesHref="/(provider)/messages"
+-          notificationsHref="/(provider)/notifications"
+-        />
++            messagesHref="/(provider)/messages"
++            notificationsHref="/(provider)/notifications"
++          />
+       </View>
+ 
+       {provider?.verificationStatus === 'approved' ? (
+         <Badge label="✓ Verified transporter" tone="green" />
+       ) : (
+-        <Badge label={`${provider?.verificationStatus ?? 'pending'} verification`} tone="amber" />
++        <Badge
++          label={`${provider?.verificationStatus ?? 'pending'} verification`}
++          tone="amber"
++        />
+       )}
+ 
+       <View style={styles.stats}>
+         <ProviderStatCard
+           label="Your trips"
+-          value={String(seatTotals.tripCount || liveTrips.length || stats?.todaysTrips || 0)}
++          value={String(
++            seatTotals.tripCount || liveTrips.length || stats?.todaysTrips || 0,
++          )}
+           tone="blue"
+         />
+         <ProviderStatCard
+@@ -480,7 +514,7 @@ export default function ProviderDashboardScreen() {
+         )}
+       </View>
+ 
+-      {/* 1. Create Trip — main section */}
++      {/* Trip capacity analytics */}
+       <View style={styles.sectionCard}>
+         <View style={styles.sectionHead}>
+           <Text style={styles.sectionTitle}>Create trip</Text>
+@@ -513,15 +547,15 @@ export default function ProviderDashboardScreen() {
+         )}
+       </View>
+ 
+-      {/* 2. Earnings + BANJARA fee */}
++      {/* Trip capacity analytics */}
+       <ProviderEarningsFeeCard
+-        totalRevenue={earnings?.totalRevenue ?? 0}
+-        platformFees={earnings?.platformFees ?? 0}
+-        platformFeePercent={earnings?.platformFeePercent}
+-        netEarnings={earnings?.netEarnings}
+-      />
++          totalRevenue={earnings?.totalRevenue ?? 0}
++          platformFees={earnings?.platformFees ?? 0}
++          platformFeePercent={earnings?.platformFeePercent}
++          netEarnings={earnings?.netEarnings}
++        />
+ 
+-      {/* 3. Pending booking requests */}
++      {/* Trip capacity analytics */}
+       <View style={styles.sectionCard}>
+         <Text style={styles.sectionTitle}>Pending booking requests</Text>
+         <Text style={styles.sectionSub}>
+@@ -557,7 +591,7 @@ export default function ProviderDashboardScreen() {
+         )}
+       </View>
+ 
+-      {/* 4. Reviews */}
++      {/* Trip capacity analytics */}
+       <View style={styles.sectionCard}>
+         <View style={styles.sectionHead}>
+           <Text style={styles.sectionTitle}>Customer reviews</Text>
+@@ -584,7 +618,7 @@ export default function ProviderDashboardScreen() {
+         )}
+       </View>
+ 
+-      {/* 5. Most visited routes (replaces quick actions) */}
++      {/* Trip capacity analytics */}
+       <View style={styles.sectionCard}>
+         <Text style={styles.sectionTitle}>Most visited routes</Text>
+         <Text style={styles.sectionSub}>Corridors customers use most often on BANJARA</Text>
+@@ -614,34 +648,58 @@ export default function ProviderDashboardScreen() {
+ 
+ const styles = StyleSheet.create({
+   container: { flex: 1, backgroundColor: Colors.background },
+-  header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+-  greeting: { ...Typography.h2, color: Colors.dark },
+-  business: { ...Typography.caption, color: Colors.muted },
++  header: {
++    flexDirection: 'row',
++    alignItems: 'center',
++    gap: Spacing.md,
++    paddingVertical: Spacing.sm,
++  },
++  greeting: {
++    fontFamily: Fonts.display,
++    fontSize: 26,
++    lineHeight: 36,
++    letterSpacing: -0.4,
++    color: Colors.dark,
++    writingDirection: 'auto',
++  },
++  business: {
++    fontFamily: Fonts.body,
++    fontSize: 13,
++    lineHeight: 22,
++    color: Colors.muted,
++    marginTop: Spacing.xs,
++  },
+   heading: { ...Typography.h2, color: Colors.dark },
+   sub: { ...Typography.body, color: Colors.muted },
+   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
+   sectionCard: {
+     backgroundColor: Colors.card,
+-    borderRadius: Radius['2xl'],
+-    borderWidth: 1,
++    borderRadius: Radius.xl,
++    borderWidth: StyleSheet.hairlineWidth,
+     borderColor: Colors.border,
+-    padding: Spacing.lg,
++    padding: Spacing.xl,
+     gap: Spacing.md,
++    ...Shadows.premium,
+   },
+   sectionHead: {
+     flexDirection: 'row',
+     alignItems: 'center',
+     justifyContent: 'space-between',
++    flexWrap: 'wrap',
++    gap: Spacing.sm,
+   },
+   sectionTitle: {
+     fontFamily: Fonts.display,
+-    fontSize: 18,
++    fontSize: 21,
++    lineHeight: 29,
+     color: Colors.dark,
++    flexShrink: 1,
+   },
+   sectionSub: {
+-    ...Typography.caption,
++    fontFamily: Fonts.body,
++    fontSize: 12,
++    lineHeight: 21,
+     color: Colors.muted,
+-    lineHeight: 18,
+   },
+   link: {
+     fontFamily: Fonts.bodySemiBold,
+@@ -666,19 +724,36 @@ const styles = StyleSheet.create({
+   requestRow: {
+     flexDirection: 'row',
+     alignItems: 'center',
+-    gap: Spacing.sm,
+-    paddingVertical: Spacing.sm,
++    gap: Spacing.md,
++    paddingVertical: Spacing.md,
+     borderBottomWidth: StyleSheet.hairlineWidth,
+     borderBottomColor: Colors.border,
+   },
+-  requestTitle: { fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.dark },
+-  requestMeta: { fontFamily: Fonts.body, fontSize: 12, color: Colors.muted, marginTop: 2 },
+-  requestAmount: { fontFamily: Fonts.bodySemiBold, fontSize: 13, color: Colors.primary },
++  requestTitle: {
++    fontFamily: Fonts.bodySemiBold,
++    fontSize: 14,
++    lineHeight: 23,
++    color: Colors.dark,
++    writingDirection: 'auto',
++  },
++  requestMeta: {
++    fontFamily: Fonts.body,
++    fontSize: 12,
++    lineHeight: 20,
++    color: Colors.muted,
++    marginTop: Spacing.xs,
++  },
++  requestAmount: {
++    fontFamily: Fonts.bodySemiBold,
++    fontSize: 14,
++    lineHeight: 22,
++    color: Colors.action,
++  },
+   reviewCard: {
+-    padding: Spacing.md,
+-    borderRadius: Radius.xl,
++    padding: Spacing.lg,
++    borderRadius: Radius.lg,
+     backgroundColor: Colors.surfaceSecondary,
+-    gap: 6,
++    gap: Spacing.sm,
+   },
+   reviewHead: {
+     flexDirection: 'row',
+@@ -690,7 +765,8 @@ const styles = StyleSheet.create({
+     fontFamily: Fonts.body,
+     fontSize: 13,
+     color: Colors.dark,
+-    lineHeight: 18,
++    lineHeight: 24,
++    writingDirection: 'auto',
+   },
+   routeRow: {
+     flexDirection: 'row',
+@@ -705,5 +781,9 @@ const styles = StyleSheet.create({
+     alignItems: 'center',
+     justifyContent: 'center',
+   },
+-  routeRankText: { fontFamily: Fonts.bodySemiBold, fontSize: 12, color: Colors.primary },
++  routeRankText: {
++    fontFamily: Fonts.bodySemiBold,
++    fontSize: 12,
++    color: Colors.primary,
++  },
+ });
+
+diff --git a/components/provider/ProviderStatCard.tsx b/components/provider/ProviderStatCard.tsx
+--- a/components/provider/ProviderStatCard.tsx
++++ b/components/provider/ProviderStatCard.tsx
+@@ -1,7 +1,7 @@
+-import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+-import { Colors } from '@/constants/colors';
+-import { Radius, Spacing } from '@/constants/spacing';
+-import { Typography } from '@/constants/typography';
++import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
++import { useThemeColors } from '@/constants/colors';
++import { Radius, Shadows, Spacing } from '@/constants/spacing';
++import { Fonts } from '@/constants/typography';
+ 
+ interface StatCardProps {
+   label: string;
+@@ -10,37 +10,67 @@ interface StatCardProps {
+   style?: ViewStyle;
+ }
+ 
+-const tones = {
+-  blue: Colors.actionSoft,
+-  amber: Colors.softAmber,
+-  green: Colors.softGreen,
+-  navy: Colors.primary,
+-};
+-
+-const textTones = {
+-  blue: Colors.action,
+-  amber: '#B45309',
+-  green: Colors.success,
+-  navy: Colors.white,
+-};
+-
+-export function ProviderStatCard({ label, value, tone = 'blue', style }: StatCardProps) {
++export function ProviderStatCard({
++  label,
++  value,
++  tone = 'blue',
++  style,
++}: StatCardProps) {
++  const colors = useThemeColors();
++  const tones = {
++    blue: colors.primary,
++    amber: colors.warning,
++    green: colors.action,
++    navy: colors.primary,
++  };
+   return (
+-    <View style={[styles.card, { backgroundColor: tones[tone] }, style]}>
+-      <Text style={[styles.value, { color: textTones[tone] }]}>{value}</Text>
+-      <Text style={[styles.label, { color: textTones[tone] }]}>{label}</Text>
++    <View
++      style={[
++        styles.card,
++        { backgroundColor: colors.card, borderColor: colors.border },
++        style,
++      ]}
++    >
++      <View style={styles.heading}>
++        <View style={[styles.dot, { backgroundColor: tones[tone] }]} />
++        <Text style={[styles.label, { color: colors.muted }]}>{label}</Text>
++      </View>
++      <Text
++        style={[
++          styles.value,
++          { color: tone === 'green' ? colors.action : colors.dark },
++        ]}
++      >
++        {value}
++      </Text>
+     </View>
+   );
+ }
+ 
+ const styles = StyleSheet.create({
+   card: {
+-    flex: 1,
++    flexGrow: 1,
++    flexBasis: '45%',
+     minWidth: '45%',
+     borderRadius: Radius.xl,
+     padding: Spacing.lg,
+-    gap: 4,
++    borderWidth: StyleSheet.hairlineWidth,
++    gap: Spacing.md,
++    ...Shadows.premium,
++  },
++  heading: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
++  dot: { width: 6, height: 6, borderRadius: Radius.full },
++  value: {
++    fontFamily: Fonts.display,
++    fontSize: 28,
++    lineHeight: 38,
++    letterSpacing: -0.5,
++    writingDirection: 'auto',
++  },
++  label: {
++    fontFamily: Fonts.bodyMedium,
++    fontSize: 12,
++    lineHeight: 20,
++    flex: 1,
+   },
+-  value: { ...Typography.h2, fontWeight: '800' },
+-  label: { ...Typography.caption, fontWeight: '600', opacity: 0.9 },
+ });
+
+diff --git a/components/provider/SimpleBarChart.tsx b/components/provider/SimpleBarChart.tsx
+--- a/components/provider/SimpleBarChart.tsx
++++ b/components/provider/SimpleBarChart.tsx
+@@ -1,7 +1,7 @@
+ import { StyleSheet, Text, View } from 'react-native';
+ import { Colors } from '@/constants/colors';
+-import { Radius, Spacing } from '@/constants/spacing';
+-import { Typography } from '@/constants/typography';
++import { Radius, Shadows, Spacing } from '@/constants/spacing';
++import { Fonts, Typography } from '@/constants/typography';
+ import { formatCurrency } from '@/utils/formatCurrency';
+ 
+ interface BarChartProps {
+@@ -29,7 +29,10 @@ export function SimpleBarChart({ title, data }: BarChartProps) {
+           );
+         })}
+       </View>
+-      <Text style={styles.hint}>Amounts in PKR · {formatCurrency(data.reduce((s, d) => s + d.amount, 0))} total in view</Text>
++      <Text style={styles.hint}>
++        Amounts in PKR · {' '}
++        {formatCurrency(data.reduce((s, d) => s + d.amount, 0))} total in view
++      </Text>
+     </View>
+   );
+ }
+@@ -38,13 +41,24 @@ const styles = StyleSheet.create({
+   card: {
+     backgroundColor: Colors.card,
+     borderRadius: Radius.xl,
+-    padding: Spacing.lg,
+-    borderWidth: 1,
++    padding: Spacing.xl,
++    borderWidth: StyleSheet.hairlineWidth,
+     borderColor: Colors.border,
+-    gap: Spacing.md,
++    gap: Spacing.lg,
++    ...Shadows.premium,
++  },
++  title: {
++    fontFamily: Fonts.display,
++    fontSize: 21,
++    lineHeight: 29,
++    color: Colors.dark,
++  },
++  row: {
++    flexDirection: 'row',
++    alignItems: 'flex-end',
++    gap: Spacing.sm,
++    minHeight: 140,
+   },
+-  title: { ...Typography.h3, color: Colors.primary },
+-  row: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, minHeight: 140 },
+   col: { flex: 1, alignItems: 'center', gap: 4 },
+   barTrack: {
+     height: 110,
+@@ -56,11 +70,16 @@ const styles = StyleSheet.create({
+   },
+   bar: {
+     width: '100%',
+-    backgroundColor: Colors.secondary,
++    backgroundColor: Colors.primary,
+     borderTopLeftRadius: Radius.sm,
+     borderTopRightRadius: Radius.sm,
+   },
+-  label: { ...Typography.small, color: Colors.muted, fontWeight: '700' },
++  label: {
++    fontFamily: Fonts.bodyMedium,
++    fontSize: 11,
++    lineHeight: 18,
++    color: Colors.muted,
++  },
+   value: { ...Typography.small, color: Colors.primary, fontSize: 10 },
+   hint: { ...Typography.caption, color: Colors.muted },
+ });
+
+diff --git a/components/provider/InventoryCapacityCard.tsx b/components/provider/InventoryCapacityCard.tsx
+--- a/components/provider/InventoryCapacityCard.tsx
++++ b/components/provider/InventoryCapacityCard.tsx
+@@ -79,7 +79,12 @@ export function InventoryCapacityCard({
+           <View key={`${metric.label}-${index}`} style={styles.metricWrap}>
+             {index > 0 ? <View style={styles.metricDivider} /> : null}
+             <View style={styles.metric}>
+-              <Text style={[styles.metricValue, metric.color ? { color: metric.color } : null]}>
++              <Text
++                style={[
++                  styles.metricValue,
++                  metric.color ? { color: metric.color } : null,
++                ]}
++              >
+                 {metric.value}
+               </Text>
+               <Text style={styles.metricLabel}>{metric.label}</Text>
+@@ -98,7 +103,9 @@ export function InventoryCapacityCard({
+       </View>
+       <View style={styles.footer}>
+         <Text style={styles.fillLabel}>{fillCaption}</Text>
+-        {trailingCaption ? <Text style={styles.trailing}>{trailingCaption}</Text> : null}
++        {trailingCaption ? (
++          <Text style={styles.trailing}>{trailingCaption}</Text>
++        ) : null}
+       </View>
+     </Pressable>
+   );
+@@ -121,13 +128,16 @@ const styles = StyleSheet.create({
+   title: {
+     fontFamily: Fonts.bodySemiBold,
+     fontSize: 15,
++    lineHeight: 25,
+     color: Colors.dark,
++    writingDirection: 'auto',
+   },
+   subtitle: {
+     fontFamily: Fonts.body,
+     fontSize: 12,
++    lineHeight: 20,
+     color: Colors.muted,
+-    marginTop: 2,
++    marginTop: Spacing.xs,
+   },
+   statusPill: {
+     borderRadius: Radius.full,
+@@ -154,13 +164,15 @@ const styles = StyleSheet.create({
+   },
+   metric: { flex: 1, alignItems: 'center', gap: 2 },
+   metricValue: {
+-    fontFamily: Fonts.bodyBold,
+-    fontSize: 17,
++    fontFamily: Fonts.display,
++    fontSize: 23,
++    lineHeight: 32,
+     color: Colors.dark,
+   },
+   metricLabel: {
+     fontFamily: Fonts.body,
+-    fontSize: 10,
++    fontSize: 11,
++    lineHeight: 18,
+     color: Colors.muted,
+     textAlign: 'center',
+   },
+@@ -178,5 +190,9 @@ const styles = StyleSheet.create({
+     gap: 8,
+   },
+   fillLabel: { ...Typography.small, color: Colors.muted, flex: 1 },
+-  trailing: { fontFamily: Fonts.bodySemiBold, fontSize: 12, color: Colors.primary },
++  trailing: {
++    fontFamily: Fonts.bodySemiBold,
++    fontSize: 12,
++    color: Colors.primary,
++  },
+ });
+
+diff --git a/components/hotels/HotelImageGallery.tsx b/components/hotels/HotelImageGallery.tsx
+--- a/components/hotels/HotelImageGallery.tsx
++++ b/components/hotels/HotelImageGallery.tsx
+@@ -1,6 +1,12 @@
+ import { Image } from 'expo-image';
+ import { useState } from 'react';
+-import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
++import {
++  Pressable,
++  ScrollView,
++  StyleSheet,
++  useWindowDimensions,
++  View,
++} from 'react-native';
+ import { Colors } from '@/constants/colors';
+ import { Radius, Spacing } from '@/constants/spacing';
+ import { FavoriteButton } from './FavoriteButton';
+@@ -10,21 +16,31 @@ interface HotelImageGalleryProps {
+   images: string[];
+   hotelId?: string;
+   height?: number;
++  width?: number;
+ }
+ 
+-export function HotelImageGallery({ images, hotelId, height = 240 }: HotelImageGalleryProps) {
+-  const { width } = useWindowDimensions();
++export function HotelImageGallery({
++  images,
++  hotelId,
++  height = 240,
++  width: requestedWidth,
++}: HotelImageGalleryProps) {
++  const { width: screenWidth } = useWindowDimensions();
++  const width = Math.max(
++    1,
++    Math.min(requestedWidth ?? screenWidth, screenWidth),
++  );
+   const [active, setActive] = useState(0);
+ 
+   return (
+-    <View style={[styles.wrap, { height }]}>
++    <View style={[styles.wrap, { height, width }]}>
+       <ScrollView
+         horizontal
+         pagingEnabled
+         showsHorizontalScrollIndicator={false}
+         onMomentumScrollEnd={(event) => {
+           const index = Math.round(
+-            event.nativeEvent.contentOffset.x / event.nativeEvent.layoutMeasurement.width
++            event.nativeEvent.contentOffset.x / event.nativeEvent.layoutMeasurement.width,
+           );
+           setActive(index);
+         }}
+

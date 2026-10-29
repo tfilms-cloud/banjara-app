@@ -12,7 +12,7 @@ import { Radius, Spacing } from '@/constants/spacing';
 import { Fonts, Typography } from '@/constants/typography';
 import * as providerService from '@/services/providerService';
 import { useProviderStore } from '@/store/providerStore';
-import { corridorKey, parseCorridor } from '@/utils/corridors';
+import { corridorKey, displayStopName, parseCorridor, parseRouteStop, stopBelongsToRoute } from '@/utils/corridors';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { paramId, pushPath } from '@/utils/navigation';
 
@@ -46,8 +46,8 @@ export default function ProviderTransportScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      void refreshDashboard();
-    }, [refreshDashboard])
+      void useProviderStore.getState().refreshDashboard();
+    }, [])
   );
 
   const displayedRoutes = useMemo(() => {
@@ -73,8 +73,23 @@ export default function ProviderTransportScreen() {
         durationHours: 0,
         distanceKm: 0,
       }));
-    return [...fromApi, ...fromProfile];
-  }, [provider?.id, provider?.transport?.operatingRoutes, routes]);
+
+    return [...fromApi, ...fromProfile].map((item) => {
+      const board = (provider?.transport?.pickupLocations ?? [])
+        .filter((stop) => stopBelongsToRoute(stop, item.origin, item.destination))
+        .map(displayStopName);
+      const alight = (provider?.transport?.dropoffLocations ?? [])
+        .filter((stop) => stopBelongsToRoute(stop, item.origin, item.destination))
+        .map(displayStopName);
+      return { ...item, pickups: board, dropoffs: alight };
+    });
+  }, [
+    provider?.id,
+    provider?.transport?.dropoffLocations,
+    provider?.transport?.operatingRoutes,
+    provider?.transport?.pickupLocations,
+    routes,
+  ]);
 
   const cancelTrip = (id: string) => {
     Alert.alert('Cancel trip', 'Cancel this upcoming trip?', [
@@ -135,7 +150,14 @@ export default function ProviderTransportScreen() {
     icon: 'map-outline',
     status: item.status.charAt(0).toUpperCase() + item.status.slice(1),
     statusTone: statusTone(item.status),
-    onPress: () => pushPath('/(provider)/passengers'),
+    actionLabel: item.status === 'cancelled' ? undefined : 'Edit',
+    onPress: () =>
+      item.status === 'cancelled'
+        ? pushPath('/(provider)/passengers')
+        : router.push({
+            pathname: '/(provider)/transport/trips/create',
+            params: { id: item.id },
+          } as never),
   }));
 
   const cta =
@@ -199,10 +221,10 @@ export default function ProviderTransportScreen() {
         {tab === 'vehicles'
           ? 'Tap a vehicle to edit photos, seats, or details.'
           : tab === 'trips'
-            ? 'Dated departures travelers can book. Cancel if a run will not go.'
+            ? 'Dated departures travelers can book. Tap a trip to edit, or cancel if a run will not go.'
             : tab === 'routes'
-              ? 'Corridors you drive. Tap a route to change From or To.'
-              : 'Boarding and drop-off pins. Tap one to move it on the map.'}
+              ? 'Each corridor has its own boarding and drop-off. Tap a route to edit From, To, and stops.'
+              : 'Boarding and drop-off belong to a route. Hunza drop-offs stay on the Hunza corridor.'}
       </Text>
 
       {tab === 'vehicles' ? (
@@ -262,15 +284,15 @@ export default function ProviderTransportScreen() {
           ListHeaderComponent={
             displayedRoutes.length ? (
               <Text style={styles.hint}>
-                A route is the corridor you operate, like Islamabad → Hunza. Pin From and To the same way
-                you pin a pickup.
+                A route is the corridor you operate, like Islamabad → Hunza. Pin boarding in the start
+                city and drop-off in the end city on that same route.
               </Text>
             ) : null
           }
           ListEmptyComponent={
             <EmptyState
               title="No routes yet"
-              message="Add the corridors you drive. Pickup points are separate — those are boarding spots on that corridor."
+              message="Add the corridors you drive. Pickup and drop-off sit on each route, so Hunza and Skardu never mix."
               icon="navigate-outline"
               actionLabel="Add route"
               onAction={() => router.push('/(provider)/transport/route-add')}
@@ -281,7 +303,13 @@ export default function ProviderTransportScreen() {
               item={{
                 id: item.id,
                 title: item.destination ? `${item.origin} → ${item.destination}` : item.origin,
-                subtitle: item.stops.length ? `Stops: ${item.stops.join(', ')}` : 'Tap to edit this corridor',
+                subtitle: [
+                  item.pickups.length ? `Board: ${item.pickups.join(', ')}` : null,
+                  item.dropoffs.length ? `Drop: ${item.dropoffs.join(', ')}` : null,
+                  item.stops.length ? `Via ${item.stops.join(', ')}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ') || 'Tap to add boarding and drop-off for this corridor',
                 meta:
                   item.distanceKm > 0
                     ? `${item.distanceKm} km · ~${item.durationHours || '—'}h`
@@ -310,23 +338,49 @@ export default function ProviderTransportScreen() {
       {tab === 'pickups' ? (
         <FlatList
           data={[
-            ...pickups.map((point) => ({ id: `pick-${point}`, kind: 'pickup' as const, name: point })),
-            ...dropoffs.map((point) => ({ id: `drop-${point}`, kind: 'dropoff' as const, name: point })),
+            ...pickups.map((point) => {
+              const parsed = parseRouteStop(point);
+              const corridor =
+                parsed.origin && parsed.destination
+                  ? `${parsed.origin} → ${parsed.destination}`
+                  : '';
+              return {
+                id: `pick-${point}`,
+                kind: 'pickup' as const,
+                name: point,
+                display: parsed.place,
+                corridor,
+              };
+            }),
+            ...dropoffs.map((point) => {
+              const parsed = parseRouteStop(point);
+              const corridor =
+                parsed.origin && parsed.destination
+                  ? `${parsed.origin} → ${parsed.destination}`
+                  : '';
+              return {
+                id: `drop-${point}`,
+                kind: 'dropoff' as const,
+                name: point,
+                display: parsed.place,
+                corridor,
+              };
+            }),
           ]}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           ListHeaderComponent={
             pickups.length || dropoffs.length ? (
               <Text style={styles.hint}>
-                Pickups are where travelers board. Drop-offs are where they get off. Pin them on the map
-                like your business location.
+                Each pin belongs to one corridor. Add a Hunza drop-off on Islamabad → Hunza, not as a
+                shared list.
               </Text>
             ) : null
           }
           ListEmptyComponent={
             <EmptyState
               title="No boarding points yet"
-              message="Pin a stand or landmark. Travelers pick one when they book."
+              message="Add a route first, then pin boarding in the start city and drop-off in the end city."
               icon="location-outline"
               actionLabel="Add pickup"
               onAction={() => router.push('/(provider)/transport/stop-add')}
@@ -337,14 +391,18 @@ export default function ProviderTransportScreen() {
               <ChildServiceCard
                 item={{
                   id: item.id,
-                  title: item.name,
-                  subtitle: item.kind === 'pickup' ? 'Pickup · boarding' : 'Drop-off · alighting',
+                  title: item.display,
+                  subtitle: item.corridor
+                    ? `${item.kind === 'pickup' ? 'Pickup' : 'Drop-off'} · ${item.corridor}`
+                    : item.kind === 'pickup'
+                      ? 'Pickup · boarding'
+                      : 'Drop-off · alighting',
                   icon: item.kind === 'pickup' ? 'location-outline' : 'flag-outline',
                   actionLabel: 'Edit',
                   onPress: () =>
                     router.push({
                       pathname: '/(provider)/transport/stop-add',
-                      params: { kind: item.kind, name: item.name },
+                      params: { kind: item.kind, name: item.name, route: item.corridor },
                     } as never),
                 }}
               />

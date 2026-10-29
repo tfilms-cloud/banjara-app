@@ -41,7 +41,7 @@ export default function ProviderStatusScreen() {
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const provider = useProviderStore((s) => s.provider);
-  const status = user?.providerStatus ?? provider?.verificationStatus ?? 'pending';
+  const status = provider?.verificationStatus ?? user?.providerStatus ?? 'pending';
   const content = copy[status] ?? copy.pending;
 
   if (needsProviderOnboarding(user)) {
@@ -60,6 +60,8 @@ export default function ProviderStatusScreen() {
       ) : (
         <Button title="View Application" onPress={() => router.push('/(provider)/register/review')} />
       )}
+      {provider ? <Button title="Refresh status" variant="outline"
+        onPress={() => void useProviderStore.getState().loadProvider(provider.id)} /> : null}
       <Button title="Sign Out" variant="ghost" onPress={() => {
         useAuthStore.getState().logout();
         router.replace('/(auth)/welcome');

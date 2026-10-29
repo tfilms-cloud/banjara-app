@@ -1,12 +1,64 @@
 /**
- * BANJARA customer product vision (mixed model):
- * - Transport = ride for distance (one-way seat)
- * - Trips = go & return home with a trip duration
- * - Hotels = stay at the place you reach
- * Destination “services” for now = soft hotel suggestions after a ride.
+ * BANJARA customer home service categories + journey/search modes.
+ *
+ * Top-level home tabs (services Banjara offers):
+ * Transport · Hotels · Tour Operators · Guides · Restaurants
+ *
+ * Transport search still uses journey modes:
+ * - transport = one-way seat/vehicle
+ * - trips = go & return
  */
 
+export type HomeServiceCategory =
+  | 'transport'
+  | 'hotels'
+  | 'tours'
+  | 'guides'
+  | 'restaurants';
+
 export type CustomerProductMode = 'transport' | 'trips' | 'hotels';
+
+export type TransportBookingKind = 'seat' | 'vehicle';
+export type TransportPanel = 'customise' | 'available';
+
+export const SERVICE_CATEGORIES: Array<{
+  id: HomeServiceCategory;
+  label: string;
+  shortHint: string;
+  icon: 'bus' | 'bed' | 'map' | 'person' | 'restaurant';
+  comingSoon?: boolean;
+}> = [
+  {
+    id: 'transport',
+    label: 'Transport',
+    shortHint: 'Rides & seats',
+    icon: 'bus',
+  },
+  {
+    id: 'hotels',
+    label: 'Hotels',
+    shortHint: 'Stays',
+    icon: 'bed',
+  },
+  {
+    id: 'tours',
+    label: 'Tour Operators',
+    shortHint: 'Packages',
+    icon: 'map',
+  },
+  {
+    id: 'guides',
+    label: 'Guides',
+    shortHint: 'Local experts',
+    icon: 'person',
+  },
+  {
+    id: 'restaurants',
+    label: 'Restaurants',
+    shortHint: 'Places to eat',
+    icon: 'restaurant',
+  },
+];
 
 export const PRODUCT_MODES: Array<{
   id: CustomerProductMode;
@@ -56,6 +108,11 @@ export function productModeMeta(mode?: CustomerProductMode | string | null) {
   return PRODUCT_MODES.find((item) => item.id === id) ?? PRODUCT_MODES[0];
 }
 
+export function serviceCategoryMeta(category?: HomeServiceCategory | string | null) {
+  const id = SERVICE_CATEGORIES.find((item) => item.id === category)?.id ?? 'transport';
+  return SERVICE_CATEGORIES.find((item) => item.id === id) ?? SERVICE_CATEGORIES[0];
+}
+
 /** Maps home search mode → trip journey filter (hotels have no journey). */
 export function journeyFilterForMode(
   mode: CustomerProductMode
@@ -63,4 +120,12 @@ export function journeyFilterForMode(
   if (mode === 'transport') return 'one_way';
   if (mode === 'trips') return 'round_trip';
   return undefined;
+}
+
+export function todayIsoDate() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }

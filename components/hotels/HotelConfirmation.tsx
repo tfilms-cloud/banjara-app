@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { BrandMark } from '@/components/brand/BrandMark';
 import { Colors } from '@/constants/colors';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Brand, Typography } from '@/constants/typography';
@@ -26,7 +27,8 @@ export function HotelConfirmation({
 }: HotelConfirmationProps) {
   return (
     <View style={styles.card}>
-      <LinearGradient colors={[Colors.primary, Colors.softNavy]} style={styles.header}>
+      <LinearGradient colors={[Colors.primaryDark, '#000000']} style={styles.header}>
+        <BrandMark size={56} />
         <Text style={styles.brand}>{Brand.name}</Text>
         <Text style={styles.tagline}>Hotel Confirmation</Text>
       </LinearGradient>
@@ -94,7 +96,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  header: { padding: Spacing['2xl'] },
+  header: { padding: Spacing['2xl'], alignItems: 'center', gap: 8 },
   brand: { ...Typography.brand, color: Colors.white, fontSize: 28 },
   tagline: { ...Typography.caption, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
   qrWrap: { alignItems: 'center', paddingVertical: Spacing['2xl'], gap: Spacing.md },

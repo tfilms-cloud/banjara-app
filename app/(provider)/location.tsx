@@ -1,12 +1,14 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,32 +23,22 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Header } from '@/components/ui/Header';
 import { Colors } from '@/constants/colors';
-import { isHotelService, isTourLikeService, isTransportService } from '@/constants/providerOptions';
+import { nextProviderSetupRoute } from '@/constants/providerOptions';
 import { Spacing } from '@/constants/spacing';
 import { Typography } from '@/constants/typography';
 import {
-  useCurrentLocation,
-  useLocationPicker,
+  usePinnedLocationPicker,
   useLocationSearch,
-  useReverseGeocode,
 } from '@/hooks/useLocationPicker';
 import { getApiErrorMessage } from '@/services/apiError';
 import * as locationService from '@/services/locationService';
 import { useProviderStore } from '@/store/providerStore';
-
-function nextSetupRoute(services: string[]) {
-  if (services.some((s) => isTransportService(s) || s === 'carRental')) {
-    return '/(provider)/register/transport';
-  }
-  if (services.some((s) => isHotelService(s))) {
-    return '/(provider)/register/hotel';
-  }
-  if (services.some((s) => isTourLikeService(s))) return '/(provider)/register/tours';
-  return '/(provider)/register/verification';
-}
+import type { LocationPickerValue } from '@/types/location';
 
 export default function BusinessLocationScreen() {
   const insets = useSafeAreaInsets();
+  const { height: screenHeight } = useWindowDimensions();
+  const mapHeight = Math.max(240, Math.min(320, Math.round(screenHeight * 0.36)));
   const { mode } = useLocalSearchParams<{ mode?: string }>();
   const isOnboarding = mode === 'onboarding';
 
@@ -56,11 +48,11 @@ export default function BusinessLocationScreen() {
   const setProvider = useProviderStore((s) => s.setProvider);
   const saveProgress = useProviderStore((s) => s.saveProgress);
   const saving = useProviderStore((s) => s.saving);
+  const [advancing, setAdvancing] = useState(false);
+  const [candidate] = useState(() => isOnboarding ? useProviderStore.getState().formDrafts['location.candidate'] as Partial<LocationPickerValue> | undefined : undefined);
 
   const search = useLocationSearch();
-  const { reverse, loading: reversing } = useReverseGeocode();
-  const current = useCurrentLocation();
-  const picker = useLocationPicker({
+  const { picker, current, reversing, reverseError, pinConfirmed, onPinStatusChange, onRegionSettled, selectPlace, onUseCurrent } = usePinnedLocationPicker({
     latitude: draft.location?.latitude ?? provider?.latitude,
     longitude: draft.location?.longitude ?? provider?.longitude,
     address:
@@ -71,7 +63,12 @@ export default function BusinessLocationScreen() {
         country: 'Pakistan',
       },
     placeName: draft.location?.placeName ?? provider?.businessName,
+    ...candidate,
   });
+
+  useEffect(() => {
+    if (isOnboarding) useProviderStore.getState().setFormDraft('location.candidate', picker.value);
+  }, [isOnboarding, picker.value]);
 
   const [loadedExisting, setLoadedExisting] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(
@@ -107,26 +104,8 @@ export default function BusinessLocationScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOnboarding, loadedExisting]);
 
-  const onRegionSettled = useCallback(
-    async (latitude: number, longitude: number) => {
-      picker.applyCoords(latitude, longitude);
-      const place = await reverse(latitude, longitude);
-      if (place) {
-        picker.applyPlace(place);
-      }
-    },
-    [picker, reverse]
-  );
-
-  const onUseCurrent = async () => {
-    const position = await current.getCurrentPosition();
-    if (!position) return;
-    picker.applyCoords(position.latitude, position.longitude);
-    const place = await reverse(position.latitude, position.longitude);
-    if (place) picker.applyPlace(place);
-  };
-
   const onConfirmSave = async () => {
+    if (!pinConfirmed || reversing || current.loading || advancing || saving) return;
     const { latitude, longitude, address, placeName } = picker.value;
     if (!address.formattedAddress && !address.city) {
       Alert.alert('Select a location', 'Search or move the map to choose your business location.');
@@ -148,10 +127,15 @@ export default function BusinessLocationScreen() {
         },
       });
       try {
+        setAdvancing(true);
         await saveProgress();
-        router.push(nextSetupRoute(draft.selectedServices) as never);
+        if (draft.selectedServices.includes('transport')) await useProviderStore.getState().checkpoint('location');
+        useProviderStore.getState().clearFormDraft('location.candidate');
+        router.push(nextProviderSetupRoute(draft.selectedServices) as never);
       } catch (error) {
         Alert.alert('Could not save', getApiErrorMessage(error));
+      } finally {
+        setAdvancing(false);
       }
       return;
     }
@@ -217,7 +201,7 @@ export default function BusinessLocationScreen() {
             address={picker.value.address}
             latitude={picker.value.latitude}
             longitude={picker.value.longitude}
-            saving={isOnboarding ? saving : picker.saving}
+            saving={isOnboarding ? saving || advancing : picker.saving}
             error={picker.saveError}
             onEdit={() => picker.setConfirming(false)}
             onConfirm={() => void onConfirmSave()}
@@ -226,16 +210,19 @@ export default function BusinessLocationScreen() {
       ) : (
         <ScrollView
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{
+          keyboardDismissMode="on-drag"
+          onScrollBeginDrag={Keyboard.dismiss}
+          contentContainerStyle={[styles.content, {
             padding: Spacing.lg,
-            paddingBottom: insets.bottom + 32,
-            gap: Spacing.lg,
-          }}
+            paddingBottom: Spacing.lg,
+            gap: Spacing.md,
+          }]}
+          showsVerticalScrollIndicator={false}
         >
           <View>
-            <Text style={styles.heading}>Business Location</Text>
+            <Text style={styles.heading}>Pin your business</Text>
             <Text style={styles.sub}>
-              Tap the map to drop the pin where customers can find your business.
+              Search for your address, then move the map to place the pin at your entrance.
             </Text>
             {lastUpdated ? (
               <Text style={styles.updated}>
@@ -252,7 +239,7 @@ export default function BusinessLocationScreen() {
             error={search.error}
             onClear={search.clear}
             onSelect={(place) => {
-              picker.applyPlace(place);
+              selectPlace(place);
               search.clear();
             }}
           />
@@ -261,18 +248,25 @@ export default function BusinessLocationScreen() {
             latitude={picker.value.latitude}
             longitude={picker.value.longitude}
             onRegionSettled={(lat, lng) => void onRegionSettled(lat, lng)}
-            height={300}
-            pinMode="tap"
+            height={mapHeight}
+            pinMode="center"
             pinLabel="Business pin"
+            requirePinConfirmation
+            pinConfirmed={pinConfirmed}
+            onPinStatusChange={onPinStatusChange}
+            pinning={reversing || current.loading}
           />
 
           <AddressPreview
+            title={pinConfirmed ? 'Pinned location' : 'Location preview'}
             placeName={picker.value.placeName || businessName}
             address={picker.value.address}
-            updating={reversing || search.searching || current.loading}
+            updating={reversing || current.loading}
             latitude={picker.value.latitude}
             longitude={picker.value.longitude}
           />
+
+          {reverseError ? <Text style={styles.offline}>Address unavailable. Your pin coordinates are kept; tap Pin location to retry.</Text> : null}
 
           {current.error ? (
             <LocationPermissionHandler
@@ -286,6 +280,10 @@ export default function BusinessLocationScreen() {
             <Text style={styles.offline}>{picker.saveError}</Text>
           ) : null}
 
+        </ScrollView>
+      )}
+      {!picker.confirming ? (
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, Spacing.md) }]}>
           <CurrentLocationButton
             onPress={() => void onUseCurrent()}
             loading={current.loading}
@@ -294,17 +292,19 @@ export default function BusinessLocationScreen() {
           <Button
             title="Confirm Location"
             onPress={() => picker.setConfirming(true)}
-            disabled={reversing}
+            disabled={!pinConfirmed || reversing || current.loading}
           />
-        </ScrollView>
-      )}
+        </View>
+      ) : null}
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  heading: { ...Typography.h2, color: Colors.primary },
+  content: { width: '100%', maxWidth: 640, alignSelf: 'center' },
+  footer: { paddingTop: Spacing.md, paddingHorizontal: Spacing.lg, gap: Spacing.sm, backgroundColor: Colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: Colors.border },
+  heading: { ...Typography.h3, color: Colors.dark },
   sub: { ...Typography.body, color: Colors.muted, marginTop: Spacing.xs, lineHeight: 21 },
   updated: { ...Typography.small, color: Colors.muted, marginTop: Spacing.sm },
   offline: { ...Typography.caption, color: Colors.danger },

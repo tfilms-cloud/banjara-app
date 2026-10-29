@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
@@ -33,61 +33,70 @@ export default function HotelSuccessScreen() {
   const id = bookingId ?? booking?.id;
 
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingTop: insets.top + Spacing['3xl'], paddingBottom: insets.bottom + Spacing['2xl'] },
-      ]}
-    >
-      <Animated.View style={[styles.iconWrap, animatedStyle]}>
-        <Ionicons name="checkmark" size={42} color={Colors.white} />
-      </Animated.View>
-      <Text style={styles.title}>Booking Confirmed</Text>
-      <Text style={styles.sub}>Your hotel has been successfully booked.</Text>
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: insets.bottom + Spacing['3xl'] },
+        ]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        bounces
+      >
+        <Animated.View style={[styles.iconWrap, animatedStyle]}>
+          <Ionicons name="time-outline" size={42} color={Colors.white} />
+        </Animated.View>
+        <Text style={styles.title}>Request submitted</Text>
+        <Text style={styles.sub}>
+          Your hotel booking is pending. The lodging provider must approve it before the stay is
+          confirmed.
+        </Text>
 
-      <View style={styles.card}>
-        <Row label="Booking ID" value={booking?.bookingCode ?? id ?? '—'} />
-        <Row label="Hotel" value={selectedHotel?.name ?? '—'} />
-        <Row label="Room" value={selectedRoom?.name ?? '—'} />
-        <Row label="Guest" value={booking?.guest.name ?? '—'} />
-        <Row label="Check-in" value={booking ? formatDate(booking.checkIn) : '—'} />
-        <Row label="Check-out" value={booking ? formatDate(booking.checkOut) : '—'} />
-        <Row
-          label="Guests"
-          value={
-            booking
-              ? `${booking.adults + booking.children} · ${booking.rooms} room${booking.rooms > 1 ? 's' : ''}`
-              : '—'
-          }
-        />
-        <Row
-          label="Amount"
-          value={
-            booking
-              ? formatCurrency(booking.priceBreakdown.total, booking.priceBreakdown.currency)
-              : '—'
-          }
-        />
-      </View>
+        <View style={styles.card}>
+          <Row label="Status" value="Awaiting provider approval" />
+          <Row label="Booking ID" value={booking?.bookingCode ?? id ?? '—'} />
+          <Row label="Hotel" value={selectedHotel?.name ?? '—'} />
+          <Row label="Room" value={selectedRoom?.name ?? '—'} />
+          <Row label="Guest" value={booking?.guest.name ?? '—'} />
+          <Row label="Check-in" value={booking ? formatDate(booking.checkIn) : '—'} />
+          <Row label="Check-out" value={booking ? formatDate(booking.checkOut) : '—'} />
+          <Row
+            label="Guests"
+            value={
+              booking
+                ? `${booking.adults + booking.children} · ${booking.rooms} room${booking.rooms > 1 ? 's' : ''}`
+                : '—'
+            }
+          />
+          <Row
+            label="Amount"
+            value={
+              booking
+                ? formatCurrency(booking.priceBreakdown.total, booking.priceBreakdown.currency)
+                : '—'
+            }
+          />
+        </View>
 
-      <View style={styles.actions}>
-        <Button
-          title="View Booking"
-          onPress={() => replacePath(`/(customer)/hotels/booking-details/${id}`)}
-          disabled={!id}
-        />
-        <Button
-          title="View Digital Confirmation"
-          variant="outline"
-          onPress={() => replacePath(`/(customer)/hotels/confirmation/${id}`)}
-          disabled={!id}
-        />
-        <Button
-          title="Back to Home"
-          variant="ghost"
-          onPress={() => router.replace('/(customer)/(tabs)')}
-        />
-      </View>
+        <View style={styles.actions}>
+          <Button
+            title="View Booking"
+            onPress={() => replacePath(`/(customer)/hotels/booking-details/${id}`)}
+            disabled={!id}
+          />
+          <Button
+            title="My bookings"
+            variant="outline"
+            onPress={() => replacePath('/(customer)/(tabs)/bookings')}
+          />
+          <Button
+            title="Back to Home"
+            variant="ghost"
+            onPress={() => router.replace('/(customer)/(tabs)')}
+          />
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -102,17 +111,24 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  scroll: {
+    flex: 1,
+  },
+  content: {
     paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing['3xl'],
     alignItems: 'center',
+    flexGrow: 1,
   },
   iconWrap: {
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: Colors.success,
+    backgroundColor: Colors.warning,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.lg,
@@ -137,5 +153,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.md },
   label: { ...Typography.caption, color: Colors.muted },
   value: { ...Typography.bodyBold, color: Colors.primary, flexShrink: 1, textAlign: 'right' },
-  actions: { width: '100%', gap: Spacing.md, marginTop: 'auto' },
+  actions: { width: '100%', gap: Spacing.md, marginTop: Spacing['2xl'] },
 });

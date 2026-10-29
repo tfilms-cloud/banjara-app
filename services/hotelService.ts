@@ -17,6 +17,7 @@ import type {
   HotelSearchParams,
   HotelSortBy,
 } from '@/types/hotel';
+import { matchesSearchText } from '@/utils/matchesSearchText';
 
 const hotelDetailCache = new Map<string, { at: number; hotel: Hotel }>();
 const HOTEL_CACHE_MS = 20_000;
@@ -85,9 +86,10 @@ export async function searchHotels(
   filters?: HotelFilters,
   sortBy: HotelSortBy = 'recommended'
 ): Promise<Hotel[]> {
+  const query = params.query?.trim();
   const data = await get<unknown>('/hotels/search', {
     params: {
-      destination: params.destination,
+      destination: query ? undefined : params.destination,
       checkIn: params.checkIn,
       checkOut: params.checkOut,
       guests: params.adults + params.children,
@@ -104,6 +106,18 @@ export async function searchHotels(
   });
 
   let results = applyClientFilters(asArray<AnyRecord>(data).map(mapHotel), filters);
+  if (query) {
+    results = results.filter((hotel) =>
+      matchesSearchText(
+        query,
+        hotel.name,
+        hotel.location.city,
+        hotel.location.area,
+        hotel.location.address,
+        hotel.hotelType
+      )
+    );
+  }
 
   results.sort((a, b) => {
     switch (sortBy) {
@@ -153,23 +167,55 @@ export async function getHotelQuote(input: {
   return data;
 }
 
+const roomCache = new Map<string, { at: number; room: HotelRoom | null }>();
+const roomInflight = new Map<string, Promise<HotelRoom | null>>();
+const ROOM_CACHE_MS = 20_000;
+
 export async function getRoomById(roomId: string): Promise<HotelRoom | null> {
-  try {
-    const data = await get<AnyRecord>(`/rooms/${roomId}`);
-    return mapHotelRoom(data);
-  } catch {
-    return null;
-  }
+  if (!roomId) return null;
+  const cached = roomCache.get(roomId);
+  if (cached && Date.now() - cached.at < ROOM_CACHE_MS) return cached.room;
+  const pending = roomInflight.get(roomId);
+  if (pending) return pending;
+
+  const request = (async () => {
+    try {
+      const data = await get<AnyRecord>(`/rooms/${roomId}`);
+      const room = mapHotelRoom(data);
+      roomCache.set(roomId, { at: Date.now(), room });
+      return room;
+    } catch {
+      roomCache.set(roomId, { at: Date.now(), room: null });
+      return null;
+    } finally {
+      roomInflight.delete(roomId);
+    }
+  })();
+
+  roomInflight.set(roomId, request);
+  return request;
+}
+
+let popularHotelsCache: { at: number; hotels: Hotel[] } | null = null;
+const POPULAR_HOTELS_TTL_MS = 60_000;
+
+export function invalidatePopularHotelsCache() {
+  popularHotelsCache = null;
 }
 
 export async function getPopularHotels(): Promise<Hotel[]> {
+  if (popularHotelsCache && Date.now() - popularHotelsCache.at < POPULAR_HOTELS_TTL_MS) {
+    return popularHotelsCache.hotels;
+  }
   const data = await get<unknown>('/hotels/search', {
-    params: { sort: 'rating', limit: 10 },
+    params: { sort: 'rating', limit: 40 },
   });
-  return asArray<AnyRecord>(data)
+  const hotels = asArray<AnyRecord>(data)
     .map(mapHotel)
     .sort((a, b) => Number(b.featured) - Number(a.featured) || b.rating - a.rating)
-    .slice(0, 10);
+    .slice(0, 40);
+  popularHotelsCache = { at: Date.now(), hotels };
+  return hotels;
 }
 
 export async function createHotelBooking(

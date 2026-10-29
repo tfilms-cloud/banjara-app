@@ -13,6 +13,7 @@ export function useTrips() {
   const date = useSearchStore((s) => s.date);
   const passengers = useSearchStore((s) => s.passengers);
   const productMode = useSearchStore((s) => s.productMode);
+  const query = useSearchStore((s) => s.query);
   const filters = useSearchStore((s) => s.filters);
   const sortBy = useSearchStore((s) => s.sortBy);
 
@@ -23,7 +24,7 @@ export function useTrips() {
       const journeyType =
         filters.journeyType ?? (productMode === 'trips' ? 'round_trip' : 'one_way');
       const data = await tripService.searchTrips(
-        { from, to, date, passengers, journeyType },
+        { from, to, date, passengers, journeyType, query: query.trim() || undefined },
         { ...filters, journeyType },
         sortBy
       );
@@ -39,7 +40,7 @@ export function useTrips() {
     void refresh();
     // Primitive search fields only — avoid looping on unstable function refs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [from, to, date, passengers, productMode, filters, sortBy]);
+  }, [from, to, date, passengers, productMode, query, filters, sortBy]);
 
   return { trips, loading, error, refresh };
 }
@@ -83,8 +84,8 @@ export function useRecommendedTrips() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = async () => {
-    setLoading(true);
+  const refresh = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true);
     setError(null);
     try {
       const data = await tripService.getRecommendedTrips();
@@ -92,13 +93,13 @@ export function useRecommendedTrips() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load trips');
     } finally {
-      setLoading(false);
+      if (!opts?.silent) setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void refresh();
-  }, []);
+  }, [refresh]);
 
   return { trips, loading, error, refresh };
 }

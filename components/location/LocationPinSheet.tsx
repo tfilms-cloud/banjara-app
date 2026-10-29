@@ -1,13 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useEffect } from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AddressPreview } from '@/components/location/AddressPreview';
@@ -16,14 +18,12 @@ import { LocationMap } from '@/components/location/LocationMap';
 import { LocationPermissionHandler } from '@/components/location/LocationPermissionHandler';
 import { LocationSearchBar } from '@/components/location/LocationSearchBar';
 import { Button } from '@/components/ui/Button';
-import { Colors } from '@/constants/colors';
-import { Radius, Spacing } from '@/constants/spacing';
-import { Fonts, Typography } from '@/constants/typography';
+import { useThemeColors } from '@/constants/colors';
+import { Radius, Shadows, Spacing } from '@/constants/spacing';
+import { Fonts } from '@/constants/typography';
 import {
-  useCurrentLocation,
-  useLocationPicker,
+  usePinnedLocationPicker,
   useLocationSearch,
-  useReverseGeocode,
 } from '@/hooks/useLocationPicker';
 import type { LocationPickerValue, PlaceSearchResult } from '@/types/location';
 
@@ -39,6 +39,10 @@ export function formatPickedPlace(value: LocationPickerValue): string {
     text(value.placeName, value.address.city, value.address.area, value.address.formattedAddress) ||
     `${value.latitude.toFixed(5)}, ${value.longitude.toFixed(5)}`
   );
+}
+
+export function formatPickedCity(value: LocationPickerValue): string {
+  return text(value.address.city) || formatPickedPlace(value);
 }
 
 export function formatPickedAddress(value: LocationPickerValue): string {
@@ -86,49 +90,8 @@ type LocationPinSheetProps = {
   initial?: Partial<LocationPickerValue>;
 };
 
-export function LocationPinSheet({
-  visible,
-  onClose,
-  onConfirm,
-  title = 'Pin location',
-  confirmLabel = 'Use this pin',
-  initial,
-}: LocationPinSheetProps) {
-  const insets = useSafeAreaInsets();
-  const search = useLocationSearch();
-  const { reverse, loading: reversing } = useReverseGeocode();
-  const current = useCurrentLocation();
-  const picker = useLocationPicker(initial);
-
-  useEffect(() => {
-    if (!visible) return;
-    if (initial?.latitude != null && initial?.longitude != null) {
-      picker.applyCoords(
-        initial.latitude,
-        initial.longitude,
-        initial.address,
-        initial.placeName
-      );
-    }
-    // Reset only when the sheet opens.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible]);
-
-  const dropAt = useCallback(
-    async (latitude: number, longitude: number) => {
-      picker.applyCoords(latitude, longitude);
-      const place = await reverse(latitude, longitude);
-      if (place) picker.applyPlace(place);
-    },
-    [picker, reverse]
-  );
-
-  const onUseCurrent = async () => {
-    const position = await current.getCurrentPosition();
-    if (!position) return;
-    await dropAt(position.latitude, position.longitude);
-  };
-
+/** Every map-based address field uses the same explicit pin-and-confirm flow. */
+export function LocationPinSheet({ visible, onClose, ...props }: LocationPinSheetProps) {
   return (
     <Modal
       visible={visible}
@@ -136,139 +99,125 @@ export function LocationPinSheet({
       presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
-      <KeyboardAvoidingView
-        style={styles.root}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={[styles.topBar, { paddingTop: insets.top + Spacing.sm }]}>
-          <Pressable
-            onPress={onClose}
-            style={styles.closeBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Close map"
-          >
-            <Ionicons name="close" size={22} color={Colors.dark} />
-          </Pressable>
-          <Text style={styles.title} numberOfLines={1}>
-            {title}
-          </Text>
-          <View style={styles.closeBtn} />
-        </View>
-
-        <Text style={styles.sub}>Tap the map to drop your pin. You can search or use GPS too.</Text>
-
-        <View style={styles.searchWrap}>
-          <LocationSearchBar
-            value={search.query}
-            onChangeText={search.search}
-            results={search.results}
-            searching={search.searching}
-            error={search.error}
-            onClear={search.clear}
-            onSelect={(place) => {
-              picker.applyPlace(place);
-              search.clear();
-            }}
-          />
-        </View>
-
-        <View style={styles.mapWrap}>
-          <LocationMap
-            latitude={picker.value.latitude}
-            longitude={picker.value.longitude}
-            onRegionSettled={(lat, lng) => void dropAt(lat, lng)}
-            allowFullscreen={false}
-            pinLabel="Your pin"
-            pinMode="tap"
-          />
-        </View>
-
-        <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.md }]}>
-          <AddressPreview
-            title="Pinned location"
-            placeName={picker.value.placeName}
-            address={picker.value.address}
-            updating={reversing || search.searching || current.loading}
-            showCoords
-            latitude={picker.value.latitude}
-            longitude={picker.value.longitude}
-          />
-
-          {current.error ? (
-            <LocationPermissionHandler
-              message={current.error}
-              onOpenSettings={current.openSettings}
-              onDismiss={() => current.setError(null)}
-            />
-          ) : null}
-
-          <CurrentLocationButton
-            onPress={() => void onUseCurrent()}
-            loading={current.loading}
-          />
-
-          <Button
-            title={confirmLabel}
-            onPress={() => onConfirm(resolvePickedValue(picker.value))}
-            disabled={reversing}
-          />
-        </View>
-      </KeyboardAvoidingView>
+      {visible ? <LocationPinSheetContent {...props} onClose={onClose} /> : null}
     </Modal>
   );
 }
 
+// Mount a fresh selection session each time: Back discards unconfirmed map changes.
+function LocationPinSheetContent({
+  onClose,
+  onConfirm,
+  title = 'Pin location',
+  confirmLabel = 'Use this pin',
+  initial,
+}: Omit<LocationPinSheetProps, 'visible'>) {
+  const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
+  const { height } = useWindowDimensions();
+  const mapHeight = Math.max(240, Math.min(320, Math.round(height * 0.36)));
+  const search = useLocationSearch();
+  const {
+    picker, current, reversing, reverseError, pinConfirmed,
+    onPinStatusChange, onRegionSettled, selectPlace, onUseCurrent,
+  } = usePinnedLocationPicker(initial);
+  const canConfirm = pinConfirmed && !reversing && !current.loading;
+  const close = () => { Keyboard.dismiss(); onClose(); };
+
+  return (
+    <KeyboardAvoidingView
+      style={[styles.root, { backgroundColor: colors.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
+        <Pressable
+          onPress={close}
+          style={[styles.back, { backgroundColor: colors.card, borderColor: colors.border }]}
+          accessibilityRole="button"
+          accessibilityLabel="Back from location picker"
+        >
+          <Ionicons name="arrow-back" size={22} color={colors.dark} />
+        </Pressable>
+        <Text style={[styles.title, { color: colors.dark }]} numberOfLines={2}>
+          {title}
+        </Text>
+        <View style={styles.headerSpacer} />
+      </View>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        onScrollBeginDrag={Keyboard.dismiss}
+        contentContainerStyle={styles.content}
+      >
+        <Text style={[styles.hint, { color: colors.muted }]}>
+          Search or use your current location. Move the map, then tap Pin location.
+        </Text>
+        <LocationSearchBar
+          value={search.query}
+          onChangeText={search.search}
+          results={search.results}
+          searching={search.searching}
+          error={search.error}
+          onClear={search.clear}
+          onSelect={place => { selectPlace(place); search.clear(); }}
+        />
+        <LocationMap
+          latitude={picker.value.latitude}
+          longitude={picker.value.longitude}
+          onRegionSettled={(lat, lng) => void onRegionSettled(lat, lng)}
+          height={mapHeight}
+          pinLabel="Your location"
+          pinMode="center"
+          requirePinConfirmation
+          pinConfirmed={pinConfirmed}
+          onPinStatusChange={onPinStatusChange}
+          pinning={reversing || current.loading}
+        />
+        <AddressPreview
+          title={pinConfirmed ? 'Pinned location' : 'Location preview'}
+          placeName={picker.value.placeName}
+          address={picker.value.address}
+          updating={reversing || current.loading}
+          showCoords
+          latitude={picker.value.latitude}
+          longitude={picker.value.longitude}
+        />
+        {reverseError ? (
+          <Text style={[styles.hint, { color: colors.danger }]} accessibilityRole="alert">
+            Address unavailable. Your pin coordinates are kept; tap Pin location to retry.
+          </Text>
+        ) : null}
+        {current.error ? (
+          <LocationPermissionHandler
+            message={current.error}
+            onOpenSettings={current.openSettings}
+            onDismiss={() => current.setError(null)}
+          />
+        ) : null}
+      </ScrollView>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, Spacing.md), backgroundColor: colors.card, borderTopColor: colors.border }]}>
+        <CurrentLocationButton onPress={() => void onUseCurrent()} loading={current.loading} />
+        <Button
+          title={confirmLabel}
+          disabled={!canConfirm}
+          onPress={() => {
+            if (!canConfirm) return;
+            Keyboard.dismiss();
+            onConfirm(resolvePickedValue(picker.value));
+          }}
+        />
+      </View>
+    </KeyboardAvoidingView>
+  );
+}
+
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-    backgroundColor: Colors.background,
-  },
-  closeBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.inputBg,
-  },
-  title: {
-    flex: 1,
-    textAlign: 'center',
-    fontFamily: Fonts.bodyBold,
-    fontSize: 17,
-    color: Colors.dark,
-    paddingHorizontal: Spacing.sm,
-  },
-  sub: {
-    ...Typography.caption,
-    color: Colors.muted,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.sm,
-    lineHeight: 18,
-  },
-  searchWrap: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.sm,
-    zIndex: 20,
-  },
-  mapWrap: {
-    flex: 1,
-    minHeight: 220,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.sm,
-  },
-  footer: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    gap: Spacing.sm,
-    backgroundColor: Colors.background,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
-  },
+  root: { flex: 1 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingHorizontal: Spacing.lg, paddingBottom: Spacing.md },
+  back: { width: 44, height: 44, borderRadius: Radius.full, borderWidth: 1, alignItems: 'center', justifyContent: 'center', ...Shadows.soft },
+  headerSpacer: { width: 44 },
+  title: { flex: 1, textAlign: 'center', fontFamily: Fonts.bodyBold, fontSize: 18 },
+  content: { padding: Spacing.lg, gap: Spacing.md, width: '100%', maxWidth: 640, alignSelf: 'center' },
+  hint: { fontFamily: Fonts.body, fontSize: 14, lineHeight: 21 },
+  footer: { paddingTop: Spacing.md, paddingHorizontal: Spacing.lg, gap: Spacing.sm, borderTopWidth: StyleSheet.hairlineWidth },
 });

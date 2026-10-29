@@ -24,6 +24,7 @@ export type SearchSelectOption = {
 };
 
 type SearchSelectProps = {
+  disabled?: boolean;
   label: string;
   placeholder?: string;
   value?: string;
@@ -37,6 +38,7 @@ type SearchSelectProps = {
 };
 
 export function SearchSelect({
+  disabled = false,
   label,
   placeholder = 'Select…',
   value,
@@ -97,7 +99,9 @@ export function SearchSelect({
     <View style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
       <Pressable
-        style={[styles.field, error ? styles.fieldError : null]}
+        disabled={disabled}
+        accessibilityState={{ disabled }}
+        style={[styles.field, error ? styles.fieldError : null, disabled && { opacity: 0.72 }]}
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={label}

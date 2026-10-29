@@ -9,6 +9,14 @@ import {
 import type { Booking, CreateBookingPayload } from '@/types/booking';
 
 export async function createBooking(payload: CreateBookingPayload): Promise<Booking> {
+  const primaryName = payload.passengerDetails.name?.trim() || 'Passenger';
+  const primaryPhone = payload.passengerDetails.phone?.trim() || undefined;
+  // Backend requires passengerDetails.length === seats.length
+  const passengerDetails = payload.seats.map((_, index) => ({
+    name: index === 0 ? primaryName : `${primaryName} (${index + 1})`,
+    phone: primaryPhone,
+  }));
+
   const data = await post<AnyRecord>('/bookings', {
     bookingType: 'transport',
     paymentMethod: toBackendPaymentMethod(payload.paymentMethod),
@@ -16,12 +24,7 @@ export async function createBooking(payload: CreateBookingPayload): Promise<Book
       tripId: payload.tripId,
       seats: payload.seats,
       pickupPoint: payload.pickupPointId,
-      passengerDetails: [
-        {
-          name: payload.passengerDetails.name,
-          phone: payload.passengerDetails.phone,
-        },
-      ],
+      passengerDetails,
     },
   });
   return mapTransportBooking(data);
@@ -49,8 +52,13 @@ export async function getBookingById(id: string): Promise<Booking | null> {
   }
 }
 
-export async function cancelBooking(id: string): Promise<Booking> {
-  const data = await put<AnyRecord>(`/bookings/${id}/cancel`);
+export async function cancelBooking(
+  id: string,
+  options?: { replaced?: boolean }
+): Promise<Booking> {
+  const data = await put<AnyRecord>(`/bookings/${id}/cancel`, {
+    replaced: Boolean(options?.replaced),
+  });
   return mapTransportBooking(data);
 }
 

@@ -1,6 +1,26 @@
-export type BookingStatus = 'upcoming' | 'completed' | 'cancelled' | 'confirmed';
-export type PaymentMethod = 'card' | 'wallet' | 'cash';
-export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+export type BookingStatus = 'pending' | 'upcoming' | 'completed' | 'cancelled' | 'confirmed';
+export type PaymentMethod =
+  | 'card'
+  | 'wallet'
+  | 'cash'
+  | 'bankTransfer'
+  | 'easypaisa'
+  | 'jazzcash'
+  | 'raast';
+export type PaymentStatus =
+  | 'pending'
+  | 'unpaid'
+  | 'payment_initiated'
+  | 'proof_submitted'
+  | 'under_review'
+  | 'paid'
+  | 'confirmed'
+  | 'rejected'
+  | 'disputed'
+  | 'failed'
+  | 'refunded'
+  | 'refund_pending'
+  | 'expired';
 
 export interface PassengerDetails {
   name: string;
@@ -32,6 +52,8 @@ export interface Booking {
   passengerDetails: PassengerDetails;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
+  /** Linked P2P / gateway payment transaction id */
+  paymentId?: string;
   status: BookingStatus;
   priceBreakdown: PriceBreakdown;
   createdAt: string;
@@ -50,11 +72,22 @@ export interface CreateBookingPayload {
 
 export type NotificationType =
   | 'booking_confirmed'
+  | 'booking_pending'
+  | 'booking_request'
+  | 'booking_reminder'
   | 'trip_reminder'
   | 'pickup_reminder'
   | 'booking_cancelled'
   | 'payment_received'
-  | 'new_offer';
+  | 'payment_failed'
+  | 'payment_expired'
+  | 'new_offer'
+  | 'new_review'
+  | 'new_message'
+  | 'vehicle'
+  | 'cnic_verified'
+  | 'cnic_failed'
+  | 'system';
 
 export interface AppNotification {
   id: string;
@@ -65,4 +98,7 @@ export interface AppNotification {
   createdAt: string;
   bookingId?: string;
   offerId?: string;
+  conversationId?: string;
+  /** Chat peer user id (for opening the thread from a message notification). */
+  otherUserId?: string;
 }

@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '@/constants/colors';
 import { Fonts } from '@/constants/typography';
+import { Shadows } from '@/constants/theme';
 import { useChatStore } from '@/store/chatStore';
 
 export default function TabsLayout() {
@@ -19,16 +20,18 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: colors.mutedLight,
         tabBarHideOnKeyboard: true,
         tabBarStyle: {
-          backgroundColor: colors.surfaceSecondary,
+          backgroundColor: colors.card,
           borderTopColor: colors.border,
           borderTopWidth: StyleSheet.hairlineWidth,
-          height: 60 + Math.max(insets.bottom, 8),
-          paddingBottom: Math.max(insets.bottom, 8),
-          paddingTop: 8,
+          height: 58 + Math.max(insets.bottom, 6),
+          paddingBottom: Math.max(insets.bottom, 6),
+          paddingTop: 6,
+          ...Shadows.soft,
         },
         tabBarLabelStyle: {
-          fontFamily: Fonts.bodyMedium,
+          fontFamily: Fonts.bodySemiBold,
           fontSize: 11,
+          marginTop: 2,
         },
       }}
     >

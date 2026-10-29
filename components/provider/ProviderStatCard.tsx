@@ -1,7 +1,7 @@
-import { StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { Colors } from '@/constants/colors';
-import { Radius, Spacing } from '@/constants/spacing';
-import { Typography } from '@/constants/typography';
+import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { useThemeColors } from '@/constants/colors';
+import { Radius, Shadows, Spacing } from '@/constants/spacing';
+import { Fonts } from '@/constants/typography';
 
 interface StatCardProps {
   label: string;
@@ -10,37 +10,67 @@ interface StatCardProps {
   style?: ViewStyle;
 }
 
-const tones = {
-  blue: Colors.actionSoft,
-  amber: Colors.softAmber,
-  green: Colors.softGreen,
-  navy: Colors.primary,
-};
-
-const textTones = {
-  blue: Colors.action,
-  amber: '#B45309',
-  green: Colors.success,
-  navy: Colors.white,
-};
-
-export function ProviderStatCard({ label, value, tone = 'blue', style }: StatCardProps) {
+export function ProviderStatCard({
+  label,
+  value,
+  tone = 'blue',
+  style,
+}: StatCardProps) {
+  const colors = useThemeColors();
+  const tones = {
+    blue: colors.primary,
+    amber: colors.warning,
+    green: colors.action,
+    navy: colors.primary,
+  };
   return (
-    <View style={[styles.card, { backgroundColor: tones[tone] }, style]}>
-      <Text style={[styles.value, { color: textTones[tone] }]}>{value}</Text>
-      <Text style={[styles.label, { color: textTones[tone] }]}>{label}</Text>
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: colors.card, borderColor: colors.border },
+        style,
+      ]}
+    >
+      <View style={styles.heading}>
+        <View style={[styles.dot, { backgroundColor: tones[tone] }]} />
+        <Text style={[styles.label, { color: colors.muted }]}>{label}</Text>
+      </View>
+      <Text
+        style={[
+          styles.value,
+          { color: tone === 'green' ? colors.action : colors.dark },
+        ]}
+      >
+        {value}
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: '45%',
     minWidth: '45%',
     borderRadius: Radius.xl,
     padding: Spacing.lg,
-    gap: 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: Spacing.md,
+    ...Shadows.premium,
   },
-  value: { ...Typography.h2, fontWeight: '800' },
-  label: { ...Typography.caption, fontWeight: '600', opacity: 0.9 },
+  heading: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  dot: { width: 6, height: 6, borderRadius: Radius.full },
+  value: {
+    fontFamily: Fonts.display,
+    fontSize: 28,
+    lineHeight: 38,
+    letterSpacing: -0.5,
+    writingDirection: 'auto',
+  },
+  label: {
+    fontFamily: Fonts.bodyMedium,
+    fontSize: 12,
+    lineHeight: 20,
+    flex: 1,
+  },
 });

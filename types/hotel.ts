@@ -14,9 +14,29 @@ export type HotelAmenity =
   | 'Heating'
   | 'Laundry';
 
-export type HotelBookingStatus = 'upcoming' | 'confirmed' | 'completed' | 'cancelled';
-export type HotelPaymentMethod = 'card' | 'wallet' | 'cash';
-export type HotelPaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+export type HotelBookingStatus = 'pending' | 'upcoming' | 'confirmed' | 'completed' | 'cancelled';
+export type HotelPaymentMethod =
+  | 'card'
+  | 'wallet'
+  | 'cash'
+  | 'bankTransfer'
+  | 'easypaisa'
+  | 'jazzcash'
+  | 'raast';
+export type HotelPaymentStatus =
+  | 'pending'
+  | 'unpaid'
+  | 'payment_initiated'
+  | 'proof_submitted'
+  | 'under_review'
+  | 'paid'
+  | 'confirmed'
+  | 'rejected'
+  | 'disputed'
+  | 'failed'
+  | 'refunded'
+  | 'refund_pending'
+  | 'expired';
 export type HotelSortBy =
   | 'recommended'
   | 'price_asc'
@@ -47,6 +67,7 @@ export interface HotelRoom {
   pricePerNight: number;
   availableRooms: number;
   description: string;
+  roomType?: string;
 }
 
 export interface Hotel {
@@ -71,6 +92,18 @@ export interface Hotel {
   breakfastIncluded?: boolean;
   phone: string;
   email: string;
+  /** Owning provider profile id (for P2P payment accounts) */
+  providerId?: string;
+  /** Provider lodging profile fields (from hotelDetails) */
+  managerName?: string;
+  village?: string;
+  district?: string;
+  landline?: string;
+  yearsExperience?: number;
+  restaurantAvailable?: boolean;
+  googleMapsUrl?: string;
+  website?: string;
+  businessRegistered?: boolean;
 }
 
 export interface HotelSearchParams {
@@ -80,6 +113,8 @@ export interface HotelSearchParams {
   adults: number;
   children: number;
   rooms: number;
+  /** Free-text match on hotel name, city, or area */
+  query?: string;
 }
 
 export interface HotelFilters {
@@ -128,6 +163,7 @@ export interface HotelBooking {
   guest: HotelGuest;
   paymentMethod: HotelPaymentMethod;
   paymentStatus: HotelPaymentStatus;
+  paymentId?: string;
   status: HotelBookingStatus;
   priceBreakdown: HotelPriceBreakdown;
   createdAt: string;

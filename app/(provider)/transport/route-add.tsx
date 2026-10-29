@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PlaceAutocompleteSelect } from '@/components/ui/PlaceAutocompleteSelect';
+import { RouteStopFields } from '@/components/provider/RouteStopFields';
 import { Button } from '@/components/ui/Button';
 import { Header } from '@/components/ui/Header';
 import { Input } from '@/components/ui/Input';
@@ -13,7 +14,7 @@ import { Typography } from '@/constants/typography';
 import { getApiErrorMessage } from '@/services/apiError';
 import * as providerService from '@/services/providerService';
 import { useProviderStore } from '@/store/providerStore';
-import { formatCorridor } from '@/utils/corridors';
+import { displayStopName, formatCorridor, replaceCorridorStops, stopBelongsToRoute } from '@/utils/corridors';
 import { paramId } from '@/utils/navigation';
 import type { PlaceSearchResult } from '@/types/location';
 
@@ -55,6 +56,20 @@ export default function AddRouteScreen() {
   const [stops, setStops] = useState(
     paramId(params.stops) || existing?.stops?.join(', ') || ''
   );
+  const [pickups, setPickups] = useState(() =>
+    (provider?.transport?.pickupLocations ?? [])
+      .filter((item) =>
+        origin && destination ? stopBelongsToRoute(item, origin, destination) : false
+      )
+      .map(displayStopName)
+  );
+  const [dropoffs, setDropoffs] = useState(() =>
+    (provider?.transport?.dropoffLocations ?? [])
+      .filter((item) =>
+        origin && destination ? stopBelongsToRoute(item, origin, destination) : false
+      )
+      .map(displayStopName)
+  );
 
   const replaceProfileLabel = async (nextLabel: string) => {
     const current = provider?.transport?.operatingRoutes ?? [];
@@ -69,7 +84,22 @@ export default function AddRouteScreen() {
     const next = withoutOld.some((item) => item.toLowerCase() === nextLabel.toLowerCase())
       ? withoutOld
       : [...withoutOld, nextLabel];
-    setTransport({ ...provider?.transport, operatingRoutes: next });
+    setTransport({
+      ...provider?.transport,
+      operatingRoutes: next,
+      pickupLocations: replaceCorridorStops(
+        provider?.transport?.pickupLocations,
+        origin,
+        destination,
+        pickups
+      ),
+      dropoffLocations: replaceCorridorStops(
+        provider?.transport?.dropoffLocations,
+        origin,
+        destination,
+        dropoffs
+      ),
+    });
     await saveProgress();
   };
 
@@ -133,9 +163,23 @@ export default function AddRouteScreen() {
             const oldLabel =
               previousLabel ||
               (existing ? formatCorridor(existing.origin, existing.destination) : labelFallback(origin, destination));
+            const oldOrigin = existing?.origin || origin;
+            const oldDest = existing?.destination || destination;
             setTransport({
               ...provider?.transport,
               operatingRoutes: current.filter((item) => item !== oldLabel),
+              pickupLocations: replaceCorridorStops(
+                provider?.transport?.pickupLocations,
+                oldOrigin,
+                oldDest,
+                []
+              ),
+              dropoffLocations: replaceCorridorStops(
+                provider?.transport?.dropoffLocations,
+                oldOrigin,
+                oldDest,
+                []
+              ),
             });
             await saveProgress();
             await refreshDashboard();
@@ -153,7 +197,7 @@ export default function AddRouteScreen() {
       <Header
         title={isEditing ? 'Edit route' : 'Add route'}
         showBack
-        fallbackHref={'/(provider)/transport/index' as never}
+        fallbackHref={'/(provider)/transport' as never}
       />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
@@ -166,7 +210,8 @@ export default function AddRouteScreen() {
         >
           <Text style={styles.heading}>The corridor you drive</Text>
           <Text style={styles.sub}>
-            A route is Islamabad → Hunza. Pickup points are boarding spots — add those on Pickups.
+            A route is Islamabad → Hunza. Boarding is in the start city. Drop-off is in the end city for
+            this route only — add another route if you also drive somewhere else.
           </Text>
           <PlaceAutocompleteSelect
             label="From"
@@ -191,12 +236,22 @@ export default function AddRouteScreen() {
               setDestinationPlace(place);
             }}
           />
+          {origin.trim() && destination.trim() ? (
+            <RouteStopFields
+              origin={origin}
+              destination={destination}
+              pickups={pickups}
+              dropoffs={dropoffs}
+              onChangePickups={setPickups}
+              onChangeDropoffs={setDropoffs}
+            />
+          ) : null}
           <Input
             label="Stops along the way (optional)"
             value={stops}
             onChangeText={setStops}
             placeholder="Chilas, Gilgit"
-            hint="Comma-separated towns between From and To"
+            hint="Towns between From and To, not the drop-off in the destination"
           />
           <Button title={isEditing ? 'Save changes' : 'Save route'} loading={saving} onPress={() => void onSave()} />
           {isEditing ? <Button title="Remove route" variant="danger" onPress={onDelete} /> : null}

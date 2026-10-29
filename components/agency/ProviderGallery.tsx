@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
 import { useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/colors';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
@@ -23,35 +24,54 @@ export function ProviderGallery({ images }: ProviderGalleryProps) {
     [images]
   );
 
-  const visible = uris.filter((uri) => !failed[uri]);
-  if (!visible.length) return null;
+  if (!uris.length) {
+    return (
+      <View style={styles.empty}>
+        <Ionicons name="images-outline" size={28} color={Colors.muted} />
+        <Text style={styles.emptyText}>No photos uploaded yet</Text>
+      </View>
+    );
+  }
 
   const gap = Spacing.sm;
-  const tileWidth = (width - Spacing.screen * 2 - gap) / 2;
+  const tileWidth = Math.floor((width - Spacing.screen * 2 - gap) / 2);
+  const tileHeight = Math.floor(tileWidth * 0.75);
 
   return (
     <>
       <View style={styles.grid}>
-        {visible.map((uri) => (
-          <Pressable
-            key={uri}
-            onPress={() => setActive(uri)}
-            accessibilityRole="imagebutton"
-            accessibilityLabel="View provider photo"
-            style={({ pressed }) => [
-              styles.tile,
-              { width: tileWidth, opacity: pressed ? 0.92 : 1 },
-            ]}
-          >
-            <Image
-              source={{ uri }}
-              style={styles.image}
-              contentFit="cover"
-              transition={200}
-              onError={() => setFailed((current) => ({ ...current, [uri]: true }))}
-            />
-          </Pressable>
-        ))}
+        {uris.map((uri, index) => {
+          const broke = Boolean(failed[uri]);
+          return (
+            <Pressable
+              key={`${uri}-${index}`}
+              onPress={() => {
+                if (!broke) setActive(uri);
+              }}
+              accessibilityRole="imagebutton"
+              accessibilityLabel={`Provider photo ${index + 1}`}
+              style={({ pressed }) => [
+                styles.tile,
+                { width: tileWidth, height: tileHeight, opacity: pressed ? 0.92 : 1 },
+              ]}
+            >
+              {broke ? (
+                <View style={styles.fallback}>
+                  <Ionicons name="image-outline" size={28} color={Colors.muted} />
+                </View>
+              ) : (
+                <Image
+                  source={{ uri }}
+                  style={{ width: tileWidth, height: tileHeight }}
+                  contentFit="cover"
+                  transition={200}
+                  cachePolicy="memory-disk"
+                  onError={() => setFailed((current) => ({ ...current, [uri]: true }))}
+                />
+              )}
+            </Pressable>
+          );
+        })}
       </View>
 
       <Modal
@@ -87,14 +107,29 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   tile: {
-    aspectRatio: 4 / 3,
     borderRadius: Radius.lg,
     overflow: 'hidden',
     backgroundColor: Colors.surfaceSecondary,
   },
-  image: {
-    width: '100%',
-    height: '100%',
+  fallback: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  empty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing['2xl'],
+    backgroundColor: Colors.card,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  emptyText: {
+    fontFamily: Fonts.bodyMedium,
+    fontSize: 13,
+    color: Colors.muted,
   },
   modal: {
     flex: 1,

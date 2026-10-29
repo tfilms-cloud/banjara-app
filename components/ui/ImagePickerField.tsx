@@ -1,15 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Typography } from '@/constants/typography';
 import { normalizeMediaUrl } from '@/utils/mediaUrl';
+import { removeImage } from '@/services/uploadService';
+import { getApiErrorMessage } from '@/services/apiError';
 
 type Props = {
   urls: string[];
   localPreviews?: string[];
   uploading?: boolean;
+  disabled?: boolean;
+  storageReferences?: string[];
+  onRemovingChange?: (removing: boolean) => void;
   max?: number;
   label?: string;
   onAdd: () => void;
@@ -20,13 +26,37 @@ export function ImagePickerField({
   urls,
   localPreviews = [],
   uploading,
+  disabled = false,
+  storageReferences,
+  onRemovingChange,
   max = 5,
   label = 'Photos',
   onAdd,
   onRemove,
 }: Props) {
+  const [removing, setRemoving] = useState<number | null>(null);
+  const [removeError, setRemoveError] = useState('');
+  const [removeNotice, setRemoveNotice] = useState('');
+  const removingRef = useRef(false);
   const previews = [...urls, ...localPreviews.filter((uri) => !urls.includes(uri))];
-  const canAdd = previews.length < max && !uploading;
+  const blocked = disabled || Boolean(uploading) || removing !== null;
+  const canAdd = previews.length < max && !blocked;
+
+  const remove = async (index: number, uri: string) => {
+    if (blocked || removingRef.current) return;
+    removingRef.current = true;
+    setRemoving(index); setRemoveError(''); setRemoveNotice(''); onRemovingChange?.(true);
+    try {
+      const result = await removeImage(storageReferences?.[index] || uri);
+      onRemove(index);
+      if (result.status === 'pending') setRemoveNotice('Removal queued. Save your changes to remove photos from saved records.');
+    } catch (error) {
+      setRemoveError(`${getApiErrorMessage(error)} Tap × to retry.`);
+    } finally {
+      removingRef.current = false;
+      setRemoving(null); onRemovingChange?.(false);
+    }
+  };
 
   return (
     <View style={styles.wrap}>
@@ -41,11 +71,14 @@ export function ImagePickerField({
             />
             <Pressable
               style={styles.remove}
-              onPress={() => onRemove(index)}
+              onPress={() => void remove(index, uri)}
+              disabled={blocked}
+              hitSlop={10}
               accessibilityRole="button"
               accessibilityLabel="Remove photo"
+              accessibilityState={{ disabled: blocked, busy: removing === index }}
             >
-              <Ionicons name="close" size={14} color={Colors.white} />
+              {removing === index ? <ActivityIndicator size="small" color={Colors.white} /> : <Ionicons name="close" size={14} color={Colors.white} />}
             </Pressable>
           </View>
         ))}
@@ -72,6 +105,8 @@ export function ImagePickerField({
           </View>
         ) : null}
       </ScrollView>
+      {removeError ? <Text style={styles.error} accessibilityRole="alert">{removeError}</Text> : null}
+      {removeNotice ? <Text style={styles.hint} accessibilityLiveRegion="polite">{removeNotice}</Text> : null}
       <Text style={styles.hint}>
         {previews.length}/{max} photos · stored securely and linked automatically
       </Text>
@@ -115,4 +150,5 @@ const styles = StyleSheet.create({
   },
   addText: { ...Typography.caption, color: Colors.secondary, fontWeight: '600' },
   hint: { ...Typography.small, color: Colors.muted },
+  error: { ...Typography.small, color: Colors.danger },
 });

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { forwardRef, useState } from 'react';
+import { forwardRef, useContext, useState } from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -8,6 +8,7 @@ import {
   type TextInputProps,
   View,
 } from 'react-native';
+import { AuthContext } from '@/components/auth/AuthContext';
 import { useThemeColors } from '@/constants/colors';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Fonts, Typography } from '@/constants/typography';
@@ -46,6 +47,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
   const [revealed, setRevealed] = useState(false);
   const disabled = editable === false;
   const colors = useThemeColors();
+  const authContext = useContext(AuthContext);
 
   const isPassword =
     password ||
@@ -94,7 +96,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
           accessibilityLabel={label}
           accessibilityState={{ disabled }}
           {...props}
-          style={[styles.input, { color: colors.dark }, disabled && { color: colors.muted }, style]}
+          style={[styles.input, { color: colors.dark }, props.multiline && { minHeight: 104, textAlignVertical: 'top', paddingTop: 14 }, disabled && { color: colors.muted }, style]}
           secureTextEntry={hideSecret}
           autoComplete={autoComplete ?? (isPassword ? 'password' : undefined)}
           autoCorrect={isPassword ? false : props.autoCorrect}
@@ -111,6 +113,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
           onFocus={(e) => {
             setFocused(true);
             onFocus?.(e);
+            authContext.onInputFocus?.(e.target);
           }}
           onBlur={(e) => {
             setFocused(false);
@@ -173,8 +176,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: Fonts.body,
     fontSize: 16,
-    paddingVertical: Spacing.md,
-    marginLeft: Spacing.sm,
+    minHeight: 52,
+    paddingVertical: 12,
+    paddingHorizontal: 0,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   icon: {
     marginRight: 2,

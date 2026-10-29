@@ -43,6 +43,8 @@ export function SeatMap({ layout, selectedSeats, onToggleSeat }: SeatMapProps) {
             return (
               <View key={`row-${rowNumber}`} style={styles.row}>
                 {rowSeats.map((seat) => {
+                  // Own selection always wins visually so going back from payment
+                  // doesn't show selected seats as "unavailable" while still held.
                   const displaySeat: SeatType = selectedSeats.includes(seat.label)
                     ? { ...seat, status: 'selected' }
                     : seat;

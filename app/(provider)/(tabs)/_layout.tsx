@@ -1,10 +1,13 @@
 import { Grid2x2, Layers, Ticket, User, Wallet } from 'lucide-react-native';
 import { Tabs, Redirect } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PaymentAccountsRequiredModal } from '@/components/provider/PaymentAccountsRequiredModal';
 import { useThemeColors } from '@/constants/colors';
 import { Fonts } from '@/constants/typography';
+import { usePaymentAccountsGate } from '@/hooks/usePaymentAccountsGate';
 import { useAuthStore } from '@/store/authStore';
+import { useProviderStore } from '@/store/providerStore';
 import { needsProviderOnboarding } from '@/utils/routing';
 
 export default function ProviderTabsLayout() {
@@ -12,6 +15,9 @@ export default function ProviderTabsLayout() {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const colors = useThemeColors();
+  const provider = useProviderStore((s) => s.provider);
+  const { promptVisible, dismiss, goToSetup } = usePaymentAccountsGate();
+  const hasServices = (provider?.services?.length ?? 0) > 0;
 
   if (!isAuthenticated) {
     return <Redirect href="/(auth)/login" />;
@@ -30,61 +36,79 @@ export default function ProviderTabsLayout() {
   }
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.mutedLight,
-        tabBarHideOnKeyboard: true,
-        tabBarStyle: {
-          backgroundColor: colors.surfaceSecondary,
-          borderTopColor: colors.border,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          height: 60 + Math.max(insets.bottom, 8),
-          paddingBottom: Math.max(insets.bottom, 8),
-          paddingTop: 8,
-        },
-        tabBarLabelStyle: {
-          fontFamily: Fonts.bodyMedium,
-          fontSize: 11,
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => <Grid2x2 size={size ?? 22} color={color} strokeWidth={2} />,
+    <View style={{ flex: 1 }}>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: colors.primary,
+          tabBarInactiveTintColor: colors.mutedLight,
+          tabBarHideOnKeyboard: true,
+          tabBarStyle: {
+            backgroundColor: colors.surfaceSecondary,
+            borderTopColor: colors.border,
+            borderTopWidth: StyleSheet.hairlineWidth,
+            height: 60 + Math.max(insets.bottom, 8),
+            paddingBottom: Math.max(insets.bottom, 8),
+            paddingTop: 8,
+          },
+          tabBarLabelStyle: {
+            fontFamily: Fonts.bodyMedium,
+            fontSize: 11,
+          },
         }}
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Dashboard',
+            tabBarIcon: ({ color, size }) => (
+              <Grid2x2 size={size ?? 22} color={color} strokeWidth={2} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="services"
+          options={{
+            title: 'Service',
+            tabBarIcon: ({ color, size }) => (
+              <Layers size={size ?? 22} color={color} strokeWidth={2} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="bookings"
+          options={{
+            title: 'Bookings',
+            tabBarIcon: ({ color, size }) => (
+              <Ticket size={size ?? 22} color={color} strokeWidth={2} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="earnings"
+          options={{
+            title: 'Earnings',
+            tabBarIcon: ({ color, size }) => (
+              <Wallet size={size ?? 22} color={color} strokeWidth={2} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: 'Profile',
+            tabBarIcon: ({ color, size }) => (
+              <User size={size ?? 22} color={color} strokeWidth={2} />
+            ),
+          }}
+        />
+      </Tabs>
+
+      <PaymentAccountsRequiredModal
+        visible={promptVisible && hasServices}
+        onSetup={goToSetup}
+        onLater={dismiss}
       />
-      <Tabs.Screen
-        name="services"
-        options={{
-          title: 'Service',
-          tabBarIcon: ({ color, size }) => <Layers size={size ?? 22} color={color} strokeWidth={2} />,
-        }}
-      />
-      <Tabs.Screen
-        name="bookings"
-        options={{
-          title: 'Bookings',
-          tabBarIcon: ({ color, size }) => <Ticket size={size ?? 22} color={color} strokeWidth={2} />,
-        }}
-      />
-      <Tabs.Screen
-        name="earnings"
-        options={{
-          title: 'Earnings',
-          tabBarIcon: ({ color, size }) => <Wallet size={size ?? 22} color={color} strokeWidth={2} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, size }) => <User size={size ?? 22} color={color} strokeWidth={2} />,
-        }}
-      />
-    </Tabs>
+    </View>
   );
 }

@@ -7,28 +7,26 @@
     "icon": "./assets/icon.png",
     "scheme": "banjara",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#F8FAFC"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.banjara.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Banjara uses your location so you can set your business pin and find nearby pickup points."
+        "NSLocationWhenInUseUsageDescription": "Banjara uses your location so you can set your business pin and find nearby pickup points.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#F8FAFC",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "com.banjara.app",
-      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ],
       "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
@@ -61,10 +59,30 @@
         {
           "photosPermission": "Allow Banjara to access your photos so you can upload vehicle, hotel, avatar, and chat images."
         }
-      ]
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#0F766E",
+          "sounds": [],
+          "defaultChannel": "banjara-default"
+        }
+      ],
+      "expo-image",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "sitemap": false
+      },
+      "eas": {
+        "projectId": "ed12ecb7-72b6-40be-9a44-cf166b8d4092"
+      }
+    },
+    "owner": "aurakhalil"
   }
 }

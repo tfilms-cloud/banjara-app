@@ -1,8 +1,10 @@
-import { MapPin, ShieldCheck, Bus } from 'lucide-react-native';
+import { ShieldCheck } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { BrandMark } from '@/components/brand/BrandMark';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
@@ -15,7 +17,6 @@ import { useAuthStore } from '@/store/authStore';
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
   const setOnboarded = useAuthStore((state) => state.setOnboarded);
-  const continueAsGuest = useAuthStore((state) => state.continueAsGuest);
 
   return (
     <View style={styles.container}>
@@ -37,9 +38,7 @@ export default function WelcomeScreen() {
       >
         <Animated.View entering={FadeIn.duration(600)} style={styles.top}>
           <View style={styles.logoRow}>
-            <View style={styles.logoMark}>
-              <MapPin size={22} color={Colors.accent} strokeWidth={2.2} />
-            </View>
+            <BrandMark size={48} />
             <Text style={styles.brand}>{Brand.name}</Text>
           </View>
 
@@ -64,7 +63,7 @@ export default function WelcomeScreen() {
               <Text style={styles.trustText}>Verified providers</Text>
             </View>
             <View style={styles.trustItem}>
-              <Bus size={16} color={Colors.accent} strokeWidth={2} />
+              <Ionicons name="bus" size={16} color={Colors.accent} />
               <Text style={styles.trustText}>Live seat maps</Text>
             </View>
           </View>
@@ -87,17 +86,6 @@ export default function WelcomeScreen() {
                 router.push('/(auth)/login');
               }}
             />
-            <Pressable
-              onPress={async () => {
-                await continueAsGuest();
-                router.replace('/(customer)/(tabs)');
-              }}
-              accessibilityRole="button"
-              hitSlop={8}
-              style={styles.guestHit}
-            >
-              <Text style={styles.guest}>Continue as guest</Text>
-            </Pressable>
           </View>
         </Animated.View>
       </View>
@@ -123,14 +111,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
     marginBottom: Spacing.sm,
-  },
-  logoMark: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   brand: {
     fontFamily: Fonts.bodyBold,
@@ -198,16 +178,5 @@ const styles = StyleSheet.create({
   signIn: {
     borderColor: Colors.border,
     backgroundColor: Colors.card,
-  },
-  guestHit: {
-    alignItems: 'center',
-    paddingVertical: Spacing.sm,
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  guest: {
-    fontFamily: Fonts.bodySemiBold,
-    fontSize: 14,
-    color: Colors.muted,
   },
 });

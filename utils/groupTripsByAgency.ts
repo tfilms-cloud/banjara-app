@@ -45,5 +45,9 @@ export function groupTripsByAgency(trips: TripWithDetails[]): AgencyTripGroup[] 
     else existing.oneWayCount += 1;
   }
 
-  return Array.from(map.values()).sort((a, b) => b.tripCount - a.tripCount);
+  return Array.from(map.values()).sort((a, b) => {
+    const ratingDiff = (b.agency.rating || 0) - (a.agency.rating || 0);
+    if (ratingDiff !== 0) return ratingDiff;
+    return b.tripCount - a.tripCount;
+  });
 }

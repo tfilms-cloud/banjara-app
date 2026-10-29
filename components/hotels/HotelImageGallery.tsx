@@ -1,6 +1,12 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { Colors } from '@/constants/colors';
 import { Radius, Spacing } from '@/constants/spacing';
 import { FavoriteButton } from './FavoriteButton';
@@ -10,21 +16,31 @@ interface HotelImageGalleryProps {
   images: string[];
   hotelId?: string;
   height?: number;
+  width?: number;
 }
 
-export function HotelImageGallery({ images, hotelId, height = 240 }: HotelImageGalleryProps) {
-  const { width } = useWindowDimensions();
+export function HotelImageGallery({
+  images,
+  hotelId,
+  height = 240,
+  width: requestedWidth,
+}: HotelImageGalleryProps) {
+  const { width: screenWidth } = useWindowDimensions();
+  const width = Math.max(
+    1,
+    Math.min(requestedWidth ?? screenWidth, screenWidth),
+  );
   const [active, setActive] = useState(0);
 
   return (
-    <View style={[styles.wrap, { height }]}>
+    <View style={[styles.wrap, { height, width }]}>
       <ScrollView
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={(event) => {
           const index = Math.round(
-            event.nativeEvent.contentOffset.x / event.nativeEvent.layoutMeasurement.width
+            event.nativeEvent.contentOffset.x / event.nativeEvent.layoutMeasurement.width,
           );
           setActive(index);
         }}

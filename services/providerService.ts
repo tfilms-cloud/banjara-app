@@ -1,6 +1,9 @@
 import { del, get, post, put } from '@/services/api';
 import { ApiError } from '@/services/apiError';
-import { DEFAULT_DOCUMENTS } from '@/constants/providerOptions';
+import { withoutDriverPhoto } from '@/utils/agencyGallery';
+import { normalizeMediaUrl } from '@/utils/mediaUrl';
+import { DEFAULT_DOCUMENTS, defaultStayType, normalizeServiceKey } from '@/constants/providerOptions';
+import { mapGuidePublicFromRaw } from '@/services/guideBookingService';
 import {
   asArray,
   mapAvailabilityDay,
@@ -39,13 +42,16 @@ import type {
 
 function mapFrontendServicesToBackend(
   services: ProviderServiceType[]
-): Array<'transport' | 'hotel' | 'tour' | 'carRental' | 'travelGuide'> {
-  const set = new Set<'transport' | 'hotel' | 'tour' | 'carRental' | 'travelGuide'>();
+): Array<'transport' | 'hotel' | 'tour' | 'carRental' | 'travelGuide' | 'restaurant'> {
+  const set = new Set<'transport' | 'hotel' | 'tour' | 'carRental' | 'travelGuide' | 'restaurant'>();
   for (const service of services) {
-    if (service === 'hotel' || service === 'guestHouse') set.add('hotel');
-    else if (service === 'tour' || service === 'travelAgency') set.add('tour');
-    else if (service === 'travelGuide') set.add('travelGuide');
-    else if (service === 'carRental') set.add('carRental');
+    const key = normalizeServiceKey(service);
+    if (key === 'hotel' || key === 'guestHouse') set.add('hotel');
+    else if (key === 'tour' || key === 'travelAgency') set.add('tour');
+    else if (key === 'travelGuide') set.add('travelGuide');
+    else if (key === 'carRental') set.add('carRental');
+    else if (key === 'restaurant') set.add('restaurant');
+    else if (key === 'transport' || key === 'van' || key === 'bus') set.add('transport');
     else set.add('transport');
   }
   return Array.from(set);
@@ -54,7 +60,8 @@ function mapFrontendServicesToBackend(
 function mapFrontendProviderTypes(services: ProviderServiceType[]): string[] {
   const types: string[] = [];
   for (const service of services) {
-    switch (service) {
+    const key = normalizeServiceKey(service);
+    switch (key) {
       case 'transport':
       case 'van':
         types.push('vanOperator');
@@ -80,17 +87,86 @@ function mapFrontendProviderTypes(services: ProviderServiceType[]): string[] {
       case 'travelAgency':
         types.push('travelAgency');
         break;
+      case 'restaurant':
+        types.push('restaurant');
+        break;
       default:
         types.push('vanOperator');
     }
   }
-  return types.length ? types : ['vanOperator'];
+  return types.length ? types.slice(0, 1) : ['vanOperator'];
 }
 
 export async function getProviderProfile(_providerId?: string): Promise<Provider | null> {
   try {
     const data = await get<AnyRecord>('/providers/me');
     return mapProvider(data);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
+}
+
+/** Public traveler profile (no auth required). */
+export async function getPublicProviderById(id: string): Promise<Provider | null> {
+  if (!id) return null;
+  try {
+    const data = await get<AnyRecord>(`/providers/public/${id}`, {
+      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+      params: { _ts: Date.now() },
+    });
+
+    let mapped: Provider;
+    try {
+      mapped = mapProvider(data);
+    } catch {
+      mapped = {
+        id: String(data._id ?? id),
+        userId: String(data.userId ?? ''),
+        businessName: String(data.businessName ?? 'Provider'),
+        ownerName: String(data.ownerName ?? ''),
+        email: String(data.email ?? ''),
+        phone: String(data.phone ?? ''),
+        description: String(data.description ?? ''),
+        address: String(data.address ?? ''),
+        city: String(data.city ?? ''),
+        logo: data.logo ? String(data.logo) : undefined,
+        services: [],
+        verificationStatus: (data.verificationStatus as Provider['verificationStatus']) ?? 'pending',
+        rating: Number(data.rating ?? 0),
+        reviewCount: Number(data.totalReviews ?? 0),
+        yearsExperience: Number(data.yearsExperience ?? 0),
+        documents: [],
+        createdAt: String(data.createdAt ?? ''),
+        updatedAt: String(data.updatedAt ?? ''),
+      };
+    }
+
+    const transport = (data.transportDetails ?? data.transport) as AnyRecord | undefined;
+    const fleet = Array.isArray(data.fleetVehicles) ? (data.fleetVehicles as AnyRecord[]) : [];
+    const extraGallery = [
+      ...(Array.isArray(data.galleryImages) ? data.galleryImages : []),
+      mapped.logo,
+      transport?.vehicleImageFront,
+      transport?.vehicleImageBack,
+      ...fleet.flatMap((v) => (Array.isArray(v.images) ? v.images : [])),
+      ...(mapped.galleryImages ?? []),
+      mapped.transport?.vehicleImageFront,
+      mapped.transport?.vehicleImageBack,
+    ]
+      .map((item) => (item == null ? '' : normalizeMediaUrl(String(item).trim()) ?? String(item).trim()))
+      .filter(Boolean);
+
+    const guideDetails = mapGuidePublicFromRaw(data.guideDetails as AnyRecord);
+
+    return {
+      ...mapped,
+      guideDetails: guideDetails ?? mapped.guideDetails,
+      galleryImages: withoutDriverPhoto(
+        extraGallery,
+        mapped.transport?.driverPhoto ?? (typeof transport?.driverPhoto === 'string' ? transport.driverPhoto : undefined)
+      ),
+    };
   } catch {
     return null;
   }
@@ -130,10 +206,18 @@ export function buildProviderApplicationPayload(draft: ProviderOnboardingDraft) 
     city: (draft.location?.address.city || draft.business.city || '').trim(),
     latitude: draft.location?.latitude,
     longitude: draft.location?.longitude,
+    structuredAddress: draft.location?.address,
     yearsExperience: draft.business.yearsExperience ?? 0,
     transportDetails: hasNamedDetails(draft.transport) ? draft.transport : undefined,
-    hotelDetails: hasNamedDetails(draft.hotel) ? draft.hotel : undefined,
+    hotelDetails: draft.hotel && hasNamedDetails(draft.hotel)
+      ? {
+          ...draft.hotel,
+          hotelType: defaultStayType(draft.selectedServices, draft.hotel.hotelType),
+        }
+      : undefined,
     tourDetails: hasNamedDetails(draft.tour) ? draft.tour : undefined,
+    guideDetails: hasNamedDetails(draft.guide) ? draft.guide : undefined,
+    restaurantDetails: hasNamedDetails(draft.restaurant) ? draft.restaurant : undefined,
   };
 
   return payload;
@@ -182,6 +266,7 @@ export async function updateProviderProfile(
     hotelDetails: patch.hotel,
     transportDetails: patch.transport,
     tourDetails: patch.tour,
+    restaurantDetails: patch.restaurant,
   });
   return mapProvider(data);
 }
@@ -227,12 +312,25 @@ export async function getProviderVehicles(_providerId?: string): Promise<Provide
   return asArray<AnyRecord>(data).map(mapProviderVehicle);
 }
 
+function normalizeApiVehicleType(
+  type: string | undefined
+): 'van' | 'minibus' | 'bus' | 'car' | 'suv' | 'other' {
+  const raw = String(type ?? 'van').trim().toLowerCase();
+  if (raw === 'jeep') return 'suv';
+  if (raw === 'mini_bus' || raw === 'mini-bus') return 'minibus';
+  if (raw === 'bus' || raw === 'car' || raw === 'minibus' || raw === 'suv' || raw === 'van') {
+    return raw;
+  }
+  return 'other';
+}
+
 export async function createVehicle(
   payload: Omit<ProviderVehicle, 'id'>
 ): Promise<ProviderVehicle> {
   const data = await post<AnyRecord>('/vehicles', {
     name: payload.name,
-    type: payload.type === 'minibus' ? 'minibus' : payload.type,
+    verificationDetails: payload.verificationDetails,
+    type: normalizeApiVehicleType(payload.type),
     brand: payload.model || payload.name,
     vehicleModel: payload.model,
     year: payload.year,
@@ -250,7 +348,8 @@ export async function updateVehicle(
 ): Promise<ProviderVehicle> {
   const data = await put<AnyRecord>(`/vehicles/${vehicleId}`, {
     name: patch.name,
-    type: patch.type,
+    verificationDetails: patch.verificationDetails,
+    type: patch.type ? normalizeApiVehicleType(patch.type) : undefined,
     vehicleModel: patch.model,
     year: patch.year,
     registrationNumber: patch.registrationNumber,
@@ -287,6 +386,7 @@ export async function createTrip(payload: Omit<ProviderTrip, 'id'>): Promise<Pro
     journeyType: payload.journeyType ?? 'one_way',
     returnDate: payload.returnDate,
     returnTime: payload.returnTime,
+    bookingMode: payload.bookingMode ?? 'seat',
   });
   return mapProviderTrip(data);
 }
@@ -301,16 +401,22 @@ export async function updateTrip(
     departureDate: patch.departureDate,
     departureTime: patch.departureTime,
     arrivalTime: patch.arrivalTime,
+    pickupPoints: patch.pickupPoints,
+    dropoffPoints: patch.dropoffPoints,
     price: patch.price,
     amenities: patch.amenities,
     description: patch.description,
-    status: patch.status === 'cancelled' ? 'cancelled' : undefined,
+    journeyType: patch.journeyType,
+    returnDate: patch.returnDate,
+    returnTime: patch.returnTime,
+    bookingMode: patch.bookingMode,
   });
   return mapProviderTrip(data);
 }
 
 export async function cancelTrip(tripId: string): Promise<ProviderTrip> {
-  return updateTrip(tripId, { status: 'cancelled' });
+  const data = await del<AnyRecord>(`/trips/${tripId}`);
+  return mapProviderTrip(data);
 }
 
 export async function getProviderRoutes(_providerId?: string): Promise<ProviderRoute[]> {
@@ -469,6 +575,9 @@ export async function updateRoom(
     cancellationPolicy: patch.freeCancellation ? 'Free cancellation' : 'Non-refundable',
     images: patch.images,
     status: patch.available === false ? 'inactive' : patch.available === true ? 'active' : undefined,
+    discountPercent: patch.discountPercent,
+    offerNote: patch.offerNote,
+    availableCount: patch.availableCount,
   });
   return mapProviderRoom(data);
 }
@@ -483,7 +592,9 @@ export async function getRoomAvailability(roomId: string): Promise<RoomAvailabil
 }
 
 export async function getProviderBookings(_providerId?: string): Promise<ProviderBooking[]> {
-  const data = await get<unknown>('/providers/bookings');
+  const data = await get<unknown>('/providers/bookings', {
+    params: { limit: 100 },
+  });
   return asArray<AnyRecord>(data).map(mapProviderBooking);
 }
 
@@ -518,15 +629,31 @@ export async function getPassengers(providerId: string): Promise<ProviderPasseng
   return bookings
     .filter((booking) => booking.kind === 'transport')
     .flatMap((booking) => {
-      const seats = booking.seatsOrRoom.split(',').map((s) => s.trim()).filter(Boolean);
+      const seats = booking.seats.length
+        ? booking.seats
+        : booking.seatsOrRoom.split(',').map((s) => s.trim()).filter(Boolean);
+      if (!seats.length) {
+        return [
+          {
+            id: `${booking.id}-0`,
+            bookingId: booking.id,
+            name: booking.passengers[0]?.name || booking.customerName,
+            seat: '—',
+            pickup: booking.pickup ?? '',
+            dropoff: booking.dropoff ?? '',
+            phone: booking.passengers[0]?.phone || booking.customerPhone,
+            status: booking.status,
+          },
+        ];
+      }
       return seats.map((seat, index) => ({
         id: `${booking.id}-${index}`,
         bookingId: booking.id,
-        name: booking.customerName,
+        name: booking.passengers[index]?.name || booking.customerName,
         seat,
         pickup: booking.pickup ?? '',
-        dropoff: '',
-        phone: booking.customerPhone,
+        dropoff: booking.dropoff ?? '',
+        phone: booking.passengers[index]?.phone || booking.customerPhone,
         status: booking.status,
       }));
     });
@@ -615,11 +742,19 @@ export async function getDashboardStats(_providerId?: string): Promise<ProviderD
 
 export async function submitProviderApplication(
   draft: ProviderOnboardingDraft,
-  _userId: string
+  _userId: string,
+  existingProviderId?: string
 ): Promise<Provider> {
-  const provider = await saveProviderProgress(draft);
+  const provider = await saveProviderProgress(draft, existingProviderId);
+  if (draft.selectedServices.includes('transport')) {
+    return mapProvider(await post<AnyRecord>('/providers/me/onboarding/submit', {}));
+  }
   provider.documents = DEFAULT_DOCUMENTS.map((doc) => ({ ...doc, status: 'pending' as const }));
   return provider;
+}
+
+export async function saveOnboardingCheckpoint(step: 'location' | 'transport' | 'vehicle', vehicleId?: string): Promise<Provider> {
+  return mapProvider(await post<AnyRecord>('/providers/me/onboarding/checkpoint', { step, vehicleId }));
 }
 
 export async function getProviderStatus() {

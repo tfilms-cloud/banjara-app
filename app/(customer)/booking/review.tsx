@@ -27,7 +27,12 @@ export default function BookingReviewScreen() {
   if (!selectedTrip || !selectedPickup || !priceBreakdown) {
     return (
       <View style={styles.container}>
-        <Header title="Review Booking" onBack={() => router.back()} />
+        <Header
+          title="Review Booking"
+          showBack
+          fallbackHref="/(customer)/(tabs)"
+          onBack={() => router.back()}
+        />
         <Text style={styles.empty}>Complete trip, pickup and seat selection first.</Text>
       </View>
     );
@@ -35,7 +40,22 @@ export default function BookingReviewScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="Review Booking" onBack={() => router.back()} />
+      <Header
+        title="Review Booking"
+        showBack
+        fallbackHref={
+          selectedTrip?.id
+            ? (`/(customer)/seat/${selectedTrip.id}` as never)
+            : '/(customer)/(tabs)'
+        }
+        onBack={() => {
+          if (selectedTrip?.id) {
+            router.push(`/(customer)/seat/${selectedTrip.id}`);
+            return;
+          }
+          router.back();
+        }}
+      />
       <ScrollView contentContainerStyle={{ padding: Spacing.lg, paddingBottom: insets.bottom + 100, gap: Spacing.lg }}>
         <View style={styles.card}>
           <Text style={styles.route}>

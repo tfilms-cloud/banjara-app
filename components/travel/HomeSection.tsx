@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { ChevronRight } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useThemeColors } from '@/constants/colors';
 import { Spacing } from '@/constants/spacing';
@@ -34,7 +35,10 @@ export function HomeSection({
             accessibilityRole="button"
             accessibilityLabel={actionLabel}
           >
-            <Text style={[styles.action, { color: colors.primary }]}>{actionLabel}</Text>
+            <View style={styles.actionRow}>
+              <Text style={[styles.action, { color: colors.primary }]}>{actionLabel}</Text>
+              <ChevronRight size={14} color={colors.primary} strokeWidth={2.4} />
+            </View>
           </Pressable>
         ) : null}
       </View>
@@ -51,7 +55,7 @@ const styles = StyleSheet.create({
   head: {
     paddingHorizontal: Spacing.screen,
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'flex-end',
     justifyContent: 'space-between',
   },
   copy: {
@@ -60,21 +64,27 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: Fonts.display,
-    fontSize: 18,
-    lineHeight: 24,
-    letterSpacing: -0.2,
+    fontSize: 19,
+    lineHeight: 25,
+    letterSpacing: -0.3,
   },
   subtitle: {
     fontFamily: Fonts.body,
     fontSize: 12,
-    marginTop: 4,
+    marginTop: 3,
   },
   actionHit: {
-    minHeight: 44,
+    minHeight: 40,
     justifyContent: 'center',
+    paddingLeft: Spacing.sm,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
   },
   action: {
-    fontFamily: Fonts.bodyMedium,
+    fontFamily: Fonts.bodySemiBold,
     fontSize: 13,
   },
 });

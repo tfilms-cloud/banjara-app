@@ -1,7 +1,6 @@
 import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
-import { Colors } from '@/constants/colors';
+import { BrandSplash } from '@/components/brand/BrandSplash';
 import { useAuthStore } from '@/store/authStore';
 import { getHomeHref } from '@/utils/routing';
 
@@ -18,18 +17,7 @@ export default function Index() {
   }, []);
 
   if (!hydrated) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: Colors.background,
-        }}
-      >
-        <ActivityIndicator size="large" color={Colors.secondary} />
-      </View>
-    );
+    return <BrandSplash />;
   }
 
   if (!hasOnboarded && !isAuthenticated) {

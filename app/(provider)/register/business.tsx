@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   Alert,
@@ -17,26 +17,39 @@ import { LocationPinField, formatPickedAddress, formatPickedPlace } from '@/comp
 import { Button } from '@/components/ui/Button';
 import { Header } from '@/components/ui/Header';
 import { Input } from '@/components/ui/Input';
+import { SearchSelect } from '@/components/ui/SearchSelect';
 import { Colors } from '@/constants/colors';
 import { Spacing } from '@/constants/spacing';
+import { TRIP_CITY_OPTIONS } from '@/constants/tripPlaces';
 import { Typography } from '@/constants/typography';
 import { getApiErrorMessage } from '@/services/apiError';
 import { useProviderStore } from '@/store/providerStore';
+import { useAuthStore } from '@/store/authStore';
 
 const schema = z.object({
   businessName: z.string().min(2, 'Enter business name'),
   ownerName: z.string().min(2, 'Enter owner name'),
-  phone: z.string().min(10, 'Enter phone'),
+  phone: z.string().refine((value) => /^\+?\d{10,15}$/.test(value.replace(/[\s()-]/g, '')), 'Enter a valid phone number (10–15 digits)'),
   email: z.string().email('Enter email'),
   description: z.string().min(10, 'Add a short description'),
-  city: z.string().min(2, 'Enter city'),
-  address: z.string().min(5, 'Enter address'),
-  yearsExperience: z.string().min(1, 'Enter years'),
+  city: z.string().min(2, 'Select a city'),
+  address: z.string().min(5, 'Enter address or pin on the map'),
+  yearsExperience: z.string().regex(/^\d+$/, 'Enter whole years, including 0').refine((value) => Number(value) <= 100, 'Enter 0 to 100 years'),
   website: z.string().optional(),
   socialMedia: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
+
+function matchCityOption(placeName: string | undefined): string | undefined {
+  const raw = String(placeName ?? '').trim().toLowerCase();
+  if (!raw) return undefined;
+  const exact = TRIP_CITY_OPTIONS.find((city) => city.toLowerCase() === raw);
+  if (exact) return exact;
+  return TRIP_CITY_OPTIONS.find(
+    (city) => raw.includes(city.toLowerCase()) || city.toLowerCase().includes(raw)
+  );
+}
 
 export default function ProviderBusinessScreen() {
   const insets = useSafeAreaInsets();
@@ -45,38 +58,35 @@ export default function ProviderBusinessScreen() {
   const setLocationDraft = useProviderStore((state) => state.setLocationDraft);
   const saveProgress = useProviderStore((state) => state.saveProgress);
   const saving = useProviderStore((state) => state.saving);
-  const provider = useProviderStore((state) => state.provider);
+  const user = useAuthStore((state) => state.user);
+  const cached = useMemo(() => useProviderStore.getState().formDrafts.business as Partial<FormValues> | undefined, []);
 
-  const { control, handleSubmit, formState, setValue, reset } = useForm<FormValues>({
+  const cityOptions = useMemo(
+    () => TRIP_CITY_OPTIONS.map((city) => ({ value: city, label: city })),
+    []
+  );
+
+  const { control, handleSubmit, formState, setValue, watch } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       businessName: draft.business.businessName ?? '',
-      ownerName: draft.business.ownerName ?? draft.personal.name,
-      phone: draft.business.phone ?? draft.personal.phone,
-      email: draft.business.email ?? draft.personal.email,
+      ownerName: draft.business.ownerName || draft.personal.name || user?.name || '',
+      phone: draft.business.phone || draft.personal.phone || user?.phone || '',
+      email: draft.business.email || draft.personal.email || user?.email || '',
       description: draft.business.description ?? '',
       city: draft.business.city ?? '',
       address: draft.business.address ?? '',
       yearsExperience: String(draft.business.yearsExperience ?? ''),
       website: draft.business.website ?? '',
       socialMedia: draft.business.socialMedia ?? '',
+      ...cached,
     },
   });
 
   useEffect(() => {
-    reset({
-      businessName: draft.business.businessName ?? '',
-      ownerName: draft.business.ownerName ?? draft.personal.name,
-      phone: draft.business.phone ?? draft.personal.phone,
-      email: draft.business.email ?? draft.personal.email,
-      description: draft.business.description ?? '',
-      city: draft.business.city ?? '',
-      address: draft.business.address ?? '',
-      yearsExperience: String(draft.business.yearsExperience ?? ''),
-      website: draft.business.website ?? '',
-      socialMedia: draft.business.socialMedia ?? '',
-    });
-  }, [provider?.id, draft.business.businessName, draft.business.city, draft.business.address, reset]);
+    const subscription = watch((values) => useProviderStore.getState().setFormDraft('business', values));
+    return () => subscription.unsubscribe();
+  }, [watch]);
 
   const onSubmit = handleSubmit(async (values) => {
     setBusiness({
@@ -85,6 +95,7 @@ export default function ProviderBusinessScreen() {
     });
     try {
       await saveProgress();
+      useProviderStore.getState().clearFormDraft('business');
       router.push({ pathname: '/(provider)/location', params: { mode: 'onboarding' } } as never);
     } catch (error) {
       Alert.alert('Could not save', getApiErrorMessage(error));
@@ -145,31 +156,15 @@ export default function ProviderBusinessScreen() {
           control={control}
           name="city"
           render={({ field: { onChange, value } }) => (
-            <LocationPinField
+            <SearchSelect
               label="City"
+              placeholder="Select city"
               value={value}
-              onChangeText={onChange}
+              options={cityOptions}
+              leftIcon="location-outline"
+              hint="Choose your operating city from the list"
               error={formState.errors.city?.message}
-              result="place"
-              mapTitle="Pin your city"
-              initialLatitude={draft.location?.latitude}
-              initialLongitude={draft.location?.longitude}
-              onPicked={(picked) => {
-                setValue('city', formatPickedPlace(picked), {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
-                setValue('address', formatPickedAddress(picked), {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
-                setLocationDraft({
-                  latitude: picked.latitude,
-                  longitude: picked.longitude,
-                  placeName: picked.placeName,
-                  address: picked.address,
-                });
-              }}
+              onChange={onChange}
             />
           )}
         />
@@ -184,17 +179,22 @@ export default function ProviderBusinessScreen() {
               error={formState.errors.address?.message}
               result="address"
               mapTitle="Pin your business"
+              mapButtonLabel="Open full map"
+              hint="Type the street address, or tap Open full map"
               initialLatitude={draft.location?.latitude}
               initialLongitude={draft.location?.longitude}
               onPicked={(picked) => {
-                setValue('city', formatPickedPlace(picked), {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
                 setValue('address', formatPickedAddress(picked), {
                   shouldDirty: true,
                   shouldValidate: true,
                 });
+                const matchedCity = matchCityOption(formatPickedPlace(picked));
+                if (matchedCity) {
+                  setValue('city', matchedCity, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                }
                 setLocationDraft({
                   latitude: picked.latitude,
                   longitude: picked.longitude,

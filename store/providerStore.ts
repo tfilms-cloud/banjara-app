@@ -13,6 +13,7 @@ import type {
   ProviderMessageThread,
   ProviderNotification,
   ProviderOnboardingDraft,
+  ProviderRestaurantSetup,
   ProviderReview,
   ProviderRoom,
   ProviderRoute,
@@ -24,7 +25,16 @@ import type {
   ProviderVehicle,
   RoomAvailabilityDay,
 } from '@/types/provider';
-import { canPersistProviderApplication, draftFromProvider } from '@/utils/providerDraft';
+import type { GuideDetails } from '@/types/guide';
+import {
+  canPersistProviderApplication,
+  draftFromProvider,
+} from '@/utils/providerDraft';
+
+/** Shared promise so concurrent refreshDashboard() calls reuse one request batch. */
+let dashboardRefreshInFlight: Promise<void> | null = null;
+// Ignore profile reads that started before a newer save/checkpoint/session change.
+let profileRequestVersion = 0;
 
 const emptyDraft = (): ProviderOnboardingDraft => ({
   personal: { name: '', email: '', phone: '', password: '' },
@@ -35,6 +45,14 @@ const emptyDraft = (): ProviderOnboardingDraft => ({
 });
 
 interface ProviderState {
+  formDrafts: Record<string, unknown>;
+  profileLoadedFor: string | null;
+  setFormDraft: (key: string, value: unknown) => void;
+  clearFormDraft: (key: string) => void;
+  checkpoint: (
+    step: 'location' | 'transport' | 'vehicle',
+    vehicleId?: string,
+  ) => Promise<Provider>;
   provider: Provider | null;
   draft: ProviderOnboardingDraft;
   draftUserId: string | null;
@@ -58,10 +76,14 @@ interface ProviderState {
   setSelectedServices: (services: ProviderServiceType[]) => void;
   toggleService: (service: ProviderServiceType) => void;
   setBusiness: (business: ProviderOnboardingDraft['business']) => void;
-  setLocationDraft: (location: NonNullable<ProviderOnboardingDraft['location']>) => void;
+  setLocationDraft: (
+    location: NonNullable<ProviderOnboardingDraft['location']>,
+  ) => void;
   setTransport: (transport: Partial<ProviderTransportSetup>) => void;
   setHotel: (hotel: Partial<ProviderHotelSetup>) => void;
   setTour: (tour: Partial<ProviderTourSetup>) => void;
+  setGuide: (guide: Partial<GuideDetails>) => void;
+  setRestaurant: (restaurant: Partial<ProviderRestaurantSetup>) => void;
   addDraftVehicle: (vehicle: ProviderVehicle) => void;
   addDraftRoom: (room: ProviderRoom) => void;
   resetDraft: () => void;
@@ -96,6 +118,41 @@ function emptyLists() {
 export const useProviderStore = create<ProviderState>()(
   persist(
     (set, get) => ({
+      formDrafts: {},
+      profileLoadedFor: null,
+      setFormDraft: (key, value) =>
+        set((state) => ({ formDrafts: { ...state.formDrafts, [key]: value } })),
+      clearFormDraft: (key) =>
+        set((state) => {
+          const formDrafts = { ...state.formDrafts };
+          delete formDrafts[key];
+          return { formDrafts };
+        }),
+      checkpoint: async (step, vehicleId) => {
+        const userId = useAuthStore.getState().user?.id;
+        ++profileRequestVersion;
+        try {
+          const provider = await providerService.saveOnboardingCheckpoint(
+            step,
+            vehicleId,
+          );
+          if (useAuthStore.getState().user?.id !== userId) return provider;
+          ++profileRequestVersion;
+          set({
+            provider,
+            draft: draftFromProvider(provider, get().draft),
+            loading: false,
+            profileLoadedFor: userId,
+          });
+          return provider;
+        } catch (error) {
+          if (useAuthStore.getState().user?.id === userId) {
+            ++profileRequestVersion;
+            set({ loading: false, error: getApiErrorMessage(error) });
+          }
+          throw error;
+        }
+      },
       provider: null,
       draft: emptyDraft(),
       draftUserId: null,
@@ -104,19 +161,27 @@ export const useProviderStore = create<ProviderState>()(
       saving: false,
       error: null,
 
-      setPersonal: (personal) => set((state) => ({ draft: { ...state.draft, personal } })),
+      setPersonal: (personal) =>
+        set((state) => ({ draft: { ...state.draft, personal } })),
       setSelectedServices: (selectedServices) =>
         set((state) => ({ draft: { ...state.draft, selectedServices } })),
       toggleService: (service) =>
         set((state) => ({
           draft: {
             ...state.draft,
-            selectedServices: state.draft.selectedServices[0] === service ? [] : [service],
+            selectedServices:
+              state.draft.selectedServices[0] === service ? [] : [service],
           },
         })),
       setBusiness: (business) =>
-        set((state) => ({ draft: { ...state.draft, business: { ...state.draft.business, ...business } } })),
-      setLocationDraft: (location) => set((state) => ({ draft: { ...state.draft, location } })),
+        set((state) => ({
+          draft: {
+            ...state.draft,
+            business: { ...state.draft.business, ...business },
+          },
+        })),
+      setLocationDraft: (location) =>
+        set((state) => ({ draft: { ...state.draft, location } })),
       setTransport: (transport) =>
         set((state) => ({
           draft: {
@@ -132,13 +197,35 @@ export const useProviderStore = create<ProviderState>()(
         set((state) => ({
           draft: { ...state.draft, tour: { ...state.draft.tour, ...tour } },
         })),
+      setGuide: (guide) =>
+        set((state) => ({
+          draft: { ...state.draft, guide: { ...state.draft.guide, ...guide } },
+        })),
+      setRestaurant: (restaurant) =>
+        set((state) => ({
+          draft: {
+            ...state.draft,
+            restaurant: { ...state.draft.restaurant, ...restaurant },
+          },
+        })),
       addDraftVehicle: (vehicle) =>
-        set((state) => ({ draft: { ...state.draft, vehicles: [...state.draft.vehicles, vehicle] } })),
+        set((state) => ({
+          draft: {
+            ...state.draft,
+            vehicles: [...state.draft.vehicles, vehicle],
+          },
+        })),
       addDraftRoom: (room) =>
-        set((state) => ({ draft: { ...state.draft, rooms: [...state.draft.rooms, room] } })),
+        set((state) => ({
+          draft: { ...state.draft, rooms: [...state.draft.rooms, room] },
+        })),
       resetDraft: () => set({ draft: emptyDraft() }),
-      clearSession: () =>
+      clearSession: () => {
+        ++profileRequestVersion;
+        dashboardRefreshInFlight = null;
         set({
+          formDrafts: {},
+          profileLoadedFor: null,
           provider: null,
           draft: emptyDraft(),
           draftUserId: null,
@@ -146,45 +233,75 @@ export const useProviderStore = create<ProviderState>()(
           loading: false,
           saving: false,
           error: null,
-        }),
+        });
+      },
 
       setProvider: (provider) => set({ provider }),
 
       loadProvider: async (_providerId) => {
-        set({ loading: true, error: null });
-        try {
-          const provider = await providerService.getProviderProfile();
-          set({
-            provider,
-            loading: false,
-            draft: provider ? draftFromProvider(provider, get().draft) : get().draft,
-          });
-          if (provider) await get().refreshDashboard();
-        } catch (error) {
-          set({
-            loading: false,
-            error: error instanceof Error ? error.message : 'Failed to load provider',
-          });
-        }
+        const userId = useAuthStore.getState().user?.id;
+        if (userId) await get().loadProviderByUser(userId);
       },
 
       loadProviderByUser: async (userId) => {
+        const requestVersion = ++profileRequestVersion;
         if (get().draftUserId && get().draftUserId !== userId) {
-          set({ provider: null, draft: emptyDraft(), ...emptyLists() });
+          set({
+            provider: null,
+            draft: emptyDraft(),
+            formDrafts: {},
+            profileLoadedFor: null,
+            ...emptyLists(),
+          });
         }
         set({ draftUserId: userId, loading: true, error: null });
         try {
           const provider = await providerService.getProviderByUserId(userId);
+          if (
+            useAuthStore.getState().user?.id !== userId ||
+            requestVersion !== profileRequestVersion
+          )
+            return;
+          const vehicles = provider?.services.includes('transport')
+            ? await providerService.getProviderVehicles(provider.id)
+            : [];
+          if (
+            useAuthStore.getState().user?.id !== userId ||
+            requestVersion !== profileRequestVersion
+          )
+            return;
           set({
+            profileLoadedFor: userId,
+            vehicles,
             provider,
             loading: false,
-            draft: provider ? draftFromProvider(provider, get().draft) : get().draft,
+            draft: provider
+              ? draftFromProvider(provider, get().draft)
+              : get().draft,
           });
-          if (provider) await get().refreshDashboard();
+          if (provider) {
+            useAuthStore
+              .getState()
+              .updateProviderLink(provider.id, provider.verificationStatus);
+            if (
+              !provider.services.includes('transport') ||
+              (provider.onboardingProgress?.completed &&
+                provider.verificationStatus === 'approved')
+            )
+              await get().refreshDashboard();
+          }
         } catch (error) {
+          if (
+            useAuthStore.getState().user?.id !== userId ||
+            requestVersion !== profileRequestVersion
+          )
+            return;
           set({
             loading: false,
-            error: error instanceof Error ? error.message : 'Failed to load provider',
+            error:
+              error instanceof Error
+                ? error.message
+                : 'Failed to load provider',
           });
         }
       },
@@ -193,27 +310,39 @@ export const useProviderStore = create<ProviderState>()(
         const auth = useAuthStore.getState();
         const token = auth.token;
         if (!auth.user || !token || token === 'guest-token') {
-          return get().provider;
+          throw new Error(
+            'Please sign in before saving your provider details.',
+          );
         }
         const selectedServices =
           get().draft.selectedServices.length > 0
             ? get().draft.selectedServices
-            : get().provider?.services ?? [];
+            : (get().provider?.services ?? []);
         const draft = {
           ...get().draft,
           selectedServices,
         };
         if (!canPersistProviderApplication(draft, selectedServices)) {
-          return get().provider;
+          throw new Error(
+            'Complete Business Info: business name, owner, phone, email, city and address, and select one service.',
+          );
         }
 
+        if (get().saving)
+          throw new Error('Your details are already being saved. Please wait.');
+        ++profileRequestVersion;
         set({ saving: true, error: null, draft });
         try {
           const provider = await providerService.saveProviderProgress(
             draft,
-            auth.user.providerId || get().provider?.id
+            auth.user.providerId || get().provider?.id,
           );
+          if (useAuthStore.getState().user?.id !== auth.user.id)
+            return provider;
+          ++profileRequestVersion;
           set({
+            loading: false,
+            profileLoadedFor: auth.user.id,
             provider,
             saving: false,
             draftUserId: auth.user.id,
@@ -222,7 +351,10 @@ export const useProviderStore = create<ProviderState>()(
           auth.updateProviderLink(provider.id, provider.verificationStatus);
           return provider;
         } catch (error) {
+          if (useAuthStore.getState().user?.id !== auth.user.id) throw error;
+          ++profileRequestVersion;
           set({
+            loading: false,
             saving: false,
             error: getApiErrorMessage(error),
           });
@@ -231,9 +363,18 @@ export const useProviderStore = create<ProviderState>()(
       },
 
       submitApplication: async (userId) => {
+        if (get().loading || get().saving)
+          throw new Error('Please wait for the current save to finish.');
+        ++profileRequestVersion;
         set({ loading: true, error: null });
         try {
-          const provider = await providerService.submitProviderApplication(get().draft, userId);
+          const provider = await providerService.submitProviderApplication(
+            get().draft,
+            userId,
+            get().provider?.id,
+          );
+          if (useAuthStore.getState().user?.id !== userId) return provider;
+          ++profileRequestVersion;
           set({
             provider,
             loading: false,
@@ -242,6 +383,8 @@ export const useProviderStore = create<ProviderState>()(
           });
           return provider;
         } catch (error) {
+          if (useAuthStore.getState().user?.id !== userId) throw error;
+          ++profileRequestVersion;
           set({
             loading: false,
             error: getApiErrorMessage(error),
@@ -252,11 +395,29 @@ export const useProviderStore = create<ProviderState>()(
 
       refreshDashboard: async () => {
         const provider = get().provider;
+        const userId = useAuthStore.getState().user?.id;
         if (!provider) return;
-        set({ loading: true });
-        try {
-          const [services, vehicles, trips, routes, rooms, bookings, earnings, reviews, messages, notifications, stats] =
-            await Promise.all([
+        // Collapse overlapping refreshes (focus effects / parent+child) into one in-flight call.
+        const existing = dashboardRefreshInFlight;
+        if (existing) return existing;
+
+        let run: Promise<void> | null = null;
+        run = (async () => {
+          set({ loading: true });
+          try {
+            const [
+              services,
+              vehicles,
+              trips,
+              routes,
+              rooms,
+              bookings,
+              earnings,
+              reviews,
+              messages,
+              notifications,
+              stats,
+            ] = await Promise.all([
               providerService.getProviderServicesList(provider.id),
               providerService.getProviderVehicles(provider.id),
               providerService.getProviderTrips(provider.id),
@@ -269,26 +430,43 @@ export const useProviderStore = create<ProviderState>()(
               providerService.getProviderNotifications(),
               providerService.getDashboardStats(provider.id),
             ]);
-          set({
-            services,
-            vehicles,
-            trips,
-            routes,
-            rooms,
-            bookings,
-            earnings,
-            reviews,
-            messages,
-            notifications,
-            stats,
-            loading: false,
-          });
-        } catch (error) {
-          set({
-            loading: false,
-            error: getApiErrorMessage(error),
-          });
-        }
+            if (
+              useAuthStore.getState().user?.id !== userId ||
+              get().provider?.id !== provider.id
+            )
+              return;
+            set({
+              services,
+              vehicles,
+              trips,
+              routes,
+              rooms,
+              bookings,
+              earnings,
+              reviews,
+              messages,
+              notifications,
+              stats,
+              loading: false,
+            });
+          } catch (error) {
+            if (
+              useAuthStore.getState().user?.id !== userId ||
+              get().provider?.id !== provider.id
+            )
+              return;
+            set({
+              loading: false,
+              error: getApiErrorMessage(error),
+            });
+          } finally {
+            if (dashboardRefreshInFlight === run)
+              dashboardRefreshInFlight = null;
+          }
+        })();
+
+        dashboardRefreshInFlight = run;
+        return run;
       },
 
       refreshBookings: async () => {
@@ -302,6 +480,7 @@ export const useProviderStore = create<ProviderState>()(
       name: 'banjara-provider',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
+        formDrafts: state.formDrafts,
         draftUserId: state.draftUserId,
         draft: {
           ...state.draft,
@@ -310,6 +489,6 @@ export const useProviderStore = create<ProviderState>()(
           rooms: [],
         },
       }),
-    }
-  )
+    },
+  ),
 );

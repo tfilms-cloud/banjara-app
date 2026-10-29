@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import * as bookingService from '@/services/bookingService';
 import type { Booking, BookingStatus } from '@/types/booking';
 
@@ -7,8 +7,8 @@ export function useBookings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = async () => {
-    setLoading(true);
+  const refresh = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true);
     setError(null);
     try {
       const data = await bookingService.getBookings();
@@ -16,20 +16,28 @@ export function useBookings() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load bookings');
     } finally {
-      setLoading(false);
+      if (!opts?.silent) setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void refresh();
-  }, []);
+  }, [refresh]);
 
-  const byStatus = (status: BookingStatus | 'upcoming') => {
-    if (status === 'upcoming') {
-      return bookings.filter((item) => item.status === 'upcoming' || item.status === 'confirmed');
-    }
-    return bookings.filter((item) => item.status === status);
-  };
+  const byStatus = useCallback(
+    (status: BookingStatus | 'upcoming') => {
+      if (status === 'upcoming') {
+        return bookings.filter(
+          (item) =>
+            item.status === 'upcoming' ||
+            item.status === 'confirmed' ||
+            item.status === 'pending'
+        );
+      }
+      return bookings.filter((item) => item.status === status);
+    },
+    [bookings]
+  );
 
   return { bookings, loading, error, refresh, byStatus };
 }

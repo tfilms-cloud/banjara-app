@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Colors } from '@/constants/colors';
-import { Radius, Spacing } from '@/constants/spacing';
-import { Typography } from '@/constants/typography';
+import { Radius, Shadows, Spacing } from '@/constants/spacing';
+import { Fonts, Typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
 
 interface BarChartProps {
@@ -14,7 +14,7 @@ export function SimpleBarChart({ title, data }: BarChartProps) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>{title}</Text>
+      {title ? <Text style={styles.title}>{title}</Text> : null}
       <View style={styles.row}>
         {data.map((item) => {
           const height = Math.max(12, Math.round((item.amount / max) * 100));
@@ -29,7 +29,10 @@ export function SimpleBarChart({ title, data }: BarChartProps) {
           );
         })}
       </View>
-      <Text style={styles.hint}>Amounts in PKR · {formatCurrency(data.reduce((s, d) => s + d.amount, 0))} total in view</Text>
+      <Text style={styles.hint}>
+        Amounts in PKR · {' '}
+        {formatCurrency(data.reduce((s, d) => s + d.amount, 0))} total in view
+      </Text>
     </View>
   );
 }
@@ -38,13 +41,24 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.card,
     borderRadius: Radius.xl,
-    padding: Spacing.lg,
-    borderWidth: 1,
+    padding: Spacing.xl,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: Colors.border,
-    gap: Spacing.md,
+    gap: Spacing.lg,
+    ...Shadows.premium,
   },
-  title: { ...Typography.h3, color: Colors.primary },
-  row: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, minHeight: 140 },
+  title: {
+    fontFamily: Fonts.display,
+    fontSize: 21,
+    lineHeight: 29,
+    color: Colors.dark,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: Spacing.sm,
+    minHeight: 140,
+  },
   col: { flex: 1, alignItems: 'center', gap: 4 },
   barTrack: {
     height: 110,
@@ -56,11 +70,16 @@ const styles = StyleSheet.create({
   },
   bar: {
     width: '100%',
-    backgroundColor: Colors.secondary,
+    backgroundColor: Colors.primary,
     borderTopLeftRadius: Radius.sm,
     borderTopRightRadius: Radius.sm,
   },
-  label: { ...Typography.small, color: Colors.muted, fontWeight: '700' },
+  label: {
+    fontFamily: Fonts.bodyMedium,
+    fontSize: 11,
+    lineHeight: 18,
+    color: Colors.muted,
+  },
   value: { ...Typography.small, color: Colors.primary, fontSize: 10 },
   hint: { ...Typography.caption, color: Colors.muted },
 });

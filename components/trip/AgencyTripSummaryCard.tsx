@@ -1,13 +1,17 @@
-import { Bus, CheckCircle2, ChevronRight, Star } from 'lucide-react-native';
+import { ArrowRight, CheckCircle2, ChevronRight, Star } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Colors } from '@/constants/colors';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { Colors, useThemeColors } from '@/constants/colors';
 import { Radius, Shadows, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 import type { AgencyTripGroup } from '@/utils/groupTripsByAgency';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { normalizeMediaUrl } from '@/utils/mediaUrl';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 type AgencyTripSummaryCardProps = {
   group: AgencyTripGroup;
@@ -22,12 +26,18 @@ function agencyInitials(name: string) {
 }
 
 export function AgencyTripSummaryCard({ group, onPress }: AgencyTripSummaryCardProps) {
+  const colors = useThemeColors();
   const { agency, tripCount, fromPrice, currency, routes, oneWayCount, roundTripCount } = group;
   const logoUri = useMemo(
     () => normalizeMediaUrl(agency.logo) ?? (agency.logo || undefined),
     [agency.logo]
   );
   const [logoFailed, setLogoFailed] = useState(false);
+  const scale = useSharedValue(1);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   useEffect(() => {
     setLogoFailed(false);
@@ -38,72 +48,100 @@ export function AgencyTripSummaryCard({ group, onPress }: AgencyTripSummaryCardP
   const moreRoutes = routes.length > 2 ? ` +${routes.length - 2}` : '';
 
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${agency.name} trips`}>
-      <View style={styles.card}>
+    <AnimatedPressable
+      onPress={onPress}
+      onPressIn={() => {
+        scale.value = withSpring(0.985, { damping: 16, stiffness: 280 });
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, { damping: 16, stiffness: 280 });
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={`${agency.name} trips`}
+      style={animStyle}
+    >
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <View style={styles.top}>
           {showLogo ? (
             <Image
               source={{ uri: logoUri }}
-              style={styles.logo}
+              style={[styles.logo, { borderColor: colors.border }]}
               contentFit="cover"
               onError={() => setLogoFailed(true)}
             />
           ) : (
-            <View style={[styles.logo, styles.logoFallback]}>
-              <Text style={styles.logoInitials}>{agencyInitials(agency.name)}</Text>
+            <View
+              style={[
+                styles.logo,
+                styles.logoFallback,
+                { backgroundColor: colors.primarySoft, borderColor: colors.border },
+              ]}
+            >
+              <Text style={[styles.logoInitials, { color: colors.primary }]}>
+                {agencyInitials(agency.name)}
+              </Text>
             </View>
           )}
           <View style={styles.copy}>
             <View style={styles.nameRow}>
-              <Text style={styles.name} numberOfLines={1}>
+              <Text style={[styles.name, { color: colors.dark }]} numberOfLines={1}>
                 {agency.name}
               </Text>
               {agency.verified ? (
-                <CheckCircle2 size={14} color={Colors.success} strokeWidth={2} />
+                <CheckCircle2 size={15} color={colors.action} strokeWidth={2.4} />
               ) : null}
             </View>
             <View style={styles.ratingRow}>
-              <Star size={12} color={Colors.accent} fill={Colors.accent} strokeWidth={0} />
-              <Text style={styles.rating}>{agency.rating?.toFixed?.(1) ?? '0.0'}</Text>
-              <Text style={styles.metaDot}>·</Text>
-              <Text style={styles.tripCount}>
+              <Star size={11} color={colors.warning} fill={colors.warning} strokeWidth={0} />
+              <Text style={[styles.rating, { color: colors.dark }]}>
+                {agency.rating?.toFixed?.(1) ?? '0.0'}
+              </Text>
+              <Text style={[styles.metaDot, { color: colors.mutedLight }]}>·</Text>
+              <Text style={[styles.tripCount, { color: colors.muted }]}>
                 {tripCount} trip{tripCount === 1 ? '' : 's'}
               </Text>
             </View>
           </View>
-          <ChevronRight size={18} color={Colors.muted} strokeWidth={2} />
+          <ChevronRight size={18} color={colors.mutedLight} strokeWidth={2} />
         </View>
 
-        <View style={styles.routeRow}>
-          <Bus size={14} color={Colors.action} strokeWidth={2} />
-          <Text style={styles.routes} numberOfLines={2}>
-            {routePreview}
-            {moreRoutes}
-          </Text>
-        </View>
+        {routes.length > 0 ? (
+          <View style={[styles.routeRow, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+            <Ionicons name="bus" size={14} color={colors.primary} />
+            <Text style={[styles.routes, { color: colors.muted }]} numberOfLines={2}>
+              {routePreview}
+              {moreRoutes}
+            </Text>
+          </View>
+        ) : null}
 
         <View style={styles.footer}>
           <View style={styles.badges}>
             {oneWayCount > 0 ? (
-              <View style={[styles.badge, styles.badgeOne]}>
-                <Text style={styles.badgeText}>{oneWayCount} one way</Text>
+              <View style={[styles.badge, { backgroundColor: colors.primarySoft }]}>
+                <Text style={[styles.badgeText, { color: colors.primary }]}>{oneWayCount} one way</Text>
               </View>
             ) : null}
             {roundTripCount > 0 ? (
-              <View style={[styles.badge, styles.badgeRound]}>
-                <Text style={styles.badgeText}>{roundTripCount} round trip</Text>
+              <View style={[styles.badge, { backgroundColor: colors.softGreen }]}>
+                <Text style={[styles.badgeText, { color: colors.action }]}>{roundTripCount} round trip</Text>
               </View>
             ) : null}
           </View>
           <View style={styles.priceCol}>
-            <Text style={styles.fromLabel}>From</Text>
-            <Text style={styles.price}>{formatCurrency(fromPrice, currency)}</Text>
+            <Text style={[styles.fromLabel, { color: colors.mutedLight }]}>FROM</Text>
+            <Text style={[styles.price, { color: colors.dark }]}>
+              {formatCurrency(fromPrice, currency)}
+            </Text>
           </View>
         </View>
 
-        <Text style={styles.cta}>View all trips</Text>
+        <View style={[styles.ctaRow, { borderTopColor: colors.border }]}>
+          <Text style={[styles.cta, { color: colors.primary }]}>View all trips</Text>
+          <ArrowRight size={13} color={colors.primary} strokeWidth={2.2} />
+        </View>
       </View>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
@@ -115,7 +153,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     padding: Spacing.lg,
     gap: Spacing.sm,
-    ...Shadows.soft,
+    marginBottom: Spacing.md,
+    ...Shadows.card,
   },
   top: {
     flexDirection: 'row',
@@ -123,20 +162,19 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   logo: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+    width: 44,
+    height: 44,
+    borderRadius: Radius.md,
     backgroundColor: Colors.border,
+    borderWidth: 1,
   },
   logoFallback: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primarySoft,
   },
   logoInitials: {
     fontFamily: Fonts.bodyBold,
     fontSize: 14,
-    color: Colors.primary,
   },
   copy: { flex: 1, minWidth: 0 },
   nameRow: {
@@ -145,9 +183,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   name: {
-    fontFamily: Fonts.bodyBold,
-    fontSize: 16,
-    color: Colors.primary,
+    fontFamily: Fonts.bodySemiBold,
+    fontSize: 15,
     flexShrink: 1,
   },
   ratingRow: {
@@ -159,33 +196,30 @@ const styles = StyleSheet.create({
   rating: {
     fontFamily: Fonts.bodySemiBold,
     fontSize: 12,
-    color: Colors.dark,
   },
-  metaDot: { color: Colors.muted, fontSize: 12 },
+  metaDot: { fontSize: 12 },
   tripCount: {
     fontFamily: Fonts.body,
     fontSize: 12,
-    color: Colors.muted,
   },
   routeRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
-    backgroundColor: Colors.surfaceSecondary,
     borderRadius: Radius.md,
+    borderWidth: 1,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
   },
   routes: {
     flex: 1,
     fontFamily: Fonts.bodyMedium,
-    fontSize: 13,
-    color: Colors.dark,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 17,
   },
   footer: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.md,
     marginTop: 2,
@@ -194,30 +228,35 @@ const styles = StyleSheet.create({
   badge: {
     borderRadius: Radius.full,
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 3,
   },
-  badgeOne: { backgroundColor: Colors.primarySoft },
-  badgeRound: { backgroundColor: Colors.actionSoft },
   badgeText: {
     fontFamily: Fonts.bodySemiBold,
     fontSize: 11,
-    color: Colors.dark,
   },
   priceCol: { alignItems: 'flex-end' },
   fromLabel: {
-    fontFamily: Fonts.body,
-    fontSize: 11,
-    color: Colors.muted,
+    fontFamily: Fonts.bodyMedium,
+    fontSize: 10,
+    letterSpacing: 0.4,
   },
   price: {
-    fontFamily: Fonts.bodyBold,
-    fontSize: 16,
-    color: Colors.dark,
+    fontFamily: Fonts.display,
+    fontSize: 17,
+    letterSpacing: -0.2,
+    marginTop: 1,
+  },
+  ctaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 4,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: Spacing.xs,
+    marginTop: 2,
   },
   cta: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 13,
-    color: Colors.action,
-    marginTop: 2,
+    fontSize: 12,
   },
 });

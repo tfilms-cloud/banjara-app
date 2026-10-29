@@ -1,4 +1,5 @@
 import { useUserStore } from '@/store/userStore';
+import { getCachedDarkMode } from '@/utils/themeModeCache';
 
 /**
  * BANJARA design tokens — dark-first travel marketplace with a full light theme.
@@ -142,17 +143,16 @@ export const LightColors: ColorTokens = {
  * Live color tokens. `themedStyleSheet` remaps StyleSheet.create snapshots;
  * this proxy keeps JSX `Colors.x` on the active light/dark setting.
  */
-export const Colors: ColorTokens = new Proxy(DarkColors, {
+export const Colors: ColorTokens = new Proxy(LightColors, {
   get(_target, prop) {
-    if (typeof prop !== 'string' || !(prop in DarkColors)) {
-      return Reflect.get(DarkColors, prop as keyof ColorTokens);
+    if (typeof prop !== 'string' || !(prop in LightColors)) {
+      return Reflect.get(LightColors, prop as keyof ColorTokens);
     }
-    const dark = useUserStore.getState()?.settings?.darkMode ?? false;
-    return (dark ? DarkColors : LightColors)[prop as keyof ColorTokens];
+    return (getCachedDarkMode() ? DarkColors : LightColors)[prop as keyof ColorTokens];
   },
-  ownKeys: () => Reflect.ownKeys(DarkColors),
+  ownKeys: () => Reflect.ownKeys(LightColors),
   getOwnPropertyDescriptor(_target, prop) {
-    const desc = Reflect.getOwnPropertyDescriptor(DarkColors, prop);
+    const desc = Reflect.getOwnPropertyDescriptor(LightColors, prop);
     return desc ? { ...desc, configurable: true } : desc;
   },
 });

@@ -11,6 +11,7 @@ import { Typography } from '@/constants/typography';
 import { useAuthStore } from '@/store/authStore';
 import { useProviderStore } from '@/store/providerStore';
 import { getHomeHref, needsProviderOnboarding } from '@/utils/routing';
+import { transportDashboardAllowed } from '@/utils/providerOnboarding';
 
 export default function ProviderApplicationSuccessScreen() {
   const insets = useSafeAreaInsets();
@@ -18,6 +19,7 @@ export default function ProviderApplicationSuccessScreen() {
   const loadProvider = useProviderStore((s) => s.loadProvider);
   const loadProviderByUser = useProviderStore((s) => s.loadProviderByUser);
   const provider = useProviderStore((s) => s.provider);
+  const waitingForTransportReview = provider?.services.includes('transport') && !transportDashboardAllowed(provider);
 
   useEffect(() => {
     if (user?.providerId && !provider) {
@@ -42,7 +44,7 @@ export default function ProviderApplicationSuccessScreen() {
       </Text>
       <Badge label="Pending Verification" tone="amber" />
       <Text style={styles.message}>
-        Our team will review your application in MongoDB. An admin must approve your provider profile before you can manage vehicles, trips, or hotels.
+        Our team will review your application. An admin must approve your provider profile before you can manage trips or services.
       </Text>
 
       <View style={styles.card}>
@@ -62,9 +64,9 @@ export default function ProviderApplicationSuccessScreen() {
           onPress={() => router.push('/(provider)/status')}
         />
         <Button
-          title="Back to Home"
+          title={waitingForTransportReview ? 'View review status' : 'Back to Home'}
           variant="ghost"
-          onPress={() => router.replace(getHomeHref(user))}
+          onPress={() => router.replace(waitingForTransportReview ? '/(provider)/status' : getHomeHref(user))}
         />
       </View>
     </View>

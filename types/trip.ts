@@ -35,6 +35,8 @@ export interface Review {
   userName: string;
   userAvatar?: string;
   rating: number;
+  paymentRating?: number;
+  serviceRating?: number;
   comment: string;
   date: string;
   tripId: string;
@@ -73,6 +75,8 @@ export interface Trip {
   journeyType?: 'one_way' | 'round_trip';
   returnDate?: string;
   returnTime?: string;
+  /** seat = share seats; vehicle = hire whole vehicle */
+  bookingMode?: 'seat' | 'vehicle';
   /** Provider-written trip notes, when the API sends them */
   description?: string;
   /** Backend trip status such as scheduled, cancelled, completed */
@@ -103,6 +107,8 @@ export interface SearchParams {
   /** Preferred journey when searching from Transport vs Trips mode */
   journeyType?: 'one_way' | 'round_trip';
   returnDate?: string;
+  /** Free-text match on agency, cities, vehicle, pickups */
+  query?: string;
 }
 
 export interface TripFilters {

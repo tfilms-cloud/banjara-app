@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Colors, useThemeColors } from '@/constants/colors';
-import { Radius, Spacing } from '@/constants/spacing';
+import { Radius, Shadows, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 import { toISODate } from '@/utils/formatDate';
 
@@ -28,8 +29,64 @@ type QuickDateChipsProps = {
   onSelect: (isoDate: string) => void;
 };
 
-export function QuickDateChips({ selectedDate, onSelect }: QuickDateChipsProps) {
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+function ChipItem({
+  label,
+  value,
+  active,
+  onPress,
+}: {
+  label: string;
+  value: string;
+  active: boolean;
+  onPress: () => void;
+}) {
   const colors = useThemeColors();
+  const scale = useSharedValue(1);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      onPressIn={() => {
+        scale.value = withSpring(0.95, { damping: 16, stiffness: 350 });
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, { damping: 16, stiffness: 350 });
+      }}
+      style={[
+        styles.chip,
+        {
+          backgroundColor: active ? colors.primary : colors.inputBg,
+          borderColor: active ? colors.primary : colors.border,
+        },
+        active && styles.chipActive,
+        animStyle,
+      ]}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      accessibilityLabel={label}
+    >
+      <Text
+        style={[
+          styles.text,
+          {
+            color: active ? colors.white : colors.muted,
+            fontFamily: active ? Fonts.bodySemiBold : Fonts.bodyMedium,
+          },
+        ]}
+      >
+        {label}
+      </Text>
+    </AnimatedPressable>
+  );
+}
+
+export function QuickDateChips({ selectedDate, onSelect }: QuickDateChipsProps) {
   const chips: Chip[] = [
     { key: 'today', label: 'Today', value: datePlusDays(0) },
     { key: 'tomorrow', label: 'Tomorrow', value: datePlusDays(1) },
@@ -38,34 +95,15 @@ export function QuickDateChips({ selectedDate, onSelect }: QuickDateChipsProps) 
 
   return (
     <View style={styles.row}>
-      {chips.map((chip) => {
-        const active = selectedDate === chip.value;
-        return (
-          <Pressable
-            key={chip.key}
-            onPress={() => onSelect(chip.value)}
-            style={[
-              styles.chip,
-              {
-                backgroundColor: active ? colors.primary : colors.inputBg,
-                borderColor: active ? colors.primary : colors.border,
-              },
-            ]}
-            accessibilityRole="button"
-            accessibilityState={{ selected: active }}
-            accessibilityLabel={chip.label}
-          >
-            <Text
-              style={[
-                styles.text,
-                { color: active ? colors.white : colors.muted },
-              ]}
-            >
-              {chip.label}
-            </Text>
-          </Pressable>
-        );
-      })}
+      {chips.map((chip) => (
+        <ChipItem
+          key={chip.key}
+          label={chip.label}
+          value={chip.value}
+          active={selectedDate === chip.value}
+          onPress={() => onSelect(chip.value)}
+        />
+      ))}
     </View>
   );
 }
@@ -77,19 +115,19 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   chip: {
-    minHeight: 44,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 10,
+    minHeight: 38,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: Radius.full,
-    backgroundColor: Colors.surfaceSecondary,
     borderWidth: 1,
-    borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  chipActive: {
+    ...Shadows.soft,
+  },
   text: {
-    fontFamily: Fonts.bodyMedium,
     fontSize: 12,
-    color: Colors.muted,
+    letterSpacing: -0.1,
   },
 });

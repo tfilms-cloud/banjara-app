@@ -1,5 +1,6 @@
 import { DarkColors, LightColors, type ColorTokens } from '@/constants/colors';
 import { useUserStore } from '@/store/userStore';
+import { getCachedDarkMode } from '@/utils/themeModeCache';
 
 /** Outfit = headings · Plus Jakarta Sans = UI body */
 export const Fonts = {
@@ -135,13 +136,12 @@ function makeTypography(c: ColorTokens) {
 const darkTypography = makeTypography(DarkColors);
 const lightTypography = makeTypography(LightColors);
 
-export type TypographyScale = typeof darkTypography;
+export type TypographyScale = typeof lightTypography;
 
 /** Follows the active light/dark setting when read during render. */
-export const Typography: TypographyScale = new Proxy(darkTypography, {
+export const Typography: TypographyScale = new Proxy(lightTypography, {
   get(_target, prop) {
-    const dark = useUserStore.getState()?.settings?.darkMode ?? false;
-    const source = dark ? darkTypography : lightTypography;
+    const source = getCachedDarkMode() ? darkTypography : lightTypography;
     return source[prop as keyof TypographyScale];
   },
 });

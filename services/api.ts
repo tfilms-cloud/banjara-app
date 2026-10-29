@@ -68,6 +68,16 @@ async function writeAuthTokens(accessToken: string | null, refreshToken: string 
 
 export async function clearAuthSession() {
   await writeAuthTokens(null, null);
+  // Update the live store as well as disk; otherwise expired sessions remain in
+  // protected provider/customer screens until the app is restarted.
+  const { useAuthStore } = await import('@/store/authStore');
+  useAuthStore.setState({ user: null, token: null, refreshToken: null, isAuthenticated: false });
+  try {
+    const { useChatStore } = await import('@/store/chatStore');
+    useChatStore.getState().disconnect();
+    const { useProviderStore } = await import('@/store/providerStore');
+    useProviderStore.getState().clearSession();
+  } catch { /* Session is already cleared even if optional store cleanup fails. */ }
 }
 
 export { writeAuthTokens };
@@ -96,7 +106,10 @@ async function refreshAccessToken(): Promise<string | null> {
     const memoryRefresh = getMemoryRefreshToken();
     const state = await readAuthState();
     const refreshToken = memoryRefresh || state?.refreshToken;
-    if (!refreshToken) return null;
+    if (!refreshToken) {
+      await clearAuthSession();
+      return null;
+    }
 
     try {
       const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
@@ -106,9 +119,13 @@ async function refreshAccessToken(): Promise<string | null> {
       if (!accessToken) return null;
       await writeAuthTokens(accessToken, nextRefresh);
       return accessToken;
-    } catch {
-      await clearAuthSession();
-      return null;
+    } catch (error) {
+      if (axios.isAxiosError(error) && [400, 401, 403].includes(error.response?.status ?? 0)) {
+        await clearAuthSession();
+        return null;
+      }
+      // A network outage should not discard a valid refresh token.
+      throw normalizeApiError(error);
     } finally {
       refreshPromise = null;
     }

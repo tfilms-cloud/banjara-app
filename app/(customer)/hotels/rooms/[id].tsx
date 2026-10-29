@@ -75,6 +75,11 @@ export default function HotelRoomsScreen() {
             room={item}
             selected={selectedRoom?.id === item.id}
             onSelect={() => onSelect(item)}
+            onView={() =>
+              pushPath(
+                `/(customer)/hotels/room-detail/${item.id}?hotelId=${encodeURIComponent(String(id))}`
+              )
+            }
           />
         )}
       />

@@ -1,6 +1,7 @@
-import { Calendar, ChevronRight, MapPin, Moon, Users } from 'lucide-react-native';
+import { Calendar, ChevronRight, MapPin, Moon, Search, Users } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
 import { DatePickerModal } from '@/components/ui/DatePickerModal';
@@ -13,6 +14,8 @@ import { useHotelStore } from '@/store/hotelStore';
 import { formatDate } from '@/utils/formatDate';
 import { calculateNights } from '@/utils/hotelPricing';
 import { HotelGuestPickerModal } from './HotelGuestPickerModal';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface HotelSearchCardProps {
   onSearch: () => void;
@@ -35,26 +38,41 @@ function Field({
   compact?: boolean;
 }) {
   const colors = useThemeColors();
+  const scale = useSharedValue(1);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
+      onPressIn={() => {
+        scale.value = withSpring(0.985, { damping: 18, stiffness: 300 });
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, { damping: 18, stiffness: 300 });
+      }}
       style={[
         styles.field,
         compact && styles.fieldCompact,
-        { backgroundColor: colors.inputBg },
+        { backgroundColor: colors.inputBg, borderColor: colors.border },
+        animStyle,
       ]}
       accessibilityRole="button"
       accessibilityLabel={`${label}: ${value}`}
     >
-      <View style={[styles.fieldIcon, { backgroundColor: colors.card }]}>{icon}</View>
+      <View style={[styles.fieldIcon, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        {icon}
+      </View>
       <View style={styles.fieldCopy}>
-        <Text style={[styles.fieldLabel, { color: colors.muted }]}>{label}</Text>
+        <Text style={[styles.fieldLabel, { color: colors.mutedLight }]}>{label}</Text>
         <Text style={[styles.fieldValue, { color: colors.dark }]} numberOfLines={1}>
           {value || 'Select'}
         </Text>
       </View>
-      <ChevronRight size={16} color={colors.mutedLight} strokeWidth={2} />
-    </Pressable>
+      <ChevronRight size={15} color={colors.mutedLight} strokeWidth={2} />
+    </AnimatedPressable>
   );
 }
 
@@ -99,9 +117,12 @@ export function HotelSearchCard({ onSearch, embedded = false, showCta = true }: 
         { backgroundColor: colors.card, borderColor: colors.border },
       ]}
     >
-      <Text style={[styles.intentHint, { color: colors.muted }]}>
-        Stay when you arrive · place, dates & rooms
-      </Text>
+      <View style={styles.hintRow}>
+        <View style={[styles.hintDot, { backgroundColor: colors.primary }]} />
+        <Text style={[styles.intentHint, { color: colors.muted }]}>
+          Stay when you arrive · place, dates & rooms
+        </Text>
+      </View>
 
       <Field
         icon={<MapPin size={16} color={colors.primary} strokeWidth={2} />}
@@ -114,7 +135,7 @@ export function HotelSearchCard({ onSearch, embedded = false, showCta = true }: 
         <View style={styles.metaCell}>
           <Field
             compact
-            icon={<Calendar size={16} color={colors.primary} strokeWidth={2} />}
+            icon={<Calendar size={15} color={colors.primary} strokeWidth={2} />}
             label="Check-in"
             value={formatDate(checkIn, false)}
             onPress={() => setDateMode('in')}
@@ -124,7 +145,7 @@ export function HotelSearchCard({ onSearch, embedded = false, showCta = true }: 
         <View style={styles.metaCell}>
           <Field
             compact
-            icon={<Calendar size={16} color={colors.action} strokeWidth={2} />}
+            icon={<Calendar size={15} color={colors.action} strokeWidth={2} />}
             label="Check-out"
             value={formatDate(checkOut, false)}
             onPress={() => setDateMode('out')}
@@ -134,22 +155,30 @@ export function HotelSearchCard({ onSearch, embedded = false, showCta = true }: 
 
       <View style={styles.nightsRow}>
         <View style={[styles.nightsPill, { backgroundColor: colors.actionSoft }]}>
-          <Moon size={13} color={colors.action} strokeWidth={2.2} />
+          <Moon size={12} color={colors.action} strokeWidth={2.2} />
           <Text style={[styles.nightsText, { color: colors.action }]}>
             {nights} night{nights === 1 ? '' : 's'}
           </Text>
         </View>
-        <Text style={[styles.nightsSub, { color: colors.muted }]}>Stay length from your dates</Text>
+        <Text style={[styles.nightsSub, { color: colors.mutedLight }]}>Stay length from your dates</Text>
       </View>
 
       <Field
-        icon={<Users size={16} color={colors.primary} strokeWidth={2} />}
+        compact
+        icon={<Users size={15} color={colors.primary} strokeWidth={2} />}
         label="Guests & rooms"
         value={guestLabel}
         onPress={() => setShowGuests(true)}
       />
 
-      {showCta ? <Button title="Search hotels" onPress={onSearch} style={styles.cta} /> : null}
+      {showCta ? (
+        <Button
+          title="Search hotels"
+          onPress={onSearch}
+          icon={<Search size={16} color={colors.white} strokeWidth={2.4} />}
+          style={styles.cta}
+        />
+      ) : null}
 
       <Modal
         visible={showDestination}
@@ -166,7 +195,7 @@ export function HotelSearchCard({ onSearch, embedded = false, showCta = true }: 
             ]}
           >
             <View style={[styles.handle, { backgroundColor: colors.border }]} />
-            <Text style={[styles.sheetTitle, { color: colors.primary }]}>Destination</Text>
+            <Text style={[styles.sheetTitle, { color: colors.dark }]}>Destination</Text>
             <PlaceAutocompleteSelect
               label="Search place"
               leftIcon="location-outline"
@@ -228,24 +257,33 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.card,
     borderRadius: Radius.xl,
+    padding: Spacing.lg,
     borderWidth: 1,
     borderColor: Colors.border,
-    padding: Spacing.md,
-    gap: Spacing.sm,
-    ...Shadows.float,
+    gap: Spacing.md,
+    ...Shadows.card,
   },
   embedded: {
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.md,
-    ...Shadows.float,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    padding: 0,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  hintRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  hintDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   intentHint: {
     fontFamily: Fonts.bodyMedium,
     fontSize: 12,
-    color: Colors.muted,
-    marginBottom: 2,
+    letterSpacing: 0.1,
   },
   metaRow: {
     flexDirection: 'row',
@@ -263,40 +301,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: Colors.actionSoft,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: Radius.full,
   },
   nightsText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 12,
-    color: Colors.action,
+    fontSize: 11,
   },
   nightsSub: {
     fontFamily: Fonts.body,
-    fontSize: 12,
-    color: Colors.muted,
+    fontSize: 11,
     flex: 1,
   },
   field: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 44,
-    paddingVertical: 8,
+    minHeight: 48,
+    paddingVertical: Spacing.xs,
     paddingHorizontal: Spacing.sm,
-    backgroundColor: Colors.surfaceSecondary,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
   },
   fieldCompact: {
-    minHeight: 44,
-    paddingVertical: 6,
+    minHeight: 46,
+    paddingVertical: 4,
   },
   fieldIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: Colors.card,
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.sm,
@@ -308,17 +343,19 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: 11,
-    color: Colors.muted,
+    fontSize: 10,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
   fieldValue: {
-    fontFamily: Fonts.bodyMedium,
+    fontFamily: Fonts.bodySemiBold,
     fontSize: 14,
-    color: Colors.dark,
     marginTop: 1,
   },
   cta: {
     marginTop: Spacing.xs,
+    minHeight: 50,
+    borderRadius: Radius.full,
   },
   modalRoot: {
     flex: 1,
@@ -341,12 +378,10 @@ const styles = StyleSheet.create({
     width: 44,
     height: 4,
     borderRadius: 2,
-    backgroundColor: Colors.border,
   },
   sheetTitle: {
-    fontFamily: Fonts.bodyBold,
+    fontFamily: Fonts.display,
     fontSize: 18,
-    color: Colors.primary,
   },
   closeBtn: {
     alignItems: 'center',
@@ -356,7 +391,6 @@ const styles = StyleSheet.create({
   },
   closeText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 15,
-    color: Colors.muted,
+    fontSize: 14,
   },
 });

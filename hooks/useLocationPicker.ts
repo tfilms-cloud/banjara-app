@@ -1,5 +1,5 @@
 import * as Location from 'expo-location';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Linking, Platform } from 'react-native';
 import { getApiErrorMessage } from '@/services/apiError';
 import * as locationService from '@/services/locationService';
@@ -25,10 +25,18 @@ export function useLocationSearch() {
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestId = useRef(0);
+
+  useEffect(() => () => {
+    requestId.current++;
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
 
   const search = useCallback((text: string) => {
+    const id = ++requestId.current;
     setQuery(text);
     setError(null);
+    setResults([]);
     if (timer.current) clearTimeout(timer.current);
     if (text.trim().length < 2) {
       setResults([]);
@@ -39,18 +47,23 @@ export function useLocationSearch() {
     timer.current = setTimeout(async () => {
       try {
         const data = await locationService.searchPlaces(text.trim());
+        if (id !== requestId.current) return;
         setResults(data);
         if (!data.length) setError('No places found. Try a different search.');
       } catch (err) {
+        if (id !== requestId.current) return;
         setResults([]);
         setError(getApiErrorMessage(err));
       } finally {
-        setSearching(false);
+        if (id === requestId.current) setSearching(false);
       }
     }, 450);
   }, []);
 
   const clear = useCallback(() => {
+    requestId.current++;
+    if (timer.current) clearTimeout(timer.current);
+    setSearching(false);
     setQuery('');
     setResults([]);
     setError(null);
@@ -64,6 +77,13 @@ export function useReverseGeocode() {
   const [error, setError] = useState<string | null>(null);
   const requestId = useRef(0);
 
+  const cancel = useCallback(() => {
+    requestId.current++;
+    setLoading(false);
+    setError(null);
+  }, []);
+  useEffect(() => () => { requestId.current++; }, []);
+
   const reverse = useCallback(async (latitude: number, longitude: number) => {
     const id = ++requestId.current;
     setLoading(true);
@@ -73,6 +93,7 @@ export function useReverseGeocode() {
       if (id !== requestId.current) return null;
       return place;
     } catch (err) {
+      if (id !== requestId.current) return null;
       try {
         const rows = await Location.reverseGeocodeAsync({ latitude, longitude });
         const row = rows[0];
@@ -116,7 +137,7 @@ export function useReverseGeocode() {
     }
   }, []);
 
-  return { reverse, loading, error };
+  return { reverse, loading, error, cancel };
 }
 
 export function useCurrentLocation() {
@@ -255,6 +276,55 @@ export function useLocationPicker(initial?: Partial<LocationPickerValue>) {
     save,
     defaultCenter: DEFAULT_CENTER,
   };
+}
+
+/** Shared selection flow for provider and customer maps. Only the map's Pin button confirms it. */
+export function usePinnedLocationPicker(initial?: Partial<LocationPickerValue>) {
+  const picker = useLocationPicker(initial);
+  const current = useCurrentLocation();
+  const { reverse, loading: reversing, error: reverseError, cancel } = useReverseGeocode();
+  const [pinConfirmed, setPinConfirmed] = useState(false);
+  const selectionVersion = useRef(0);
+  const { applyCoords, applyPlace } = picker;
+
+  useEffect(() => () => { selectionVersion.current++; }, []);
+
+  const onPinStatusChange = useCallback((confirmed: boolean) => {
+    setPinConfirmed(confirmed);
+    if (!confirmed) {
+      selectionVersion.current++;
+      cancel();
+    }
+  }, [cancel]);
+
+  const resolveCoordinates = useCallback(async (latitude: number, longitude: number, version: number) => {
+    // Never show a previous address beside a newly chosen coordinate.
+    applyCoords(latitude, longitude, emptyAddress(), '');
+    const place = await reverse(latitude, longitude);
+    if (place && version === selectionVersion.current) {
+      // Reverse geocoders may return a nearby building. Keep the user's exact pin.
+      applyCoords(latitude, longitude, place.address, place.name);
+    }
+  }, [applyCoords, reverse]);
+
+  const onRegionSettled = useCallback(async (latitude: number, longitude: number) => {
+    await resolveCoordinates(latitude, longitude, ++selectionVersion.current);
+  }, [resolveCoordinates]);
+
+  const selectPlace = useCallback((place: PlaceSearchResult) => {
+    onPinStatusChange(false);
+    applyPlace(place);
+  }, [applyPlace, onPinStatusChange]);
+
+  const onUseCurrent = useCallback(async () => {
+    onPinStatusChange(false);
+    const version = selectionVersion.current;
+    const position = await current.getCurrentPosition();
+    if (!position || version !== selectionVersion.current) return;
+    await resolveCoordinates(position.latitude, position.longitude, version);
+  }, [current.getCurrentPosition, onPinStatusChange, resolveCoordinates]);
+
+  return { picker, current, reversing, reverseError, pinConfirmed, onPinStatusChange, onRegionSettled, selectPlace, onUseCurrent };
 }
 
 export { DEFAULT_CENTER, emptyAddress };

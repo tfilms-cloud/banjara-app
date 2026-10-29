@@ -1,7 +1,7 @@
-import { MapPin } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
+import { BrandMark } from '@/components/brand/BrandMark';
 import { Colors } from '@/constants/colors';
-import { Radius, Spacing } from '@/constants/spacing';
+import { Spacing } from '@/constants/spacing';
 import { AuthFonts } from '@/constants/authFonts';
 import { Brand } from '@/constants/typography';
 
@@ -13,13 +13,7 @@ type AuthBrandMarkProps = {
 export function AuthBrandMark({ compact = false, light = false }: AuthBrandMarkProps) {
   return (
     <View style={[styles.wrap, compact && styles.wrapCompact]}>
-      <View style={[styles.mark, compact && styles.markCompact, light && styles.markLight]}>
-        <MapPin
-          size={compact ? 14 : 18}
-          color={light ? Colors.accent : Colors.accent}
-          strokeWidth={2.2}
-        />
-      </View>
+      <BrandMark size={compact ? 30 : 36} />
       <Text style={[styles.name, compact && styles.nameCompact, light && styles.nameLight]}>
         {Brand.name}
       </Text>
@@ -35,22 +29,6 @@ const styles = StyleSheet.create({
   },
   wrapCompact: {
     gap: 8,
-  },
-  mark: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  markCompact: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-  },
-  markLight: {
-    backgroundColor: 'rgba(255,255,255,0.16)',
   },
   name: {
     fontFamily: AuthFonts.bodyBold,

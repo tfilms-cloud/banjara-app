@@ -21,6 +21,7 @@ import { Radius, Spacing } from '@/constants/spacing';
 import { Typography } from '@/constants/typography';
 import { useHotels } from '@/hooks/useHotels';
 import { useHotelStore } from '@/store/hotelStore';
+import { useSearchStore } from '@/store/searchStore';
 import type { HotelSortBy, HotelType } from '@/types/hotel';
 import { formatDate } from '@/utils/formatDate';
 
@@ -39,6 +40,7 @@ export default function HotelResultsScreen() {
     resetFilters,
     setHotel,
   } = useHotelStore();
+  const query = useSearchStore((s) => s.query);
   const { hotels, loading, error, refresh } = useHotels();
   const [showFilters, setShowFilters] = useState(false);
   const [showSort, setShowSort] = useState(false);
@@ -58,7 +60,7 @@ export default function HotelResultsScreen() {
   return (
     <View style={styles.container}>
       <Header
-        title={`Hotels in ${destination}`}
+        title={query.trim() ? `Stays matching “${query.trim()}”` : `Hotels in ${destination}`}
         subtitle={`${formatDate(checkIn, false)} → ${formatDate(checkOut, false)} · ${adults + children} guests · ${rooms} room${rooms > 1 ? 's' : ''} · ${hotels.length} stays`}
         showBack
         fallbackHref="/(customer)/(tabs)/hotels"

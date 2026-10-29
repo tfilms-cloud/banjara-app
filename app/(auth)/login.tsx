@@ -24,6 +24,7 @@ export default function LoginScreen() {
   const login = useAuthStore((state) => state.login);
   const isLoading = useAuthStore((state) => state.isLoading);
   const error = useAuthStore((state) => state.error);
+  const clearError = useAuthStore((state) => state.clearError);
 
   const { control, handleSubmit, formState } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -31,6 +32,7 @@ export default function LoginScreen() {
   });
 
   const onSubmit = handleSubmit(async (values) => {
+    clearError();
     try {
       await login(values);
       const { useProviderStore } = await import('@/store/providerStore');
@@ -45,7 +47,7 @@ export default function LoginScreen() {
     <AuthScreen
       title="Welcome back"
       caption="Sign in"
-      subtitle="Manage bookings, messages, and trips with your Banjara account."
+      subtitle="Use the email and password for your BANJARA account."
       fallbackHref="/(auth)/welcome"
       footer={
         <Text style={styles.footer}>
@@ -103,52 +105,26 @@ export default function LoginScreen() {
 
         {error ? <AuthErrorBanner message={error} /> : null}
 
-        <Button title="Sign in" loading={isLoading} onPress={onSubmit} />
-
-        <View style={styles.trust}>
-          <ShieldCheck size={14} color={Colors.primary} strokeWidth={2.2} />
-          <Text style={styles.trustText}>Your trips and messages stay private</Text>
-        </View>
+        <Button
+          title="Sign in"
+          loading={isLoading}
+          onPress={() => void onSubmit()}
+          icon={<ShieldCheck size={18} color={Colors.white} />}
+        />
       </View>
     </AuthScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  form: {
-    gap: Spacing.lg,
-  },
-  forgotHit: {
-    alignSelf: 'flex-end',
-    minHeight: 36,
-    justifyContent: 'center',
-    marginTop: -Spacing.sm,
-  },
-  forgot: {
-    fontFamily: AuthFonts.bodySemiBold,
-    fontSize: 13,
-    color: Colors.action,
-  },
-  trust: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: Spacing.xs,
-  },
-  trustText: {
-    fontFamily: AuthFonts.body,
-    fontSize: 12,
-    color: Colors.muted,
-  },
+  form: { gap: Spacing.lg },
   footer: {
     fontFamily: AuthFonts.body,
     fontSize: 14,
     color: Colors.muted,
     textAlign: 'center',
   },
-  link: {
-    fontFamily: AuthFonts.bodySemiBold,
-    color: Colors.action,
-  },
+  link: { fontFamily: AuthFonts.bodySemiBold, color: Colors.primary },
+  forgotHit: { alignSelf: 'flex-end', minHeight: 36, justifyContent: 'center' },
+  forgot: { fontFamily: AuthFonts.bodySemiBold, fontSize: 13, color: Colors.primary },
 });

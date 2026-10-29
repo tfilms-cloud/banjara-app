@@ -17,8 +17,15 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { BrandSplash } from '@/components/brand/BrandSplash';
 import { useIsDarkMode, useThemeColors } from '@/constants/colors';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useUserStore } from '@/store/userStore';
+
+function PushBootstrap() {
+  usePushNotifications();
+  return null;
+}
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -50,13 +57,20 @@ export default function RootLayout() {
   }, [fontsLoaded, hydrated]);
 
   if (!fontsLoaded || !hydrated) {
-    return null;
+    return (
+      <BrandSplash
+        onReady={() => {
+          SplashScreen.hideAsync().catch(() => undefined);
+        }}
+      />
+    );
   }
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
       <SafeAreaProvider>
         <StatusBar style={darkMode ? 'light' : 'dark'} />
+        <PushBootstrap />
         <Stack
           screenOptions={{
             headerShown: false,
@@ -68,6 +82,7 @@ export default function RootLayout() {
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(customer)" />
           <Stack.Screen name="(provider)" />
+          <Stack.Screen name="terms/[role]" />
           <Stack.Screen name="+not-found" />
         </Stack>
       </SafeAreaProvider>

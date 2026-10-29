@@ -7,11 +7,22 @@ import { MenuList } from '@/components/ui/MenuList';
 import { Colors } from '@/constants/colors';
 import { Spacing } from '@/constants/spacing';
 import { useAuthStore } from '@/store/authStore';
+import { useProviderStore } from '@/store/providerStore';
 import { pushPath } from '@/utils/navigation';
 
+/** App-level settings only — service operations stay on Dashboard / Service / Bookings. */
 export default function ProviderSettingsScreen() {
   const insets = useSafeAreaInsets();
   const logout = useAuthStore((s) => s.logout);
+  const provider = useProviderStore((s) => s.provider);
+  const termsRole =
+    provider?.services?.some((s) => s === 'hotel' || s === 'guestHouse')
+      ? 'hotel'
+      : provider?.services?.some((s) => s === 'tour')
+        ? 'tour'
+        : provider?.services?.some((s) => s === 'travelGuide')
+          ? 'guide'
+          : 'transporter';
 
   return (
     <View style={styles.container}>
@@ -27,69 +38,51 @@ export default function ProviderSettingsScreen() {
         <MenuList
           items={[
             {
-              key: 'business',
-              label: 'Business information',
-              icon: 'briefcase-outline',
-              onPress: () => pushPath('/(provider)/register/business'),
+              key: 'cnic',
+              label: 'CNIC verification',
+              subtitle: 'Verify identity from your CNIC photo',
+              icon: 'card-outline',
+              onPress: () => pushPath('/(provider)/register/verification'),
             },
             {
-              key: 'location',
-              label: 'Business location',
-              icon: 'location-outline',
-              onPress: () => pushPath('/(provider)/location'),
-            },
-            {
-              key: 'account',
-              label: 'Account information',
-              icon: 'person-outline',
-              onPress: () => pushPath('/(provider)/(tabs)/profile'),
+              key: 'payment-accounts',
+              label: 'Payment accounts',
+              subtitle: 'Bank, Easypaisa, JazzCash, Raast',
+              icon: 'wallet-outline',
+              onPress: () => pushPath('/(provider)/payment-accounts'),
             },
             {
               key: 'notifications',
               label: 'Notifications',
+              subtitle: 'Inbox',
               icon: 'notifications-outline',
               onPress: () => pushPath('/(provider)/notifications'),
             },
             {
-              key: 'payments',
-              label: 'Payment settings',
-              icon: 'card-outline',
-              onPress: () => pushPath('/(provider)/(tabs)/earnings'),
+              key: 'notification-settings',
+              label: 'Push settings',
+              subtitle: 'Choose what alerts you get',
+              icon: 'options-outline',
+              onPress: () => pushPath('/(provider)/notification-settings'),
             },
             {
-              key: 'availability',
-              label: 'Availability',
-              icon: 'calendar-outline',
-              onPress: () => pushPath('/(provider)/hotel/availability'),
+              key: 'phone',
+              label: 'Phone number',
+              subtitle: provider?.phone || 'Verified mobile',
+              icon: 'phone-portrait-outline',
+              onPress: () => pushPath('/(provider)/register/business'),
             },
-          ]}
-        />
-
-        <MenuList
-          items={[
+            {
+              key: 'terms',
+              label: 'Terms & Conditions',
+              icon: 'document-text-outline',
+              onPress: () => pushPath(`/terms/${termsRole}`),
+            },
             {
               key: 'privacy',
               label: 'Privacy',
               icon: 'shield-outline',
-              onPress: () => pushPath('/(provider)/settings'),
-            },
-            {
-              key: 'security',
-              label: 'Security',
-              icon: 'lock-closed-outline',
-              onPress: () => pushPath('/(provider)/settings'),
-            },
-            {
-              key: 'terms',
-              label: 'Terms',
-              icon: 'document-text-outline',
-              onPress: () => pushPath('/(provider)/settings'),
-            },
-            {
-              key: 'help',
-              label: 'Help & support',
-              icon: 'help-circle-outline',
-              onPress: () => pushPath('/(provider)/settings'),
+              onPress: () => pushPath('/terms/customer'),
             },
           ]}
         />

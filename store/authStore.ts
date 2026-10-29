@@ -91,8 +91,19 @@ export const useAuthStore = create<AuthState>()(
         });
       },
       logout: async () => {
+        const departingUserId = get().user?.id;
+        if (departingUserId) {
+          const { clearIdentityDraft } = await import('@/services/identityDraft');
+          await clearIdentityDraft(departingUserId).catch(() => undefined);
+        }
         const token = get().token;
         if (token && token !== 'guest-token') {
+          try {
+            const { unregisterPushToken } = await import('@/services/pushNotifications');
+            await unregisterPushToken();
+          } catch {
+            // ignore push cleanup failures
+          }
           await authService.logout();
         }
         await clearAuthSession();
@@ -119,7 +130,10 @@ export const useAuthStore = create<AuthState>()(
       setOnboarded: () => set({ hasOnboarded: true }),
       clearError: () => set({ error: null }),
       updateProviderLink: (providerId, providerStatus) =>
-        set((state) => ({
+        set((state) => {
+          if (!state.user || (state.user.role === 'provider' &&
+              state.user.providerId === providerId && state.user.providerStatus === providerStatus)) return state;
+          return {
           user: state.user
             ? {
                 ...state.user,
@@ -128,7 +142,8 @@ export const useAuthStore = create<AuthState>()(
                 providerStatus,
               }
             : state.user,
-        })),
+          };
+        }),
       refreshUser: async () => {
         const token = get().token;
         if (!token || token === 'guest-token') return;

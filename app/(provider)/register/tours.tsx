@@ -1,15 +1,15 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LocationPinField } from '@/components/location';
 import { Button } from '@/components/ui/Button';
 import { Header } from '@/components/ui/Header';
 import { Input } from '@/components/ui/Input';
+import { LocationPinField } from '@/components/location/LocationPinField';
 import { Colors } from '@/constants/colors';
-import { isHotelService, isTransportService } from '@/constants/providerOptions';
-import { Spacing } from '@/constants/spacing';
-import { Typography } from '@/constants/typography';
+import { isGuideService, isHotelService, isTourOperatorService, isTransportService } from '@/constants/providerOptions';
+import { Radius, Spacing } from '@/constants/spacing';
+import { Fonts, Typography } from '@/constants/typography';
 import { getApiErrorMessage } from '@/services/apiError';
 import { useProviderStore } from '@/store/providerStore';
 import { useAuthStore } from '@/store/authStore';
@@ -21,6 +21,15 @@ import {
   useWizardBack,
   wizardBack,
 } from '@/utils/navigation';
+
+type GuideGender = 'male' | 'female';
+
+function splitList(value: string) {
+  return value
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
 export default function ProviderTourSetupScreen() {
   const insets = useSafeAreaInsets();
@@ -39,7 +48,7 @@ export default function ProviderTourSetupScreen() {
       wizardBack('/(provider)/register/hotel');
       return;
     }
-    if (services.some((s) => isTransportService(s) || s === 'carRental')) {
+    if (services.some((s) => isTransportService(s))) {
       wizardBack('/(provider)/register/transport');
       return;
     }
@@ -49,8 +58,25 @@ export default function ProviderTourSetupScreen() {
   const saveProgress = useProviderStore((s) => s.saveProgress);
   const saving = useProviderStore((s) => s.saving);
   const isGuide =
-    draft.selectedServices.includes('travelGuide') || provider?.services?.[0] === 'travelGuide';
+    draft.selectedServices.some((s) => isGuideService(s)) ||
+    Boolean(provider?.services?.some((s) => isGuideService(s)));
+  const isTourOp =
+    draft.selectedServices.some((s) => isTourOperatorService(s)) ||
+    Boolean(provider?.services?.some((s) => isTourOperatorService(s)));
   const tour = draft.tour ?? provider?.tour;
+
+  const [guideForm, setGuideForm] = useState({
+    guideName: tour?.companyName ?? draft.business.businessName ?? draft.business.ownerName ?? '',
+    gender: (tour?.gender ?? 'male') as GuideGender,
+    regionalLanguages: tour?.regionalLanguages?.join(', ') ?? '',
+    internationalLanguages: tour?.internationalLanguages?.join(', ') ?? '',
+    yearsExperience: String(tour?.yearsExperience ?? draft.business.yearsExperience ?? ''),
+    experienceHistory: tour?.experienceHistory ?? tour?.description ?? '',
+    specialties: tour?.specialties?.join(', ') ?? '',
+    operatingAreas: tour?.operatingAreas?.join(', ') ?? tour?.destination ?? draft.business.city ?? '',
+    certifications: tour?.certifications?.join(', ') ?? '',
+    dailyHireRate: String(tour?.dailyHireRate ?? tour?.price ?? ''),
+  });
 
   const [form, setForm] = useState({
     companyName: tour?.companyName ?? draft.business.businessName ?? '',
@@ -68,7 +94,23 @@ export default function ProviderTourSetupScreen() {
 
   useEffect(() => {
     const next = draft.tour ?? provider?.tour;
-    if (!next?.tourName && !next?.companyName && !next?.destination) return;
+    if (!next) return;
+    if (isGuide) {
+      setGuideForm({
+        guideName: next.companyName || next.tourName || '',
+        gender: (next.gender ?? 'male') as GuideGender,
+        regionalLanguages: next.regionalLanguages?.join(', ') ?? '',
+        internationalLanguages: next.internationalLanguages?.join(', ') ?? '',
+        yearsExperience: String(next.yearsExperience ?? ''),
+        experienceHistory: next.experienceHistory ?? next.description ?? '',
+        specialties: next.specialties?.join(', ') ?? '',
+        operatingAreas: next.operatingAreas?.join(', ') ?? next.destination ?? '',
+        certifications: next.certifications?.join(', ') ?? '',
+        dailyHireRate: String(next.dailyHireRate ?? next.price ?? ''),
+      });
+      return;
+    }
+    if (!next.tourName && !next.companyName && !next.destination) return;
     setForm({
       companyName: next.companyName ?? '',
       tourName: next.tourName ?? '',
@@ -82,9 +124,61 @@ export default function ProviderTourSetupScreen() {
       included: next.included?.join(', ') ?? '',
       excluded: next.excluded?.join(', ') ?? '',
     });
-  }, [provider?.id, draft.tour?.tourName, draft.tour?.companyName]);
+  }, [provider?.id, draft.tour?.companyName, draft.tour?.tourName, draft.tour?.gender, isGuide]);
 
-  const onContinue = async () => {
+  const onContinueGuide = async () => {
+    if (!guideForm.guideName.trim()) {
+      Alert.alert('Required', 'Enter your guide name.');
+      return;
+    }
+    if (!guideForm.gender) {
+      Alert.alert('Required', 'Select Male or Female.');
+      return;
+    }
+    if (!guideForm.experienceHistory.trim()) {
+      Alert.alert('Required', 'Add your experience history so travelers know your background.');
+      return;
+    }
+    const years = Number(guideForm.yearsExperience);
+    const rate = Number(guideForm.dailyHireRate);
+    setTour({
+      companyName: guideForm.guideName.trim(),
+      tourName: '',
+      description: guideForm.experienceHistory.trim(),
+      destination: splitList(guideForm.operatingAreas)[0] ?? '',
+      duration: '',
+      departureLocation: '',
+      pickupLocations: [],
+      price: Number.isFinite(rate) ? rate : 0,
+      maxParticipants: 0,
+      included: [],
+      excluded: [],
+      images: draft.tour?.images?.length
+        ? draft.tour.images
+        : ['https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800'],
+      gender: guideForm.gender,
+      regionalLanguages: splitList(guideForm.regionalLanguages),
+      internationalLanguages: splitList(guideForm.internationalLanguages),
+      yearsExperience: Number.isFinite(years) ? years : 0,
+      experienceHistory: guideForm.experienceHistory.trim(),
+      specialties: splitList(guideForm.specialties),
+      operatingAreas: splitList(guideForm.operatingAreas),
+      certifications: splitList(guideForm.certifications),
+      dailyHireRate: Number.isFinite(rate) ? rate : 0,
+    });
+    try {
+      await saveProgress();
+      if (isEditing) {
+        leaveProviderEditor(user);
+        return;
+      }
+      router.push('/(provider)/register/verification');
+    } catch (error) {
+      Alert.alert('Could not save', getApiErrorMessage(error));
+    }
+  };
+
+  const onContinueTour = async () => {
     setTour({
       companyName: form.companyName,
       tourName: form.tourName,
@@ -113,10 +207,14 @@ export default function ProviderTourSetupScreen() {
     }
   };
 
+  if (isGuide) {
+    return <Redirect href="/(provider)/register/guide" />;
+  }
+
   return (
     <View style={styles.container}>
       <Header
-        title={isGuide ? 'Travel Guide' : 'Tour Setup'}
+        title="Tour Setup"
         showBack
         fallbackHref={isEditing ? PROVIDER_SERVICE_TAB : (ONBOARDING_LOCATION as never)}
         onBack={goPrevious}
@@ -124,14 +222,17 @@ export default function ProviderTourSetupScreen() {
       <ScrollView
         contentContainerStyle={{ padding: Spacing.lg, paddingBottom: insets.bottom + 40, gap: Spacing.lg }}
       >
-        <Text style={styles.heading}>{isGuide ? 'Travel guide details' : 'Tour provider details'}</Text>
+        <Text style={styles.heading}>Tour provider details</Text>
+        {!isTourOp ? (
+          <Text style={styles.sub}>Complete your tour operator package details.</Text>
+        ) : null}
         <Input
-          label={isGuide ? 'Guide / company name' : 'Tour company name'}
+          label="Tour company name"
           value={form.companyName}
           onChangeText={(v) => setForm({ ...form, companyName: v })}
         />
         <Input
-          label={isGuide ? 'Offer name' : 'Tour name'}
+          label="Tour name"
           value={form.tourName}
           onChangeText={(v) => setForm({ ...form, tourName: v })}
         />
@@ -146,15 +247,12 @@ export default function ProviderTourSetupScreen() {
           value={form.destination}
           onChangeText={(v) => setForm({ ...form, destination: v })}
           result="place"
-          mapTitle="Pin the destination"
         />
         <Input label="Duration" value={form.duration} onChangeText={(v) => setForm({ ...form, duration: v })} />
         <LocationPinField
           label="Departure location"
           value={form.departureLocation}
           onChangeText={(v) => setForm({ ...form, departureLocation: v })}
-          result="place"
-          mapTitle="Pin departure"
         />
         <LocationPinField
           label="Pickup locations"
@@ -162,7 +260,6 @@ export default function ProviderTourSetupScreen() {
           onChangeText={(v) => setForm({ ...form, pickupLocations: v })}
           result="place"
           append
-          mapTitle="Pin a pickup location"
         />
         <Input
           label="Price (PKR)"
@@ -171,14 +268,14 @@ export default function ProviderTourSetupScreen() {
           onChangeText={(v) => setForm({ ...form, price: v })}
         />
         <Input
-          label={isGuide ? 'Group size' : 'Maximum participants'}
+          label="Maximum participants"
           keyboardType="number-pad"
           value={form.maxParticipants}
           onChangeText={(v) => setForm({ ...form, maxParticipants: v })}
         />
         <Input label="Included services" value={form.included} onChangeText={(v) => setForm({ ...form, included: v })} />
         <Input label="Excluded services" value={form.excluded} onChangeText={(v) => setForm({ ...form, excluded: v })} />
-          <Button title={isEditing ? 'Save changes' : 'Continue'} loading={saving} onPress={() => void onContinue()} />
+        <Button title={isEditing ? 'Save changes' : 'Continue'} loading={saving} onPress={() => void onContinueTour()} />
       </ScrollView>
     </View>
   );
@@ -187,4 +284,26 @@ export default function ProviderTourSetupScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   heading: { ...Typography.h2, color: Colors.dark },
+  sub: { ...Typography.body, color: Colors.muted, lineHeight: 20 },
+  genderBlock: { gap: Spacing.sm },
+  fieldLabel: { fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.dark },
+  genderRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    backgroundColor: Colors.inputBg,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 3,
+  },
+  genderChip: {
+    flex: 1,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: Radius.full,
+  },
+  genderChipActive: { backgroundColor: Colors.primary },
+  genderText: { fontFamily: Fonts.bodyMedium, fontSize: 14, color: Colors.muted },
+  genderTextActive: { fontFamily: Fonts.bodySemiBold, color: Colors.white },
 });

@@ -6,6 +6,13 @@ import { Radius, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 import type { Booking } from '@/types/booking';
 import type { TripWithDetails } from '@/types/trip';
+import {
+  bookingNeedsPaymentAction,
+  canOpenBookingPayment,
+  openBookingPayment,
+  paymentActionHint,
+  paymentActionLabel,
+} from '@/utils/continuePayment';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatDate';
 import { formatTime } from '@/utils/formatTime';
@@ -19,12 +26,21 @@ interface BookingCardProps {
 
 export function BookingCard({ booking, trip, onPress, onViewTicket }: BookingCardProps) {
   const colors = useThemeColors();
+  const needsPay = bookingNeedsPaymentAction(booking);
+  const canOpenPay = canOpenBookingPayment(booking);
   const tone =
     booking.status === 'cancelled'
       ? 'red'
       : booking.status === 'completed'
         ? 'green'
-        : 'blue';
+        : needsPay || booking.status === 'pending'
+          ? 'amber'
+          : 'blue';
+  const statusLabel = needsPay
+    ? paymentActionLabel(booking.paymentStatus)
+    : booking.status === 'pending'
+      ? 'Awaiting approval'
+      : booking.status;
   const journey = trip ? journeyTypeMeta(trip.journeyType) : null;
 
   return (
@@ -49,9 +65,18 @@ export function BookingCard({ booking, trip, onPress, onViewTicket }: BookingCar
               tone={journey.value === 'round_trip' ? 'blue' : 'gray'}
             />
           ) : null}
-          <Badge label={booking.status} tone={tone} />
+          <Badge label={statusLabel} tone={tone} />
         </View>
       </View>
+      {canOpenPay ? (
+        <Text style={[styles.pendingHint, { color: colors.warning ?? '#B45309' }]}>
+          {paymentActionHint(booking.paymentStatus)}
+        </Text>
+      ) : booking.status === 'pending' ? (
+        <Text style={[styles.pendingHint, { color: colors.warning ?? '#B45309' }]}>
+          Waiting for the provider to approve this booking.
+        </Text>
+      ) : null}
       {journey ? <Text style={styles.journeyHint}>{journey.customerHint}</Text> : null}
       <Text style={styles.meta}>
         {formatDate(booking.date)}
@@ -63,7 +88,23 @@ export function BookingCard({ booking, trip, onPress, onViewTicket }: BookingCar
           {formatCurrency(booking.priceBreakdown.total, booking.priceBreakdown.currency)}
         </Text>
         <View style={styles.actions}>
-          {booking.status !== 'cancelled' && onViewTicket ? (
+          {canOpenPay && booking.paymentId ? (
+            <Pressable
+              onPress={() =>
+                openBookingPayment({
+                  paymentId: booking.paymentId!,
+                  bookingId: booking.id,
+                  method: booking.paymentMethod,
+                })
+              }
+              hitSlop={8}
+            >
+              <Text style={[styles.link, { color: colors.action }]}>
+                {paymentActionLabel(booking.paymentStatus)}
+              </Text>
+            </Pressable>
+          ) : null}
+          {booking.status !== 'cancelled' && booking.status !== 'pending' && !needsPay && onViewTicket ? (
             <Pressable onPress={onViewTicket} hitSlop={8}>
               <Text style={styles.link}>Ticket</Text>
             </Pressable>
@@ -109,6 +150,12 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.body,
     fontSize: 12,
     color: Colors.muted,
+  },
+  pendingHint: {
+    fontFamily: Fonts.bodyMedium,
+    fontSize: 12,
+    marginTop: 4,
+    lineHeight: 16,
   },
   meta: {
     fontFamily: Fonts.body,

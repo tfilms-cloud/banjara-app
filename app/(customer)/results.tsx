@@ -44,8 +44,17 @@ const PRICE_BANDS: Array<{ label: string; min?: number; max?: number }> = [
 ];
 
 export default function ResultsScreen() {
-  const { from, to, date, passengers, productMode, sortBy, setSortBy, filters, setFilters, resetFilters } =
-    useSearchStore();
+  const from = useSearchStore((s) => s.from);
+  const to = useSearchStore((s) => s.to);
+  const date = useSearchStore((s) => s.date);
+  const passengers = useSearchStore((s) => s.passengers);
+  const productMode = useSearchStore((s) => s.productMode);
+  const sortBy = useSearchStore((s) => s.sortBy);
+  const setSortBy = useSearchStore((s) => s.setSortBy);
+  const filters = useSearchStore((s) => s.filters);
+  const setFilters = useSearchStore((s) => s.setFilters);
+  const resetFilters = useSearchStore((s) => s.resetFilters);
+  const query = useSearchStore((s) => s.query);
   const setTrip = useBookingStore((state) => state.setTrip);
   const { trips, loading, error, refresh } = useTrips();
   const [showFilters, setShowFilters] = useState(false);
@@ -120,11 +129,12 @@ export default function ResultsScreen() {
         accessibilityLabel="Edit search"
       >
         <Text style={styles.summaryRoute}>
-          {from} → {to}
+          {query.trim() ? `Matches for “${query.trim()}”` : `${from} → ${to}`}
         </Text>
         <Text style={styles.summaryMeta}>
-          {formatDate(date, false)} · {passengers} passenger{passengers > 1 ? 's' : ''}
-          {productMode === 'trips' ? ' · return' : ' · one way'}
+          {query.trim()
+            ? 'Name search · any date'
+            : `${formatDate(date, false)} · ${passengers} passenger${passengers > 1 ? 's' : ''}${productMode === 'trips' ? ' · return' : ' · one way'}`}
         </Text>
         <Text style={styles.summaryCount}>
           {loading ? 'Searching…' : `${trips.length} ${noun} available`}

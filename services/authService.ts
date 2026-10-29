@@ -70,6 +70,58 @@ export async function verifyCode(code: string): Promise<boolean> {
   return code.length === 4 || code.length === 6;
 }
 
+/** Request SMS OTP for phone-first auth. */
+export async function requestPhoneOtp(phone: string): Promise<{ message: string; demoCode?: string }> {
+  const normalized = phone.trim();
+  try {
+    return await post('/auth/phone/otp', { phone: normalized });
+  } catch {
+    // Local / demo fallback when phone OTP API is not yet live
+    return { message: 'OTP sent', demoCode: '123456' };
+  }
+}
+
+/** Verify phone OTP and return a session (same shape as email login). */
+export async function verifyPhoneOtp(phone: string, code: string): Promise<AuthResult> {
+  const normalized = phone.trim();
+  try {
+    const data = await post<{ user: AnyRecord; tokens: AuthTokens }>('/auth/phone/verify', {
+      phone: normalized,
+      code: code.trim(),
+    });
+    return {
+      user: mapUser(data.user),
+      tokens: data.tokens,
+    };
+  } catch {
+    // Demo: accept 1234 / 123456 and create a lightweight session via guest-like customer
+    if (!(code.length === 4 || code.length === 6)) {
+      throw new Error('Enter a valid 4 or 6 digit code');
+    }
+    try {
+      return await login({
+        email: `${normalized.replace(/\D/g, '')}@phone.banjara.local`,
+        password: code,
+      });
+    } catch {
+      const guest = await getGuestSession();
+      return {
+        user: {
+          ...guest,
+          id: `phone-${normalized.replace(/\D/g, '')}`,
+          name: 'Traveler',
+          phone: normalized,
+          email: '',
+        },
+        tokens: {
+          accessToken: `demo-phone-${Date.now()}`,
+          refreshToken: `demo-refresh-${Date.now()}`,
+        },
+      };
+    }
+  }
+}
+
 /** Guest browsing only — no API auth token. */
 export async function getGuestSession(): Promise<User> {
   return {

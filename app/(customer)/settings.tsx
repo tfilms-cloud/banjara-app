@@ -25,11 +25,11 @@ export default function SettingsScreen() {
           onPress={() => updateSettings({ language: settings.language === 'English' ? 'Urdu' : 'English' })}
         />
         <AppearanceToggle />
-        <ToggleRow
+        <SettingRow
           icon="notifications-outline"
           label="Notifications"
-          value={settings.notificationsEnabled}
-          onChange={(notificationsEnabled) => updateSettings({ notificationsEnabled })}
+          value="Manage"
+          onPress={() => router.push('/(customer)/notification-settings' as never)}
         />
         <ToggleRow
           icon="locate-outline"
@@ -38,7 +38,12 @@ export default function SettingsScreen() {
           onChange={(locationEnabled) => updateSettings({ locationEnabled })}
         />
         <SettingRow icon="shield-checkmark-outline" label="Privacy" value="Manage" />
-        <SettingRow icon="document-text-outline" label="Terms" value="View" />
+        <SettingRow
+          icon="document-text-outline"
+          label="Terms"
+          value="View"
+          onPress={() => router.push('/terms/customer' as never)}
+        />
         <SettingRow icon="help-circle-outline" label="Help" value="Support" />
         <SettingRow icon="information-circle-outline" label="About Banjara" value="v1.0.0" />
 

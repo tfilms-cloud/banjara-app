@@ -7,6 +7,7 @@ import { ActionGrid, type ActionItem } from '@/components/ui/ActionGrid';
 import { Badge } from '@/components/ui/Badge';
 import { Header } from '@/components/ui/Header';
 import { Colors } from '@/constants/colors';
+import { isGuestHouseService } from '@/constants/providerOptions';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Fonts, Typography } from '@/constants/typography';
 import { get } from '@/services/api';
@@ -20,6 +21,9 @@ export default function ProviderHotelScreen() {
   const insets = useSafeAreaInsets();
   const rooms = useProviderStore((s) => s.rooms);
   const bookings = useProviderStore((s) => s.bookings);
+  const provider = useProviderStore((s) => s.provider);
+  const isGuestStay = (provider?.services ?? []).some(isGuestHouseService);
+  const stayNoun = isGuestStay ? 'guest house' : 'hotel';
   const [hotel, setHotel] = useState<Hotel | null>(null);
   const [loadingHotel, setLoadingHotel] = useState(true);
 
@@ -95,7 +99,7 @@ export default function ProviderHotelScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="Hotel Management" showBack fallbackHref="/(provider)/(tabs)/services" />
+      <Header title={isGuestStay ? 'Guest House Management' : 'Hotel Management'} showBack fallbackHref="/(provider)/(tabs)/services" />
       <ScrollView
         contentContainerStyle={{
           padding: Spacing.lg,
@@ -142,11 +146,11 @@ export default function ProviderHotelScreen() {
             style={styles.emptyCard}
             onPress={() => router.push('/(provider)/register/hotel')}
           >
-            <Text style={styles.emptyTitle}>No hotel linked yet</Text>
+            <Text style={styles.emptyTitle}>No {stayNoun} linked yet</Text>
             <Text style={styles.empty}>
               Add your property details so travelers can find and book your rooms.
             </Text>
-            <Text style={styles.emptyCta}>Set up hotel →</Text>
+            <Text style={styles.emptyCta}>Set up {stayNoun} →</Text>
           </Pressable>
         )}
 

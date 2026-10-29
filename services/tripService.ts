@@ -16,6 +16,7 @@ import type {
   TripSortBy,
   TripWithDetails,
 } from '@/types/trip';
+import { matchesSearchText } from '@/utils/matchesSearchText';
 
 function sortToBackend(sortBy: TripSortBy): string {
   switch (sortBy) {
@@ -93,6 +94,23 @@ function applyClientFilters(
       trip.pickupLocations.some((point) => point.name.toLowerCase().includes(needle))
     );
   }
+  const query = params.query?.trim();
+  if (query) {
+    results = results.filter((trip) =>
+      matchesSearchText(
+        query,
+        trip.from,
+        trip.to,
+        trip.agency.name,
+        trip.vehicleName,
+        trip.vehicleType,
+        trip.vehicleBrand,
+        trip.vehicleModel,
+        trip.description,
+        ...trip.pickupLocations.map((point) => point.name)
+      )
+    );
+  }
   return results;
 }
 
@@ -156,11 +174,12 @@ export async function searchTrips(
   filters?: TripFilters,
   sortBy: TripSortBy = 'departure'
 ): Promise<TripWithDetails[]> {
+  const query = params.query?.trim();
   const data = await get<unknown>('/trips/search', {
     params: {
-      origin: params.from,
-      destination: params.to,
-      date: params.date,
+      origin: query ? undefined : params.from,
+      destination: query ? undefined : params.to,
+      date: query ? undefined : params.date,
       passengers: params.passengers,
       journeyType: params.journeyType ?? filters?.journeyType,
       minPrice: filters?.minPrice,
@@ -211,11 +230,26 @@ export async function getVehicleSeats(tripId: string): Promise<SeatLayout | null
   return mapSeatLayout(raw);
 }
 
+let recommendedTripsCache: { at: number; trips: TripWithDetails[] } | null = null;
+const RECOMMENDED_TRIPS_TTL_MS = 60_000;
+
 export async function getRecommendedTrips(): Promise<TripWithDetails[]> {
+  if (
+    recommendedTripsCache &&
+    Date.now() - recommendedTripsCache.at < RECOMMENDED_TRIPS_TTL_MS
+  ) {
+    return recommendedTripsCache.trips;
+  }
   const data = await get<unknown>('/trips/search', {
     params: { sort: 'recommended', limit: 40 },
   });
-  return asArray<AnyRecord>(data).map(mapTrip);
+  const trips = asArray<AnyRecord>(data).map(mapTrip);
+  recommendedTripsCache = { at: Date.now(), trips };
+  return trips;
+}
+
+export function invalidateRecommendedTripsCache() {
+  recommendedTripsCache = null;
 }
 
 export async function getPopularTrips(): Promise<TripWithDetails[]> {

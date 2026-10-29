@@ -68,7 +68,9 @@ export default function ProfileScreen() {
           </Pressable>
           <Text style={styles.name}>{person?.name ?? 'Guest'}</Text>
           <Text style={styles.meta}>{person?.email}</Text>
-          <Text style={styles.hint}>{uploading ? 'Uploading…' : 'Tap photo to change'}</Text>
+          <Text style={styles.hint}>
+            {uploading ? 'Uploading…' : person?.avatar ? 'Tap photo to change' : 'Tap to add profile photo'}
+          </Text>
           <Button
             title="Edit profile"
             variant="outline"
@@ -86,6 +88,12 @@ export default function ProfileScreen() {
               label: 'My bookings',
               icon: 'ticket-outline',
               onPress: () => router.push('/(customer)/(tabs)/bookings'),
+            },
+            {
+              key: 'payments',
+              label: 'Payments / Transactions',
+              icon: 'wallet-outline',
+              onPress: () => router.push('/(customer)/payments'),
             },
             {
               key: 'messages',

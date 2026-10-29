@@ -1,4 +1,4 @@
-import { serviceLabel } from '@/constants/providerOptions';
+import { serviceLabel, normalizeServiceKey } from '@/constants/providerOptions';
 import type { AppNotification, Booking, BookingStatus, PaymentMethod, PaymentStatus } from '@/types/booking';
 import type {
   Hotel,
@@ -12,10 +12,13 @@ import type {
 import type {
   Provider,
   ProviderBooking,
+  ProviderBookingKind,
   ProviderBookingStatus,
   ProviderDashboardStats,
   ProviderEarningsSummary,
   ProviderHotelSetup,
+  ProviderRestaurantOffer,
+  ProviderRestaurantSetup,
   ProviderReview,
   ProviderRoom,
   ProviderRoute,
@@ -30,7 +33,16 @@ import type {
 import type { Coordinates, PickupPoint, RouteInfo } from '@/types/route';
 import type { Seat, SeatLayout, SeatStatus } from '@/types/seat';
 import type { Agency, Amenity, Review, Trip, TripWithDetails, VehicleType } from '@/types/trip';
+import type {
+  GuideAvailability,
+  GuideDetails,
+  GuideDocument,
+  GuideLanguage,
+  GuideOfferedService,
+  GuidePhoto,
+} from '@/types/guide';
 import type { ProviderAccountStatus, User, UserRole } from '@/types/user';
+import { DEFAULT_GUIDE_WEEKLY } from '@/constants/guideOptions';
 import { resolveCoordinates } from '@/constants/geoPlaces';
 import { normalizeMediaUrl } from '@/utils/mediaUrl';
 
@@ -53,41 +65,109 @@ function asRecord(value: unknown): AnyRecord | undefined {
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as AnyRecord) : undefined;
 }
 
+function mapStayType(value: unknown): ProviderHotelSetup['hotelType'] {
+  const raw = String(value ?? '')
+    .replace(/[_-\s]/g, '')
+    .toLowerCase();
+  if (raw === 'resort') return 'resort';
+  if (raw === 'lodge') return 'lodge';
+  if (raw === 'hostel') return 'hostel';
+  if (raw === 'guesthouse' || raw === 'homestay') return 'guestHouse';
+  return 'hotel';
+}
+
+function mapYesNo(value: unknown): 'yes' | 'no' | '' {
+  const raw = String(value ?? '').trim().toLowerCase();
+  if (raw === 'yes' || raw === 'true' || raw === '1') return 'yes';
+  if (raw === 'no' || raw === 'false' || raw === '0') return 'no';
+  return '';
+}
+
 function mapHotelSetup(raw: unknown): ProviderHotelSetup | undefined {
   const data = asRecord(raw);
-  if (!data || (!data.hotelName && !data.address && !data.city)) return undefined;
-  const hotelTypeRaw = String(data.hotelType ?? 'hotel');
-  const hotelType: ProviderHotelSetup['hotelType'] =
-    hotelTypeRaw === 'resort' || hotelTypeRaw === 'guest_house' || hotelTypeRaw === 'lodge'
-      ? hotelTypeRaw
-      : 'hotel';
+  if (!data || (!data.hotelName && !data.address && !data.city && !data.managerName)) return undefined;
+  const outlookImages = mediaUrls(data.outlookImages).length
+    ? mediaUrls(data.outlookImages)
+    : stringList(data.outlookImages);
+  const roomImages = mediaUrls(data.roomImages).length
+    ? mediaUrls(data.roomImages)
+    : stringList(data.roomImages);
+  const restaurantImages = mediaUrls(data.restaurantImages).length
+    ? mediaUrls(data.restaurantImages)
+    : stringList(data.restaurantImages);
+  const legacyImages = mediaUrls(data.images).length
+    ? mediaUrls(data.images)
+    : stringList(data.images);
+  const images =
+    [...outlookImages, ...roomImages, ...restaurantImages].length > 0
+      ? [...outlookImages, ...roomImages, ...restaurantImages]
+      : legacyImages;
   return {
     hotelName: String(data.hotelName ?? ''),
-    hotelType,
+    hotelType: mapStayType(data.hotelType),
+    managerName: String(data.managerName ?? data.ownerName ?? ''),
+    landline: data.landline ? String(data.landline) : undefined,
+    phone: String(data.phone ?? ''),
     address: String(data.address ?? ''),
+    village: String(data.village ?? ''),
+    district: String(data.district ?? data.region ?? ''),
     city: String(data.city ?? ''),
     latitude: Number(data.latitude ?? 0),
     longitude: Number(data.longitude ?? 0),
+    googleMapsUrl: data.googleMapsUrl ? String(data.googleMapsUrl) : undefined,
+    businessRegistered: mapYesNo(data.businessRegistered),
+    businessRegistrationNumber: String(data.businessRegistrationNumber ?? data.registrationNumber ?? ''),
+    yearsExperience: Number(data.yearsExperience ?? 0),
+    website: data.website ? String(data.website) : undefined,
+    socialFacebook: data.socialFacebook ? String(data.socialFacebook) : undefined,
+    socialInstagram: data.socialInstagram ? String(data.socialInstagram) : undefined,
+    socialTiktok: data.socialTiktok ? String(data.socialTiktok) : undefined,
+    restaurantAvailable: mapYesNo(data.restaurantAvailable),
+    outlookImages,
+    roomImages,
+    restaurantImages,
     description: String(data.description ?? ''),
-    phone: String(data.phone ?? ''),
     email: String(data.email ?? ''),
     checkInTime: String(data.checkInTime ?? '14:00'),
     checkOutTime: String(data.checkOutTime ?? '12:00'),
     amenities: stringList(data.amenities),
-    images: mediaUrls(data.images).length ? mediaUrls(data.images) : stringList(data.images),
+    images,
   };
 }
 
 function mapTransportSetup(raw: unknown): ProviderTransportSetup | undefined {
   const data = asRecord(raw);
-  if (!data || (!data.businessName && !stringList(data.operatingCities).length && !data.description)) {
+  if (
+    !data ||
+    (!data.businessName &&
+      !stringList(data.operatingCities).length &&
+      !data.description &&
+      !data.registrationNumber &&
+      !data.vehicleImageFront &&
+      !data.vehicleImageBack &&
+      !data.vehicleModel &&
+      !data.driverName)
+  ) {
     return undefined;
   }
   const ownership = String(data.ownershipType ?? 'owned');
   const pricing = String(data.pricingMethod ?? 'per_seat');
+  const vehicleClassRaw = String(
+    data.vehicleClass ?? (Array.isArray(data.vehicleTypes) ? data.vehicleTypes[0] : '') ?? ''
+  );
+  const vehicleClass = (['car', 'jeep', 'suv', 'van', 'mini_bus', 'bus', 'minibus'].includes(vehicleClassRaw)
+    ? vehicleClassRaw === 'minibus'
+      ? 'mini_bus'
+      : vehicleClassRaw
+    : undefined) as ProviderTransportSetup['vehicleClass'];
+  const insurance = String(data.hasInsurance ?? '').toLowerCase();
   return {
     businessName: String(data.businessName ?? ''),
-    vehicleTypes: stringList(data.vehicleTypes),
+    vehicleTypes: stringList(data.vehicleTypes).length
+      ? stringList(data.vehicleTypes)
+      : vehicleClass
+        ? [vehicleClass]
+        : [],
     vehicleCount: Number(data.vehicleCount ?? 0),
     ownershipType: ownership === 'leased' || ownership === 'mixed' ? ownership : 'owned',
     operatingCities: stringList(data.operatingCities),
@@ -101,25 +181,277 @@ function mapTransportSetup(raw: unknown): ProviderTransportSetup | undefined {
       data.pricePercent == null || data.pricePercent === ''
         ? undefined
         : Number(data.pricePercent),
+    vehicleClass,
+    ownerName: data.ownerName ? String(data.ownerName) : undefined,
+    vehicleModel: data.vehicleModel ? String(data.vehicleModel) : undefined,
+    vehicleMakeYear: data.vehicleMakeYear ? String(data.vehicleMakeYear) : undefined,
+    engineNumber: data.engineNumber ? String(data.engineNumber) : undefined,
+    registrationNumber: data.registrationNumber ? String(data.registrationNumber) : undefined,
+    driverName: data.driverName ? String(data.driverName) : undefined,
+    driverPhone: data.driverPhone ? String(data.driverPhone) : undefined,
+    driverEmail: data.driverEmail ? String(data.driverEmail) : undefined,
+    driverPermanentAddress: data.driverPermanentAddress ? String(data.driverPermanentAddress) : undefined,
+    driverCnic: data.driverCnic ? String(data.driverCnic) : undefined,
+    hasInsurance: insurance === 'yes' || insurance === 'no' ? insurance : undefined,
+    insuranceCompany: data.insuranceCompany ? String(data.insuranceCompany) : undefined,
+    insuranceNumber: data.insuranceNumber ? String(data.insuranceNumber) : undefined,
+    insuranceYear: data.insuranceYear ? String(data.insuranceYear) : undefined,
+    driverExperienceYears: data.driverExperienceYears ? String(data.driverExperienceYears) : undefined,
+    driverLicenseNumber: data.driverLicenseNumber ? String(data.driverLicenseNumber) : undefined,
+    vehicleImageFront: mediaUrl(data.vehicleImageFront) || (data.vehicleImageFront ? String(data.vehicleImageFront) : undefined),
+    vehicleImageBack: mediaUrl(data.vehicleImageBack) || (data.vehicleImageBack ? String(data.vehicleImageBack) : undefined),
+    driverPhoto: mediaUrl(data.driverPhoto) || (data.driverPhoto ? String(data.driverPhoto) : undefined),
+    driverEmergencyContact: data.driverEmergencyContact ? String(data.driverEmergencyContact) : undefined,
   };
 }
 
 function mapTourSetup(raw: unknown): ProviderTourSetup | undefined {
   const data = asRecord(raw);
-  if (!data || (!data.tourName && !data.destination && !data.companyName)) return undefined;
+  if (
+    !data ||
+    (!data.tourName &&
+      !data.destination &&
+      !data.companyName &&
+      !data.gender &&
+      !data.experienceHistory &&
+      !data.yearsExperience)
+  ) {
+    return undefined;
+  }
+  const genderRaw = String(data.gender ?? '').toLowerCase();
+  const gender =
+    genderRaw === 'male' || genderRaw === 'female' ? (genderRaw as 'male' | 'female') : undefined;
   return {
     companyName: String(data.companyName ?? ''),
     tourName: String(data.tourName ?? ''),
-    description: String(data.description ?? ''),
+    description: String(data.description ?? data.experienceHistory ?? ''),
     destination: String(data.destination ?? ''),
     duration: String(data.duration ?? ''),
     departureLocation: String(data.departureLocation ?? ''),
     pickupLocations: stringList(data.pickupLocations),
-    price: Number(data.price ?? 0),
+    price: Number(data.price ?? data.dailyHireRate ?? 0),
     maxParticipants: Number(data.maxParticipants ?? 0),
     included: stringList(data.included),
     excluded: stringList(data.excluded),
     images: mediaUrls(data.images).length ? mediaUrls(data.images) : stringList(data.images),
+    gender,
+    regionalLanguages: stringList(data.regionalLanguages),
+    internationalLanguages: stringList(data.internationalLanguages),
+    yearsExperience:
+      data.yearsExperience != null && Number.isFinite(Number(data.yearsExperience))
+        ? Number(data.yearsExperience)
+        : undefined,
+    experienceHistory: data.experienceHistory
+      ? String(data.experienceHistory)
+      : data.description
+        ? String(data.description)
+        : undefined,
+    specialties: stringList(data.specialties),
+    operatingAreas: stringList(data.operatingAreas),
+    certifications: stringList(data.certifications),
+    dailyHireRate:
+      data.dailyHireRate != null && Number.isFinite(Number(data.dailyHireRate))
+        ? Number(data.dailyHireRate)
+        : data.price != null && Number.isFinite(Number(data.price))
+          ? Number(data.price)
+          : undefined,
+  };
+}
+
+function mapGuideLanguage(raw: unknown): GuideLanguage | null {
+  const data = asRecord(raw);
+  if (!data?.language) return null;
+  const prof = String(data.proficiency ?? 'basic');
+  const proficiency =
+    prof === 'conversational' || prof === 'fluent' || prof === 'native' ? prof : 'basic';
+  return { language: String(data.language), proficiency };
+}
+
+function mapGuideDocument(raw: unknown): GuideDocument | null {
+  const data = asRecord(raw);
+  if (!data?.id || !data.fileUrl) return null;
+  return {
+    id: String(data.id),
+    type: (String(data.type ?? 'other') as GuideDocument['type']) || 'other',
+    label: data.label ? String(data.label) : undefined,
+    number: data.number ? String(data.number) : undefined,
+    issueDate: data.issueDate ? String(data.issueDate) : undefined,
+    expiryDate: data.expiryDate ? String(data.expiryDate) : undefined,
+    fileUrl: mediaUrl(data.fileUrl) ?? String(data.fileUrl),
+    status: (String(data.status ?? 'pending') as GuideDocument['status']) || 'pending',
+    rejectionReason: data.rejectionReason ? String(data.rejectionReason) : undefined,
+  };
+}
+
+function mapGuidePhoto(raw: unknown): GuidePhoto | null {
+  const data = asRecord(raw);
+  if (!data?.id || !data.url) return null;
+  return {
+    id: String(data.id),
+    url: mediaUrl(data.url) ?? String(data.url),
+    category: (String(data.category ?? 'other') as GuidePhoto['category']) || 'other',
+    caption: data.caption ? String(data.caption) : undefined,
+  };
+}
+
+function mapGuideOfferedService(raw: unknown): GuideOfferedService | null {
+  const data = asRecord(raw);
+  if (!data?.id || !data.name) return null;
+  return {
+    id: String(data.id),
+    name: String(data.name),
+    category: (String(data.category ?? 'local') as GuideOfferedService['category']) || 'local',
+    description: String(data.description ?? ''),
+    durationLabel: String(data.durationLabel ?? ''),
+    durationHours: data.durationHours != null ? Number(data.durationHours) : undefined,
+    price: Number(data.price ?? 0),
+    pricingType: (String(data.pricingType ?? 'per_day') as GuideOfferedService['pricingType']) || 'per_day',
+    currency: String(data.currency ?? 'PKR'),
+    minGuests: Number(data.minGuests ?? 1),
+    maxGuests: Number(data.maxGuests ?? 10),
+    included: stringList(data.included),
+    excluded: stringList(data.excluded),
+    meetingPoint: data.meetingPoint ? String(data.meetingPoint) : undefined,
+    availableLocations: stringList(data.availableLocations),
+    notes: data.notes ? String(data.notes) : undefined,
+    active: data.active !== false,
+  };
+}
+
+function mapGuideAvailability(raw: unknown): GuideAvailability | undefined {
+  const data = asRecord(raw);
+  if (!data) return undefined;
+  const weeklyRaw = asArray<unknown>(data.weekly);
+  const weekly =
+    weeklyRaw.length > 0
+      ? weeklyRaw
+          .map((row) => {
+            const d = asRecord(row);
+            if (!d?.day) return null;
+            return {
+              day: String(d.day) as GuideAvailability['weekly'][0]['day'],
+              enabled: Boolean(d.enabled),
+              startTime: String(d.startTime ?? '09:00'),
+              endTime: String(d.endTime ?? '18:00'),
+            };
+          })
+          .filter(Boolean)
+      : DEFAULT_GUIDE_WEEKLY.map((row) => ({ ...row }));
+  return {
+    weekly: weekly as GuideAvailability['weekly'],
+    minBookingHours: data.minBookingHours != null ? Number(data.minBookingHours) : undefined,
+    maxBookingHours: data.maxBookingHours != null ? Number(data.maxBookingHours) : undefined,
+    advanceBookingHours:
+      data.advanceBookingHours != null ? Number(data.advanceBookingHours) : undefined,
+    availableFrom: data.availableFrom ? String(data.availableFrom) : undefined,
+    availableUntil: data.availableUntil ? String(data.availableUntil) : undefined,
+    blockedDates: stringList(data.blockedDates),
+  };
+}
+
+export function mapGuideDetailsFromApi(raw: unknown): GuideDetails | undefined {
+  const data = asRecord(raw);
+  if (!data) return undefined;
+  const hasContent = Object.keys(data).some((key) => {
+    const value = data[key];
+    if (Array.isArray(value)) return value.length > 0;
+    if (value != null && typeof value === 'object') return Object.keys(value as object).length > 0;
+    return value != null && String(value).trim() !== '';
+  });
+  if (!hasContent) return undefined;
+
+  const genderRaw = String(data.gender ?? '').toLowerCase();
+  const gender =
+    genderRaw === 'male' || genderRaw === 'female' || genderRaw === 'other'
+      ? (genderRaw as GuideDetails['gender'])
+      : undefined;
+
+  return {
+    profileStatus: data.profileStatus as GuideDetails['profileStatus'],
+    changesRequestedNote: data.changesRequestedNote ? String(data.changesRequestedNote) : undefined,
+    fullName: data.fullName ? String(data.fullName) : undefined,
+    profilePhoto: mediaUrl(data.profilePhoto) ?? (data.profilePhoto ? String(data.profilePhoto) : undefined),
+    gender,
+    dateOfBirth: data.dateOfBirth ? String(data.dateOfBirth) : undefined,
+    age: data.age != null ? Number(data.age) : undefined,
+    phone: data.phone ? String(data.phone) : undefined,
+    whatsapp: data.whatsapp ? String(data.whatsapp) : undefined,
+    email: data.email ? String(data.email) : undefined,
+    cnicNumber: data.cnicNumber ? String(data.cnicNumber) : undefined,
+    cnicFrontUrl: mediaUrl(data.cnicFrontUrl) ?? (data.cnicFrontUrl ? String(data.cnicFrontUrl) : undefined),
+    cnicBackUrl: mediaUrl(data.cnicBackUrl) ?? (data.cnicBackUrl ? String(data.cnicBackUrl) : undefined),
+    country: data.country ? String(data.country) : undefined,
+    province: data.province ? String(data.province) : undefined,
+    district: data.district ? String(data.district) : undefined,
+    city: data.city ? String(data.city) : undefined,
+    currentLocation: data.currentLocation ? String(data.currentLocation) : undefined,
+    areasCovered: stringList(data.areasCovered),
+    pickupLocations: stringList(data.pickupLocations),
+    guideTypes: stringList(data.guideTypes) as GuideDetails['guideTypes'],
+    customGuideType: data.customGuideType ? String(data.customGuideType) : undefined,
+    yearsExperience:
+      data.yearsExperience != null ? Number(data.yearsExperience) : undefined,
+    shortBio: data.shortBio ? String(data.shortBio) : undefined,
+    detailedDescription: data.detailedDescription ? String(data.detailedDescription) : undefined,
+    specialSkills: stringList(data.specialSkills),
+    areasOfExpertise: stringList(data.areasOfExpertise),
+    certifications: stringList(data.certifications),
+    training: stringList(data.training),
+    awards: stringList(data.awards),
+    languages: asArray<unknown>(data.languages)
+      .map(mapGuideLanguage)
+      .filter(Boolean) as GuideLanguage[],
+    documents: asArray<unknown>(data.documents)
+      .map(mapGuideDocument)
+      .filter(Boolean) as GuideDocument[],
+    photos: asArray<unknown>(data.photos)
+      .map(mapGuidePhoto)
+      .filter(Boolean) as GuidePhoto[],
+    services: asArray<unknown>(data.services)
+      .map(mapGuideOfferedService)
+      .filter(Boolean) as GuideOfferedService[],
+    availability: mapGuideAvailability(data.availability),
+    dailyHireRate:
+      data.dailyHireRate != null && Number.isFinite(Number(data.dailyHireRate))
+        ? Number(data.dailyHireRate)
+        : undefined,
+  };
+}
+
+function mapRestaurantSetup(raw: unknown): ProviderRestaurantSetup | undefined {
+  const data = asRecord(raw);
+  if (!data || (!data.restaurantName && !data.city && !data.name)) return undefined;
+  const offersRaw = Array.isArray(data.offers) ? data.offers : [];
+  const offers: ProviderRestaurantOffer[] = offersRaw.map((item, index) => {
+    const row = asRecord(item) ?? {};
+    const typeRaw = String(row.type ?? 'offer');
+    const type: ProviderRestaurantOffer['type'] =
+      typeRaw === 'sale' || typeRaw === 'discount' ? typeRaw : 'offer';
+    return {
+      id: String(row.id ?? `offer-${index + 1}`),
+      title: String(row.title ?? ''),
+      type,
+      discountPercent:
+        row.discountPercent != null ? Number(row.discountPercent) : undefined,
+      description: row.description ? String(row.description) : undefined,
+      active: row.active !== false,
+    };
+  }).filter((o) => o.title);
+
+  return {
+    restaurantName: String(data.restaurantName ?? data.name ?? ''),
+    cuisineTypes: stringList(data.cuisineTypes ?? data.cuisine),
+    menuVariety: stringList(data.menuVariety),
+    city: String(data.city ?? ''),
+    address: String(data.address ?? ''),
+    phone: String(data.phone ?? ''),
+    description: String(data.description ?? ''),
+    images: mediaUrls(data.images).length ? mediaUrls(data.images) : stringList(data.images),
+    offers,
+    hours: data.hours ? String(data.hours) : undefined,
+    website: data.website ? String(data.website) : undefined,
+    latitude: data.latitude != null ? Number(data.latitude) : undefined,
+    longitude: data.longitude != null ? Number(data.longitude) : undefined,
   };
 }
 
@@ -130,6 +462,32 @@ export function idOf(value: unknown): string {
     const obj = value as AnyRecord;
     if (obj.id != null) return String(obj.id);
     if (obj._id != null) return String(obj._id);
+  }
+  return '';
+}
+
+/** Human-readable place label — never show raw Mongo ObjectIds in the UI. */
+export function placeLabel(value: unknown): string {
+  if (value == null) return '';
+  if (typeof value === 'string' || typeof value === 'number') {
+    const text = String(value).trim();
+    if (/^[a-f\d]{24}$/i.test(text)) return '';
+    return text;
+  }
+  if (typeof value === 'object') {
+    const obj = value as AnyRecord;
+    const name = String(
+      obj.name ?? obj.address ?? obj.placeName ?? obj.formattedAddress ?? ''
+    ).trim();
+    if (name && !/^[a-f\d]{24}$/i.test(name)) return name;
+    const structured = obj.structuredAddress;
+    if (structured && typeof structured === 'object') {
+      const addr = structured as AnyRecord;
+      const formatted = String(
+        addr.formattedAddress ?? addr.city ?? addr.area ?? addr.street ?? ''
+      ).trim();
+      if (formatted) return formatted;
+    }
   }
   return '';
 }
@@ -171,6 +529,13 @@ function mapAgency(provider: AnyRecord | undefined, fallbackId = ''): Agency {
       : '';
   const address = String(p.address ?? formattedAddress).trim();
   const website = String(p.website ?? '').trim();
+  const transport =
+    p.transportDetails && typeof p.transportDetails === 'object'
+      ? (p.transportDetails as AnyRecord)
+      : undefined;
+  const description =
+    String(p.description ?? '').trim() ||
+    String(transport?.description ?? '').trim();
 
   return {
     id: idOf(p) || fallbackId,
@@ -180,7 +545,7 @@ function mapAgency(provider: AnyRecord | undefined, fallbackId = ''): Agency {
     reviewCount: Number(p.totalReviews ?? p.reviewCount ?? 0),
     phone: String(p.phone ?? ''),
     email: String(p.email ?? ''),
-    description: String(p.description ?? ''),
+    description,
     verified: String(p.verificationStatus ?? '') === 'approved',
     userId: userId || undefined,
     city: city || undefined,
@@ -315,15 +680,20 @@ export function mapTrip(raw: AnyRecord): TripWithDetails {
     journeyType: String(raw.journeyType ?? 'one_way') === 'round_trip' ? 'round_trip' : 'one_way',
     returnDate: raw.returnDate ? String(raw.returnDate) : undefined,
     returnTime: raw.returnTime ? String(raw.returnTime) : undefined,
+    bookingMode: String(raw.bookingMode ?? 'seat') === 'vehicle' ? 'vehicle' : 'seat',
     description: String(raw.description ?? '').trim() || undefined,
     status: String(raw.status ?? '').trim() || undefined,
     originCoordinates: coordsOf(raw.originLat, raw.originLng),
     destinationCoordinates: coordsOf(raw.destinationLat, raw.destinationLng),
   };
 
-  const vehicleImages = mediaUrls(
-    Array.isArray(vehicle?.images) ? vehicle.images : trip.image ? [trip.image] : []
-  );
+  const vehicleImages = mediaUrls([
+    ...(Array.isArray(vehicle?.images) ? vehicle.images : []),
+    (provider?.transportDetails as AnyRecord | undefined)?.vehicleImageFront,
+    (provider?.transportDetails as AnyRecord | undefined)?.vehicleImageBack,
+    (provider?.transportDetails as AnyRecord | undefined)?.driverPhoto,
+    trip.image || undefined,
+  ]);
 
   return {
     ...trip,
@@ -341,25 +711,53 @@ export function mapTrip(raw: AnyRecord): TripWithDetails {
   };
 }
 
-function mapFrontendBookingStatus(status: string): BookingStatus {
-  if (status === 'pending' || status === 'confirmed') return 'upcoming';
+export function mapFrontendBookingStatus(status: string): BookingStatus {
+  if (status === 'pending' || status === 'payment_verification') return 'pending';
+  if (status === 'confirmed') return 'upcoming';
   if (status === 'completed') return 'completed';
-  if (status === 'cancelled' || status === 'refunded') return 'cancelled';
-  return (status as BookingStatus) || 'upcoming';
+  if (status === 'cancelled' || status === 'refunded' || status === 'expired') return 'cancelled';
+  return (status as BookingStatus) || 'pending';
 }
 
-function mapPaymentMethod(method: unknown): PaymentMethod {
+export function mapPaymentMethod(method: unknown): PaymentMethod {
   const value = String(method ?? 'card');
+  if (
+    value === 'bankTransfer' ||
+    value === 'easypaisa' ||
+    value === 'jazzcash' ||
+    value === 'raast'
+  ) {
+    return value as PaymentMethod;
+  }
+  if (value === 'bank_transfer') return 'bankTransfer';
   if (value === 'mobileWallet' || value === 'wallet') return 'wallet';
   if (value === 'cash' || value === 'payAtHotel') return 'cash';
   return 'card';
 }
 
 export function toBackendPaymentMethod(
-  method: PaymentMethod | HotelPaymentMethod
-): 'card' | 'mobileWallet' | 'cash' | 'payAtHotel' {
+  method: PaymentMethod | HotelPaymentMethod | string
+):
+  | 'card'
+  | 'mobileWallet'
+  | 'cash'
+  | 'payAtHotel'
+  | 'bankTransfer'
+  | 'easypaisa'
+  | 'jazzcash'
+  | 'raast' {
+  if (
+    method === 'bankTransfer' ||
+    method === 'easypaisa' ||
+    method === 'jazzcash' ||
+    method === 'raast'
+  ) {
+    return method;
+  }
+  if (method === 'bank_transfer') return 'bankTransfer';
   if (method === 'wallet') return 'mobileWallet';
   if (method === 'cash') return 'cash';
+  if (method === 'payAtHotel') return 'payAtHotel';
   return 'card';
 }
 
@@ -386,6 +784,7 @@ export function mapTransportBooking(raw: AnyRecord): Booking {
     },
     paymentMethod: mapPaymentMethod(raw.paymentMethod),
     paymentStatus: (raw.paymentStatus as PaymentStatus) ?? 'pending',
+    paymentId: raw.paymentId ? idOf(raw.paymentId) : undefined,
     status: mapFrontendBookingStatus(String(raw.bookingStatus ?? 'pending')),
     priceBreakdown: {
       ticketPrice: Number(raw.subtotal ?? 0),
@@ -413,14 +812,19 @@ export function mapHotel(raw: AnyRecord): Hotel {
     ? ((raw.location as AnyRecord).coordinates as number[])
     : [0, 0];
 
+  const village = String(raw.village ?? '').trim();
+  const district = String(raw.district ?? '').trim();
+  const city = String(raw.city ?? '').trim();
+  const area = [village, district].filter(Boolean).join(', ') || String(raw.area ?? raw.address ?? '');
+
   return {
     id: idOf(raw),
     name: String(raw.name ?? ''),
     description: String(raw.description ?? ''),
     images: mediaUrls(raw.images),
     location: {
-      city: String(raw.city ?? ''),
-      area: String(raw.area ?? raw.address ?? ''),
+      city,
+      area,
       address: String(raw.address ?? ''),
       latitude: Number(coords[1] ?? raw.latitude ?? 0),
       longitude: Number(coords[0] ?? raw.longitude ?? 0),
@@ -429,16 +833,18 @@ export function mapHotel(raw: AnyRecord): Hotel {
     rating: Number(raw.rating ?? 0),
     reviewCount: Number(raw.reviewCount ?? 0),
     hotelType: mapHotelType(raw.hotelType),
-    amenities: (Array.isArray(raw.amenities) ? raw.amenities : []) as HotelAmenity[],
+    amenities: (Array.isArray(raw.amenities) ? raw.amenities : []).map(String) as HotelAmenity[],
     roomIds: [],
     checkInTime: String(raw.checkInTime ?? '14:00'),
     checkOutTime: String(raw.checkOutTime ?? '12:00'),
-    cancellationPolicy: String(raw.cancellationPolicy ?? ''),
+    cancellationPolicy: String(
+      raw.cancellationPolicy ?? 'Free cancellation up to 24 hours before check-in.'
+    ),
     priceFrom: Number(raw.priceFrom ?? 0),
     featured: Boolean(raw.featured),
     popular: Boolean(raw.popular) || Number(raw.rating ?? 0) >= 4.5,
     isVerified: Boolean(raw.isVerified),
-    freeCancellation: String(raw.cancellationPolicy ?? '')
+    freeCancellation: String(raw.cancellationPolicy ?? 'free cancellation')
       .toLowerCase()
       .includes('free cancellation'),
     breakfastIncluded: (Array.isArray(raw.amenities) ? raw.amenities : []).some((item) =>
@@ -446,6 +852,16 @@ export function mapHotel(raw: AnyRecord): Hotel {
     ),
     phone: String(raw.phone ?? ''),
     email: String(raw.email ?? ''),
+    providerId: raw.providerId ? idOf(raw.providerId) : undefined,
+    managerName: String(raw.managerName ?? '').trim() || undefined,
+    village: village || undefined,
+    district: district || undefined,
+    landline: String(raw.landline ?? '').trim() || undefined,
+    yearsExperience: Number(raw.yearsExperience ?? 0) || undefined,
+    restaurantAvailable: Boolean(raw.restaurantAvailable),
+    googleMapsUrl: String(raw.googleMapsUrl ?? '').trim() || undefined,
+    website: String(raw.website ?? '').trim() || undefined,
+    businessRegistered: Boolean(raw.businessRegistered),
   };
 }
 
@@ -458,14 +874,15 @@ export function mapHotelRoom(raw: AnyRecord): HotelRoom {
     bedType: String(raw.bedType ?? ''),
     capacity: Number(raw.capacity ?? 1),
     sizeSqm: Number(raw.size ?? raw.sizeSqm ?? 0),
-    amenities: (Array.isArray(raw.amenities) ? raw.amenities : []) as HotelAmenity[],
+    amenities: (Array.isArray(raw.amenities) ? raw.amenities : []).map(String) as HotelAmenity[],
     breakfastIncluded: Boolean(raw.breakfastIncluded),
     freeCancellation: String(raw.cancellationPolicy ?? '')
       .toLowerCase()
       .includes('free cancellation'),
     pricePerNight: Number(raw.pricePerNight ?? 0),
     availableRooms: Number(raw.availableRooms ?? raw.totalRooms ?? 0),
-    description: String(raw.description ?? raw.roomType ?? ''),
+    description: String(raw.description ?? ''),
+    roomType: raw.roomType ? String(raw.roomType) : undefined,
   };
 }
 
@@ -495,6 +912,7 @@ export function mapHotelBooking(raw: AnyRecord): HotelBooking {
     },
     paymentMethod: mapPaymentMethod(raw.paymentMethod) as HotelPaymentMethod,
     paymentStatus: (raw.paymentStatus as PaymentStatus) ?? 'pending',
+    paymentId: raw.paymentId ? idOf(raw.paymentId) : undefined,
     status,
     priceBreakdown: {
       pricePerNight: Number(hotel.pricePerNight ?? 0),
@@ -515,28 +933,92 @@ export function mapHotelBooking(raw: AnyRecord): HotelBooking {
 export function mapNotification(raw: AnyRecord): AppNotification {
   const typeMap: Record<string, AppNotification['type']> = {
     bookingConfirmed: 'booking_confirmed',
+    bookingPending: 'booking_pending',
+    bookingRequest: 'booking_request',
+    bookingReminder: 'booking_reminder',
     bookingCancelled: 'booking_cancelled',
     tripReminder: 'trip_reminder',
     pickupReminder: 'pickup_reminder',
     paymentReceived: 'payment_received',
+    paymentFailed: 'payment_failed',
+    paymentExpired: 'payment_expired',
     newOffer: 'new_offer',
+    newReview: 'new_review',
+    newMessage: 'new_message',
+    vehicle: 'vehicle',
+    cnicVerified: 'cnic_verified',
+    cnicFailed: 'cnic_failed',
+    system: 'system',
+    // already-snake variants
+    booking_confirmed: 'booking_confirmed',
+    booking_cancelled: 'booking_cancelled',
+    booking_pending: 'booking_pending',
+    booking_request: 'booking_request',
+    booking_reminder: 'booking_reminder',
+    trip_reminder: 'trip_reminder',
+    pickup_reminder: 'pickup_reminder',
+    payment_received: 'payment_received',
+    payment_failed: 'payment_failed',
+    payment_expired: 'payment_expired',
+    new_offer: 'new_offer',
+    new_message: 'new_message',
+    new_review: 'new_review',
   };
   const backendType = String(raw.type ?? '');
+  const data = raw.data && typeof raw.data === 'object' ? (raw.data as AnyRecord) : {};
+  const otherUserId = data.otherUserId
+    ? String(data.otherUserId)
+    : data.senderId
+      ? String(data.senderId)
+      : undefined;
   return {
     id: idOf(raw),
-    type: typeMap[backendType] ?? 'booking_confirmed',
+    type: typeMap[backendType] ?? 'system',
     title: String(raw.title ?? ''),
     message: String(raw.message ?? ''),
     read: Boolean(raw.isRead ?? raw.read),
     createdAt: String(raw.createdAt ?? new Date().toISOString()),
-    bookingId: raw.data && typeof raw.data === 'object'
-      ? String((raw.data as AnyRecord).bookingId ?? '')
-      : undefined,
+    bookingId: data.bookingId ? String(data.bookingId) : undefined,
+    conversationId: data.conversationId ? String(data.conversationId) : undefined,
+    offerId: data.offerId ? String(data.offerId) : undefined,
+    otherUserId,
   };
 }
 
+function mapBackendServiceToFrontend(
+  services: unknown,
+  providerType: unknown,
+  raw?: AnyRecord
+): ProviderServiceType[] {
+  const types = Array.isArray(providerType) ? providerType.map(String) : [];
+
+  // Prefer explicit providerType (backend source of truth for catalog role)
+  if (types.includes('guestHouse') || types.includes('lodge')) return ['guestHouse'];
+  if (types.includes('travelAgency')) return ['travelAgency'];
+  if (types.includes('tourOperator')) return ['tour'];
+  if (types.includes('travelGuide')) return ['travelGuide'];
+  if (types.includes('carRental')) return ['carRental'];
+  if (types.includes('restaurant')) return ['restaurant'];
+  if (types.includes('hotel') || types.includes('resort')) return ['hotel'];
+  if (types.includes('vanOperator') || types.includes('busOperator')) return ['transport'];
+
+  const mapped = (Array.isArray(services) ? services : [])
+    .map((item) => normalizeServiceKey(String(item)))
+    .filter((item): item is ProviderServiceType => Boolean(item));
+  if (mapped.length) return mapped.slice(0, 1);
+
+  // Infer from completed service detail blobs (covers incomplete legacy profiles)
+  if (raw?.hotelDetails && typeof raw.hotelDetails === 'object') return ['hotel'];
+  if (raw?.transportDetails && typeof raw.transportDetails === 'object') return ['transport'];
+  if (raw?.guideDetails && typeof raw.guideDetails === 'object') return ['travelGuide'];
+  if (raw?.tourDetails && typeof raw.tourDetails === 'object') return ['tour'];
+  if (raw?.restaurantDetails && typeof raw.restaurantDetails === 'object') return ['restaurant'];
+
+  return [];
+}
+
 export function mapProvider(raw: AnyRecord): Provider {
-  const services = (Array.isArray(raw.services) ? raw.services : []) as ProviderServiceType[];
+  const services = mapBackendServiceToFrontend(raw.services, raw.providerType, raw);
   const coords = (raw.location as AnyRecord | undefined)?.coordinates as number[] | undefined;
   const longitude = Array.isArray(coords) ? Number(coords[0]) : undefined;
   const latitude = Array.isArray(coords) ? Number(coords[1]) : undefined;
@@ -569,7 +1051,7 @@ export function mapProvider(raw: AnyRecord): Provider {
         }
       : undefined,
     logo: mediaUrl(raw.logo),
-    services: services.slice(0, 1),
+    services: services.length ? services : [],
     verificationStatus: (raw.verificationStatus as Provider['verificationStatus']) ?? 'pending',
     rating: Number(raw.rating ?? 0),
     reviewCount: Number(raw.totalReviews ?? raw.reviewCount ?? 0),
@@ -577,8 +1059,15 @@ export function mapProvider(raw: AnyRecord): Provider {
     website: raw.website ? String(raw.website) : undefined,
     socialMedia: raw.socialMedia ? String(raw.socialMedia) : undefined,
     transport: mapTransportSetup(raw.transportDetails ?? raw.transport),
+    onboardingProgress: raw.onboardingProgress as Provider['onboardingProgress'],
+    identityVerification: raw.identityVerification as Provider['identityVerification'],
     hotel: mapHotelSetup(raw.hotelDetails ?? raw.hotel),
     tour: mapTourSetup(raw.tourDetails ?? raw.tour),
+    guideDetails: mapGuideDetailsFromApi(raw.guideDetails),
+    restaurant: mapRestaurantSetup(raw.restaurantDetails ?? raw.restaurant),
+    galleryImages: mediaUrls(raw.galleryImages).length
+      ? mediaUrls(raw.galleryImages)
+      : undefined,
     documents: [],
     createdAt: String(raw.createdAt ?? new Date().toISOString()),
     updatedAt: String(raw.updatedAt ?? new Date().toISOString()),
@@ -586,9 +1075,19 @@ export function mapProvider(raw: AnyRecord): Provider {
 }
 
 export function mapProviderVehicle(raw: AnyRecord): ProviderVehicle {
-  const typeRaw = String(raw.type ?? 'van');
+  const typeRaw = String(raw.type ?? 'van').toLowerCase();
   const type: ProviderVehicle['type'] =
-    typeRaw === 'bus' || typeRaw === 'car' || typeRaw === 'minibus' ? typeRaw : 'van';
+    typeRaw === 'bus' ||
+    typeRaw === 'car' ||
+    typeRaw === 'minibus' ||
+    typeRaw === 'suv' ||
+    typeRaw === 'other'
+      ? typeRaw
+      : typeRaw === 'mini_bus' || typeRaw === 'jeep'
+        ? typeRaw === 'jeep'
+          ? 'suv'
+          : 'minibus'
+        : 'van';
 
   return {
     id: idOf(raw),
@@ -596,6 +1095,8 @@ export function mapProviderVehicle(raw: AnyRecord): ProviderVehicle {
     name: String(raw.name ?? ''),
     type,
     model: String(raw.vehicleModel ?? raw.model ?? ''),
+    verificationDetails: raw.verificationDetails as ProviderVehicle['verificationDetails'],
+    registrationCompletedAt: raw.registrationCompletedAt ? String(raw.registrationCompletedAt) : undefined,
     year: Number(raw.year ?? new Date().getFullYear()),
     registrationNumber: String(raw.registrationNumber ?? ''),
     totalSeats: Number(raw.seatCount ?? raw.totalSeats ?? 0),
@@ -627,8 +1128,12 @@ export function mapProviderTrip(raw: AnyRecord): ProviderTrip {
     departureTime: String(raw.departureTime ?? ''),
     arrivalTime: String(raw.arrivalTime ?? ''),
     vehicleId: idOf(raw.vehicleId),
-    pickupPoints: asArray<unknown>(raw.pickupPoints).map((p) => idOf(p)),
-    dropoffPoints: asArray<unknown>(raw.dropoffPoints).map((p) => idOf(p)),
+    pickupPoints: asArray<unknown>(raw.pickupPoints)
+      .map((p) => placeLabel(p))
+      .filter(Boolean),
+    dropoffPoints: asArray<unknown>(raw.dropoffPoints)
+      .map((p) => placeLabel(p))
+      .filter(Boolean),
     price: Number(raw.price ?? 0),
     totalSeats: Number(raw.totalSeats ?? 0),
     bookedSeats: Number(raw.bookedSeats ?? 0),
@@ -638,6 +1143,7 @@ export function mapProviderTrip(raw: AnyRecord): ProviderTrip {
     journeyType: String(raw.journeyType ?? 'one_way') === 'round_trip' ? 'round_trip' : 'one_way',
     returnDate: raw.returnDate ? String(raw.returnDate) : undefined,
     returnTime: raw.returnTime ? String(raw.returnTime) : undefined,
+    bookingMode: String(raw.bookingMode ?? 'seat') === 'vehicle' ? 'vehicle' : 'seat',
   };
 }
 
@@ -665,12 +1171,12 @@ export function mapProviderRoute(raw: AnyRecord): ProviderRoute {
     origin: originName,
     destination: destinationName,
     stops: Array.isArray(raw.stops) ? raw.stops.map(String) : [],
-    pickupPoints: asArray<unknown>(raw.pickupPoints).map((p) =>
-      typeof p === 'string' ? p : idOf(p)
-    ),
-    dropoffPoints: asArray<unknown>(raw.dropoffPoints).map((p) =>
-      typeof p === 'string' ? p : idOf(p)
-    ),
+    pickupPoints: asArray<unknown>(raw.pickupPoints)
+      .map((p) => placeLabel(p) || (typeof p === 'string' && !/^[a-f\d]{24}$/i.test(p) ? p : ''))
+      .filter(Boolean),
+    dropoffPoints: asArray<unknown>(raw.dropoffPoints)
+      .map((p) => placeLabel(p) || (typeof p === 'string' && !/^[a-f\d]{24}$/i.test(p) ? p : ''))
+      .filter(Boolean),
     durationHours: Number(raw.estimatedDuration ?? raw.durationHours ?? Number(raw.durationMinutes ?? 0) / 60),
     distanceKm: Number(raw.distance ?? raw.distanceKm ?? 0),
     originLatitude: originCoords ? Number(originCoords.latitude ?? 0) : undefined,
@@ -708,44 +1214,238 @@ export function mapProviderRoom(raw: AnyRecord): ProviderRoom {
       .includes('free'),
     images: mediaUrls(raw.images),
     available: String(raw.status ?? 'active') === 'active',
+    availableCount:
+      raw.availableRooms != null || raw.availableCount != null
+        ? Number(raw.availableRooms ?? raw.availableCount)
+        : undefined,
+    discountPercent:
+      raw.discountPercent != null && raw.discountPercent !== ''
+        ? Number(raw.discountPercent)
+        : undefined,
+    offerNote: raw.offerNote ? String(raw.offerNote) : undefined,
   };
 }
 
 export function mapProviderBooking(raw: AnyRecord): ProviderBooking {
   const kind =
-    raw.bookingType === 'hotel' ? 'hotel' : raw.bookingType === 'tour' ? 'tour' : 'transport';
+    raw.bookingType === 'hotel'
+      ? 'hotel'
+      : raw.bookingType === 'guide'
+        ? 'guide'
+        : raw.bookingType === 'package' || raw.bookingType === 'tour'
+          ? 'tour'
+          : 'transport';
   const transport = (raw.transportBooking ?? {}) as AnyRecord;
   const hotel = (raw.hotelBooking ?? {}) as AnyRecord;
+  const pkg = (raw.packageBooking ?? {}) as AnyRecord;
+  const guide = (raw.guideBooking ?? {}) as AnyRecord;
   const backendStatus = String(raw.bookingStatus ?? 'pending');
   let status: ProviderBookingStatus = 'pending';
   if (backendStatus === 'confirmed') status = 'confirmed';
   else if (backendStatus === 'completed') status = 'completed';
   else if (backendStatus === 'cancelled' || backendStatus === 'refunded') status = 'cancelled';
 
-  const seats = asArray<string>(transport.seats).map(String);
+  const seats = (
+    Array.isArray(raw.seats) ? raw.seats : Array.isArray(transport.seats) ? transport.seats : []
+  ).map(String);
+
+  const passengersRaw = Array.isArray(raw.passengerDetails)
+    ? raw.passengerDetails
+    : Array.isArray(transport.passengerDetails)
+      ? transport.passengerDetails
+      : [];
+
+  const guestFromPkg =
+    pkg.guestDetails && typeof pkg.guestDetails === 'object'
+      ? (pkg.guestDetails as AnyRecord)
+      : guide.guestDetails && typeof guide.guestDetails === 'object'
+        ? (guide.guestDetails as AnyRecord)
+        : raw.guestDetails && typeof raw.guestDetails === 'object'
+          ? (raw.guestDetails as AnyRecord)
+          : null;
+
+  const passengers =
+    (kind === 'tour' || kind === 'guide') && guestFromPkg
+      ? [
+          {
+            name: String(guestFromPkg.name ?? raw.customerName ?? 'Traveler'),
+            phone: guestFromPkg.phone ? String(guestFromPkg.phone) : undefined,
+          },
+        ]
+      : passengersRaw.map((item: AnyRecord, index: number) => ({
+          name: String(item.name ?? raw.customerName ?? 'Passenger'),
+          phone: item.phone ? String(item.phone) : undefined,
+          age: item.age != null ? Number(item.age) : undefined,
+          gender: item.gender ? String(item.gender) : undefined,
+          seat: seats[index],
+        }));
+
+  const packageTitle =
+    String(raw.packageTitle ?? pkg.title ?? guide.serviceName ?? '').trim() ||
+    (kind === 'guide' ? 'Guide hire' : 'Tour package');
+  const packageDestination = String(
+    raw.packageDestination ?? pkg.destination ?? guide.availableLocation ?? guide.meetingPoint ?? ''
+  ).trim();
+
+  const routeLabel =
+    String(raw.routeLabel ?? '').trim() ||
+    (raw.tripOrigin && raw.tripDestination
+      ? `${raw.tripOrigin} → ${raw.tripDestination}`
+      : '') ||
+    (kind === 'tour' || kind === 'guide'
+      ? [packageTitle, packageDestination].filter(Boolean).join(' · ')
+      : '');
+
+  const travelDate =
+    String(raw.packageStartDate ?? pkg.startDate ?? '').trim() ||
+    String(guide.date ?? '').trim() ||
+    String(raw.tripDate ?? '').trim() ||
+    String(hotel.checkIn ?? raw.checkIn ?? '').trim() ||
+    String(raw.createdAt ?? '').slice(0, 10);
+
+  const departureTime =
+    String(raw.tripDepartureTime ?? '').trim() ||
+    (guide.startTime ? String(guide.startTime) : '') ||
+    (transport.departureTime ? String(transport.departureTime) : '') ||
+    undefined;
+
+  const pickup =
+    String(raw.pickupName ?? '').trim() ||
+    (transport.pickupPoint && !/^[a-f0-9]{24}$/i.test(String(transport.pickupPoint))
+      ? String(transport.pickupPoint)
+      : '') ||
+    undefined;
+
+  const dropoff = String(raw.dropoffName ?? '').trim() || undefined;
+
+  const paymentRaw = String(raw.paymentStatus ?? 'pending');
+  const knownPayment = [
+    'pending',
+    'unpaid',
+    'payment_initiated',
+    'proof_submitted',
+    'under_review',
+    'paid',
+    'confirmed',
+    'rejected',
+    'disputed',
+    'failed',
+    'refunded',
+    'refund_pending',
+    'expired',
+  ] as const;
+  const paymentStatus = knownPayment.includes(paymentRaw as (typeof knownPayment)[number])
+    ? (paymentRaw as ProviderBooking['paymentStatus'])
+    : 'pending';
+
+  const travelers =
+    raw.packageTravelers != null
+      ? Number(raw.packageTravelers)
+      : pkg.travelers != null
+        ? Number(pkg.travelers)
+        : undefined;
 
   return {
     id: idOf(raw),
     bookingCode: String(raw.bookingNumber ?? ''),
     providerId: idOf(raw.providerId),
     customerId: idOf(raw.customerId),
-    customerName: String(raw.customerName ?? 'Customer'),
-    customerPhone: String(raw.customerPhone ?? ''),
+    customerName: String(raw.customerName ?? guestFromPkg?.name ?? 'Customer'),
+    customerPhone: String(raw.customerPhone ?? guestFromPkg?.phone ?? ''),
+    customerEmail: raw.customerEmail
+      ? String(raw.customerEmail)
+      : guestFromPkg?.email
+        ? String(guestFromPkg.email)
+        : undefined,
     kind,
-    serviceLabel: kind === 'hotel' ? 'Hotel' : 'Transport',
+    tripId:
+      kind === 'transport'
+        ? idOf(transport.tripId ?? raw.tripId) || undefined
+        : undefined,
+    itineraryId:
+      kind === 'tour'
+        ? idOf(pkg.itineraryId ?? raw.itineraryId) || undefined
+        : undefined,
+    serviceLabel:
+      kind === 'hotel'
+        ? 'Hotel'
+        : kind === 'guide'
+          ? 'Guide hire'
+          : kind === 'tour'
+            ? 'Tour'
+            : 'Transport',
     detailLabel:
       kind === 'hotel'
-        ? String(hotel.roomName ?? 'Room booking')
-        : seats.length
-          ? `Seats ${seats.join(', ')}`
-          : 'Transport booking',
-    date: String(hotel.checkIn ?? String(raw.createdAt ?? '').slice(0, 10)),
-    time: transport.departureTime ? String(transport.departureTime) : undefined,
-    seatsOrRoom: kind === 'hotel' ? String(hotel.roomName ?? hotel.roomId ?? '') : seats.join(', '),
+        ? String(raw.roomName ?? hotel.roomName ?? 'Room booking')
+        : kind === 'guide'
+          ? String(guide.serviceName ?? 'Guide booking')
+          : kind === 'tour'
+            ? packageTitle
+            : routeLabel ||
+              (seats.length ? `Seats ${seats.join(', ')}` : 'Transport booking'),
+    date: travelDate,
+    time: departureTime || undefined,
+    arrivalTime: raw.tripArrivalTime ? String(raw.tripArrivalTime) : undefined,
+    seatsOrRoom:
+      kind === 'hotel'
+        ? String(raw.roomName ?? hotel.roomName ?? hotel.roomId ?? '')
+        : kind === 'guide'
+          ? `${Number(guide.guests ?? 1)} guest${Number(guide.guests ?? 1) === 1 ? '' : 's'}`
+          : kind === 'tour'
+            ? `${travelers ?? 1} traveler${(travelers ?? 1) === 1 ? '' : 's'}`
+            : seats.join(', '),
+    seats,
+    passengerCount: Number(
+      raw.passengerCount ?? travelers ?? Math.max(seats.length, passengers.length, 1)
+    ),
+    passengers,
     amount: Number(raw.totalAmount ?? 0),
-    paymentStatus: (raw.paymentStatus as ProviderBooking['paymentStatus']) ?? 'pending',
+    subtotal: raw.subtotal != null ? Number(raw.subtotal) : undefined,
+    tax: raw.tax != null ? Number(raw.tax) : undefined,
+    serviceFee: raw.serviceFee != null ? Number(raw.serviceFee) : undefined,
+    discount: raw.discount != null ? Number(raw.discount) : undefined,
+    currency: String(raw.currency ?? 'PKR'),
+    paymentId: raw.paymentId ? idOf(raw.paymentId) : undefined,
+    paymentStatus,
     status,
-    pickup: transport.pickupPoint ? String(transport.pickupPoint) : undefined,
+    routeLabel: routeLabel || undefined,
+    origin: raw.tripOrigin ? String(raw.tripOrigin) : undefined,
+    destination:
+      kind === 'tour'
+        ? packageDestination || undefined
+        : raw.tripDestination
+          ? String(raw.tripDestination)
+          : undefined,
+    pickup,
+    pickupAddress: raw.pickupAddress ? String(raw.pickupAddress) : undefined,
+    dropoff,
+    dropoffAddress: raw.dropoffAddress ? String(raw.dropoffAddress) : undefined,
+    vehicleName: raw.vehicleName ? String(raw.vehicleName) : undefined,
+    vehicleType: raw.vehicleType ? String(raw.vehicleType) : undefined,
+    vehiclePlate: raw.vehiclePlate ? String(raw.vehiclePlate) : undefined,
+    journeyType: raw.tripJourneyType ? String(raw.tripJourneyType) : undefined,
+    bookingMode: raw.tripBookingMode ? String(raw.tripBookingMode) : undefined,
+    tripDescription: raw.tripDescription ? String(raw.tripDescription) : undefined,
+    notes: raw.notes ? String(raw.notes) : undefined,
+    specialRequests: raw.specialRequests
+      ? String(raw.specialRequests)
+      : guestFromPkg?.specialRequests
+        ? String(guestFromPkg.specialRequests)
+        : undefined,
+    createdAt: raw.createdAt ? String(raw.createdAt) : undefined,
+    updatedAt: raw.updatedAt ? String(raw.updatedAt) : undefined,
+    hotelName: raw.hotelName ? String(raw.hotelName) : undefined,
+    roomName: raw.roomName ? String(raw.roomName) : hotel.roomName ? String(hotel.roomName) : undefined,
+    checkIn: raw.checkIn ? String(raw.checkIn) : hotel.checkIn ? String(hotel.checkIn) : undefined,
+    checkOut: raw.checkOut ? String(raw.checkOut) : hotel.checkOut ? String(hotel.checkOut) : undefined,
+    nights: raw.nights != null ? Number(raw.nights) : undefined,
+    guestsCount:
+      raw.guestsCount != null
+        ? Number(raw.guestsCount)
+        : travelers != null
+          ? travelers
+          : undefined,
+    roomsCount: raw.roomsCount != null ? Number(raw.roomsCount) : undefined,
   };
 }
 
@@ -759,6 +1459,9 @@ export function mapEarnings(raw: AnyRecord): ProviderEarningsSummary {
     completedPayout: Number(raw.completedPayout ?? 0),
     platformFees: Number(raw.platformFees ?? 0),
     netEarnings: Number(raw.netEarnings ?? 0),
+    platformFeePercent:
+      raw.platformFeePercent != null ? Number(raw.platformFeePercent) : undefined,
+    serviceKey: raw.serviceKey != null ? String(raw.serviceKey) : null,
     byDay: [],
     byMonth: [],
     byService: [],
@@ -803,14 +1506,28 @@ export function mapReview(raw: AnyRecord): Review {
       ? (raw.customerId as AnyRecord)
       : undefined;
   const createdAt = raw.createdAt ? String(raw.createdAt) : '';
+  const paymentRating =
+    raw.paymentRating != null
+      ? Number(raw.paymentRating)
+      : raw.categories && typeof raw.categories === 'object'
+        ? Number((raw.categories as AnyRecord).payment ?? NaN)
+        : NaN;
+  const serviceRating =
+    raw.serviceRating != null
+      ? Number(raw.serviceRating)
+      : raw.categories && typeof raw.categories === 'object'
+        ? Number((raw.categories as AnyRecord).service ?? NaN)
+        : NaN;
   return {
     id: idOf(raw),
     userName: String(raw.customerName ?? raw.userName ?? customer?.name ?? 'Guest'),
     userAvatar: mediaUrl(raw.userAvatar ?? customer?.avatar),
     rating: Number(raw.rating ?? 0),
+    paymentRating: Number.isFinite(paymentRating) ? paymentRating : undefined,
+    serviceRating: Number.isFinite(serviceRating) ? serviceRating : undefined,
     comment: String(raw.comment ?? ''),
     date: createdAt ? createdAt.slice(0, 10) : '',
-    tripId: idOf(raw.targetId ?? raw.tripId),
+    tripId: idOf(raw.targetId ?? raw.tripId ?? raw.bookingId),
     providerReply: raw.providerReply ? String(raw.providerReply) : undefined,
   };
 }

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { BrandMark } from '@/components/brand/BrandMark';
 import { Colors } from '@/constants/colors';
 import { journeyTypeMeta } from '@/constants/journeyTypes';
 import { Radius, Spacing } from '@/constants/spacing';
@@ -38,7 +39,8 @@ export function DigitalTicket({
 
   return (
     <View style={styles.card}>
-      <LinearGradient colors={[Colors.primary, Colors.primaryDark]} style={styles.header}>
+      <LinearGradient colors={[Colors.primaryDark, '#000000']} style={styles.header}>
+        <BrandMark size={56} />
         <Text style={styles.brand}>{Brand.name}</Text>
         <Text style={styles.tagline}>{Brand.tagline}</Text>
         {offlineSaved ? <Text style={styles.offlineBadge}>Saved for offline</Text> : null}
@@ -118,6 +120,8 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: Spacing['2xl'],
+    alignItems: 'center',
+    gap: Spacing.sm,
   },
   brand: {
     ...Typography.brand,

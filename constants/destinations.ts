@@ -131,6 +131,80 @@ export const FEATURED_STORIES = [
   },
 ];
 
+/** Short destination blogs for Popular destinations */
+export const DESTINATION_BLOGS = [
+  {
+    id: 'blog-hunza',
+    place: 'Hunza',
+    title: 'Why Hunza feels like another world',
+    excerpt:
+      'Terraced fields, Passu Cones, and quiet mornings in Karimabad — a traveler’s first look at the valley.',
+    readMins: 3,
+    image: 'https://images.unsplash.com/photo-1589802829985-817e51171b92?w=1000&q=80',
+  },
+  {
+    id: 'blog-skardu',
+    place: 'Skardu',
+    title: 'Lakes, forts and the road to K2',
+    excerpt:
+      'Shangrila, Upper Kachura, and the high desert light that makes Skardu unforgettable.',
+    readMins: 4,
+    image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1000&q=80',
+  },
+  {
+    id: 'blog-gilgit',
+    place: 'Gilgit',
+    title: 'Gateway to the north',
+    excerpt:
+      'Markets, rivers, and the crossroads where most Gilgit-Baltistan journeys begin.',
+    readMins: 2,
+    image: 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=1000&q=80',
+  },
+  {
+    id: 'blog-fairy',
+    place: 'Fairy Meadows',
+    title: 'Camping under Nanga Parbat',
+    excerpt:
+      'A short jeep and trek, then nights under stars with the world’s ninth-highest peak.',
+    readMins: 3,
+    image: 'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=1000&q=80',
+  },
+];
+
+/** Traveler experiences & testimonials via BANJARA */
+export const TRAVELER_TESTIMONIALS = [
+  {
+    id: 't-sara',
+    name: 'Sara Ahmed',
+    from: 'Lahore',
+    route: 'Islamabad → Hunza',
+    rating: 5,
+    quote:
+      'Booked seats on BANJARA in minutes. The van was clean, the agency called before departure, and we reached Karimabad safely.',
+    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80',
+  },
+  {
+    id: 't-hassan',
+    name: 'Hassan Raza',
+    from: 'Islamabad',
+    route: 'Gilgit → Skardu',
+    rating: 5,
+    quote:
+      'Best part was live seat selection. We picked seats together as a family and got digital tickets straight in the app.',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+  },
+  {
+    id: 't-amina',
+    name: 'Amina Khan',
+    from: 'Karachi',
+    route: 'Islamabad → Fairy Meadows',
+    rating: 4,
+    quote:
+      'First time to the north with BANJARA. Clear pickup point, friendly staff, and a stay we booked after the ride — all in one place.',
+    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80',
+  },
+];
+
 export const TRAVEL_OFFERS = [
   {
     id: 'offer-1',
@@ -157,9 +231,9 @@ export const TRUST_POINTS = [
   },
   {
     id: 't2',
-    label: 'Secure Payments',
-    caption: 'Pay inside BANJARA',
-    icon: 'lock-closed-outline' as const,
+    label: 'Trusted partners',
+    caption: 'Providers you can rely on',
+    icon: 'people-outline' as const,
   },
   {
     id: 't3',

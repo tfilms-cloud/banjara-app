@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import * as hotelService from '@/services/hotelService';
 import { useHotelStore } from '@/store/hotelStore';
+import { useSearchStore } from '@/store/searchStore';
 import type { Hotel, HotelBooking, HotelRoom } from '@/types/hotel';
 
 export function useHotels() {
@@ -8,19 +9,24 @@ export function useHotels() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { getSearchParams, filters, sortBy } = useHotelStore();
+  const query = useSearchStore((s) => s.query);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await hotelService.searchHotels(getSearchParams(), filters, sortBy);
+      const data = await hotelService.searchHotels(
+        { ...getSearchParams(), query: query.trim() || undefined },
+        filters,
+        sortBy
+      );
       setHotels(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load hotels');
     } finally {
       setLoading(false);
     }
-  }, [filters, getSearchParams, sortBy]);
+  }, [filters, getSearchParams, query, sortBy]);
 
   useEffect(() => {
     void refresh();
@@ -116,8 +122,8 @@ export function usePopularHotels() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
+  const refresh = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true);
     setError(null);
     try {
       const data = await hotelService.getPopularHotels();
@@ -125,7 +131,7 @@ export function usePopularHotels() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load hotels');
     } finally {
-      setLoading(false);
+      if (!opts?.silent) setLoading(false);
     }
   }, []);
 

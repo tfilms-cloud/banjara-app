@@ -1,6 +1,6 @@
 import { StyleSheet as RNStyleSheet, type ImageStyle, type TextStyle, type ViewStyle } from 'react-native';
 import { DarkColors, LightColors, type ColorTokens } from '@/constants/colors';
-import { useUserStore } from '@/store/userStore';
+import { getCachedDarkMode } from '@/utils/themeModeCache';
 
 type NamedStyles<T> = { [P in keyof T]: ViewStyle | TextStyle | ImageStyle };
 
@@ -52,7 +52,7 @@ function isDarkSnapshot(styles: unknown): boolean {
     if (uniqueLight.has(hex)) lightHits += 1;
   }
   if (darkHits === 0 && lightHits === 0) {
-    return useUserStore.getState().settings.darkMode;
+    return false;
   }
   return darkHits >= lightHits;
 }
@@ -70,10 +70,6 @@ function remap(value: unknown, map: Record<string, string>): unknown {
   return value;
 }
 
-function isDarkMode() {
-  return useUserStore.getState().settings.darkMode;
-}
-
 const originalCreate = RNStyleSheet.create.bind(RNStyleSheet);
 
 function createThemed<T extends NamedStyles<T> | NamedStyles<any>>(styles: T): T {
@@ -86,7 +82,7 @@ function createThemed<T extends NamedStyles<T> | NamedStyles<any>>(styles: T): T
     Object.defineProperty(themed, key, {
       enumerable: true,
       get() {
-        return isDarkMode() ? dark[key] : light[key];
+        return getCachedDarkMode() ? dark[key] : light[key];
       },
     });
   });

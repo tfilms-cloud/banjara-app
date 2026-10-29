@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { Alert, Linking, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BookingStatusTimeline } from '@/components/booking/BookingStatusTimeline';
-import { RateTripModal } from '@/components/booking/RateTripModal';
 import { PickupMap } from '@/components/map/PickupMap';
 import {
   mapTravelerFromPassenger,
@@ -27,6 +26,12 @@ import * as tripService from '@/services/tripService';
 import { useAuthStore } from '@/store/authStore';
 import { useHotelStore } from '@/store/hotelStore';
 import type { TripWithDetails } from '@/types/trip';
+import {
+  canOpenBookingPayment,
+  openBookingPayment,
+  paymentActionHint,
+  paymentActionLabel,
+} from '@/utils/continuePayment';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate, toISODate } from '@/utils/formatDate';
 import { formatTime } from '@/utils/formatTime';
@@ -41,7 +46,6 @@ export default function BookingDetailsScreen() {
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [trip, setTrip] = useState<TripWithDetails | null>(null);
-  const [rateOpen, setRateOpen] = useState(false);
   const setDestination = useHotelStore((s) => s.setDestination);
   const setCheckIn = useHotelStore((s) => s.setCheckIn);
   const setCheckOut = useHotelStore((s) => s.setCheckOut);
@@ -156,6 +160,23 @@ export default function BookingDetailsScreen() {
           createdAt={booking.createdAt}
         />
 
+        {canOpenBookingPayment(booking) && booking.paymentId ? (
+          <View style={styles.payCard}>
+            <Text style={styles.payTitle}>{paymentActionLabel(booking.paymentStatus)}</Text>
+            <Text style={styles.payBody}>{paymentActionHint(booking.paymentStatus)}</Text>
+            <Button
+              title={paymentActionLabel(booking.paymentStatus)}
+              onPress={() =>
+                openBookingPayment({
+                  paymentId: booking.paymentId!,
+                  bookingId: booking.id,
+                  method: booking.paymentMethod,
+                })
+              }
+            />
+          </View>
+        ) : null}
+
         {pickup ? (
           <View style={styles.mapSection}>
             <Text style={styles.mapTitle}>Your pickup point</Text>
@@ -190,11 +211,13 @@ export default function BookingDetailsScreen() {
           </View>
         ) : null}
 
-        {booking.status === 'completed' ? (
+        {booking.status === 'completed' ||
+        ((booking.paymentStatus === 'paid' || booking.paymentStatus === 'confirmed') &&
+          booking.status !== 'cancelled') ? (
           <Button
-            title="Rate this trip"
+            title="Rate payment & service"
             variant="outline"
-            onPress={() => setRateOpen(true)}
+            onPress={() => router.push(`/(customer)/rate/${booking.id}`)}
           />
         ) : null}
 
@@ -248,12 +271,6 @@ export default function BookingDetailsScreen() {
         onConfirm={onCancel}
       />
 
-      <RateTripModal
-        visible={rateOpen}
-        bookingId={booking.id}
-        agencyName={trip?.agency.name ?? 'your provider'}
-        onClose={() => setRateOpen(false)}
-      />
     </View>
   );
 }
@@ -273,6 +290,16 @@ const styles = StyleSheet.create({
   route: { ...Typography.bodyBold, color: Colors.primary, marginTop: Spacing.sm },
   meta: { ...Typography.caption, color: Colors.muted },
   total: { ...Typography.bodyBold, color: Colors.secondary, marginTop: Spacing.sm },
+  payCard: {
+    backgroundColor: '#FFF7ED',
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
+    gap: Spacing.sm,
+    borderWidth: 1,
+    borderColor: '#FDBA74',
+  },
+  payTitle: { ...Typography.bodyBold, color: Colors.primary },
+  payBody: { ...Typography.caption, color: Colors.muted, lineHeight: 18 },
   mapSection: { gap: Spacing.sm },
   mapTitle: { ...Typography.h3, color: Colors.dark },
   mapSub: { ...Typography.caption, color: Colors.muted, marginBottom: Spacing.xs },

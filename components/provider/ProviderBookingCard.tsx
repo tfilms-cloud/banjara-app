@@ -54,7 +54,12 @@ export function ProviderBookingCard({ booking, onPress }: Props) {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.service}>{booking.serviceLabel}</Text>
-          <Text style={styles.detail}>{booking.detailLabel}</Text>
+          <Text style={styles.detail}>
+            {booking.routeLabel || booking.detailLabel}
+          </Text>
+          {booking.pickup ? (
+            <Text style={styles.pickup}>Pickup · {booking.pickup}</Text>
+          ) : null}
         </View>
       </View>
 
@@ -144,6 +149,7 @@ const styles = StyleSheet.create({
   },
   service: { ...Typography.caption, color: Colors.muted },
   detail: { ...Typography.bodyBold, color: Colors.primary },
+  pickup: { ...Typography.small, color: Colors.muted, marginTop: 2 },
   metaGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   meta: { ...Typography.caption, color: Colors.muted, flexShrink: 1 },

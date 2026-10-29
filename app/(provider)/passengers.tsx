@@ -35,7 +35,7 @@ export default function ProviderPassengersScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="Passengers" showBack fallbackHref={'/(provider)/transport/index' as never} />
+      <Header title="Passengers" showBack fallbackHref={'/(provider)/transport' as never} />
       <FlatList
         data={passengers}
         keyExtractor={(item) => item.id}
