@@ -1,9 +1,10 @@
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Badge } from '@/components/ui/Badge';
-import { Colors, useThemeColors } from '@/constants/colors';
+import { useThemeColors, type ColorTokens } from '@/constants/colors';
 import { journeyTypeMeta } from '@/constants/journeyTypes';
-import { Radius, Spacing } from '@/constants/spacing';
-import { Fonts } from '@/constants/typography';
+import { Radius, Shadows, Spacing } from '@/constants/spacing';
+import { CustomerType, Fonts } from '@/constants/typography';
 import type { Booking } from '@/types/booking';
 import type { TripWithDetails } from '@/types/trip';
 import {
@@ -25,6 +26,7 @@ interface BookingCardProps {
 }
 
 export function BookingCard({ booking, trip, onPress, onViewTicket }: BookingCardProps) {
+  const styles = useThemedStyles(createStyles);
   const colors = useThemeColors();
   const needsPay = bookingNeedsPaymentAction(booking);
   const canOpenPay = canOpenBookingPayment(booking);
@@ -69,7 +71,7 @@ export function BookingCard({ booking, trip, onPress, onViewTicket }: BookingCar
         </View>
       </View>
       {canOpenPay ? (
-        <Text style={[styles.pendingHint, { color: colors.warning ?? '#B45309' }]}>
+        <Text style={[styles.pendingHint, { color: colors.warning }]}>
           {paymentActionHint(booking.paymentStatus)}
         </Text>
       ) : booking.status === 'pending' ? (
@@ -84,7 +86,7 @@ export function BookingCard({ booking, trip, onPress, onViewTicket }: BookingCar
         {booking.seats?.length ? ` · Seat ${booking.seats.join(', ')}` : ''}
       </Text>
       <View style={styles.footer}>
-        <Text style={[styles.price, { color: colors.dark }]}>
+        <Text style={[styles.price, { color: colors.action }]}>
           {formatCurrency(booking.priceBreakdown.total, booking.priceBreakdown.currency)}
         </Text>
         <View style={styles.actions}>
@@ -116,14 +118,15 @@ export function BookingCard({ booking, trip, onPress, onViewTicket }: BookingCar
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTokens) => StyleSheet.create({
   card: {
-    backgroundColor: Colors.card,
+    ...Shadows.soft,
+    backgroundColor: colors.card,
     borderRadius: Radius.xl,
     padding: Spacing.lg,
     gap: Spacing.sm,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   top: {
     flexDirection: 'row',
@@ -132,24 +135,25 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   badges: {
-    alignItems: 'flex-end',
-    gap: 6,
+    alignItems: 'flex-start',
+    flexShrink: 1,
+    maxWidth: '48%',
+    gap: Spacing.xs,
   },
   provider: {
     fontFamily: Fonts.bodyMedium,
     fontSize: 12,
-    color: Colors.muted,
+    color: colors.muted,
   },
   route: {
-    fontFamily: Fonts.bodyBold,
-    fontSize: 16,
-    color: Colors.dark,
+    ...CustomerType.card,
+    color: colors.dark,
     marginTop: 2,
   },
   journeyHint: {
     fontFamily: Fonts.body,
     fontSize: 12,
-    color: Colors.muted,
+    color: colors.muted,
   },
   pendingHint: {
     fontFamily: Fonts.bodyMedium,
@@ -160,32 +164,35 @@ const styles = StyleSheet.create({
   meta: {
     fontFamily: Fonts.body,
     fontSize: 13,
-    color: Colors.muted,
+    color: colors.muted,
   },
   footer: {
     marginTop: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: Spacing.md,
   },
   price: {
     fontFamily: Fonts.bodyBold,
     fontSize: 16,
-    color: Colors.action,
+    color: colors.action,
   },
   actions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: Spacing.md,
   },
   link: {
     fontFamily: Fonts.bodySemiBold,
     fontSize: 13,
-    color: Colors.primary,
+    color: colors.primaryText,
   },
   cta: {
     fontFamily: Fonts.bodySemiBold,
     fontSize: 13,
-    color: Colors.action,
+    color: colors.action,
   },
 });

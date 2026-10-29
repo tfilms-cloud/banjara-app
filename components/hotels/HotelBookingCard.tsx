@@ -1,9 +1,10 @@
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Badge } from '@/components/ui/Badge';
-import { Colors } from '@/constants/colors';
-import { Radius, Spacing } from '@/constants/spacing';
-import { Typography } from '@/constants/typography';
+import type { ColorTokens } from '@/constants/colors';
+import { Radius, Shadows, Spacing } from '@/constants/spacing';
+import { CustomerType, Typography } from '@/constants/typography';
 import type { Hotel, HotelBooking, HotelRoom } from '@/types/hotel';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatDate';
@@ -16,6 +17,7 @@ interface HotelBookingCardProps {
 }
 
 export function HotelBookingCard({ booking, hotel, room, onPress }: HotelBookingCardProps) {
+  const styles = useThemedStyles(createStyles);
   const pending = booking.status === 'pending';
   const tone =
     booking.status === 'cancelled'
@@ -33,7 +35,7 @@ export function HotelBookingCard({ booking, hotel, room, onPress }: HotelBooking
       ) : null}
       <View style={styles.body}>
         <View style={styles.top}>
-          <Text style={styles.name} numberOfLines={1}>
+          <Text style={styles.name} numberOfLines={2}>
             {hotel?.name ?? 'Hotel booking'}
           </Text>
           <Badge label={pending ? 'Awaiting approval' : booking.status} tone={tone} />
@@ -61,32 +63,33 @@ export function HotelBookingCard({ booking, hotel, room, onPress }: HotelBooking
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTokens) => StyleSheet.create({
   card: {
-    backgroundColor: Colors.card,
+    ...Shadows.soft,
+    backgroundColor: colors.card,
     borderRadius: Radius.xl,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   image: { width: '100%', height: 120 },
   body: { padding: Spacing.lg, gap: Spacing.xs },
   top: { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.md, alignItems: 'center' },
-  name: { ...Typography.h3, color: Colors.primary, flex: 1 },
-  meta: { ...Typography.caption, color: Colors.muted },
+  name: { ...CustomerType.card, color: colors.dark, flex: 1 },
+  meta: { ...Typography.caption, color: colors.muted },
   pendingHint: {
     ...Typography.caption,
-    color: '#B45309',
+    color: colors.warning,
     fontWeight: '600',
     marginTop: 2,
   },
-  code: { ...Typography.small, color: Colors.secondary, fontWeight: '700', marginTop: 4 },
+  code: { ...Typography.small, color: colors.secondary, fontWeight: '700', marginTop: 4 },
   footer: {
     marginTop: Spacing.sm,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  price: { ...Typography.bodyBold, color: Colors.primary },
-  link: { ...Typography.caption, color: Colors.secondary, fontWeight: '700' },
+  price: { ...CustomerType.section, color: colors.action },
+  link: { ...Typography.caption, color: colors.secondary, fontWeight: '700' },
 });

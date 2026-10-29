@@ -24,3 +24,7 @@ Changed Home route, HomeHeroHeader, CustomerHeader, SearchCard, HomeSection, Tri
 ## Step 3 — Explore
 
 Changed search.tsx, ExplorePanels, ThumbnailGrid; added useThemedStyles. Home header and exact service categories are reused. Four-column sizing, 8px gaps, filters, live hint, refresh and suggestions are preserved. Tile radius is 16 and labels have extra line height. TypeScript passed; Expo lint: 0 new errors against baseline, 60 warnings. No Explore reference image supplied; no phone test.
+
+## Step 4 — Bookings
+
+Changed bookings.tsx, BookingCard, HotelBookingCard, PackageBookingCard and GuideBookingCard. Round teal status/filter controls, softer cards, Outfit titles, green prices, wrapping actions and separate code/status rows. Theme-dependent styles now update with the theme. Every payment/ticket condition, filter, newest-first merge, loading/error branch and navigation target is preserved. TypeScript passed; Expo lint: 0 new errors against baseline, 60 warnings. No Bookings reference image supplied; no phone test.

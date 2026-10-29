@@ -1,3 +1,4 @@
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -15,8 +16,8 @@ import { PackageBookingCard } from '@/components/booking/PackageBookingCard';
 import { HotelBookingCard } from '@/components/hotels/HotelBookingCard';
 import { ScreenHeader } from '@/components/navigation/ScreenHeader';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/EmptyState';
-import { Colors } from '@/constants/colors';
-import { Radius, Spacing } from '@/constants/spacing';
+import type { ColorTokens } from '@/constants/colors';
+import { Radius, Size, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 import { useBookings } from '@/hooks/useBooking';
 import { useHotelBookings } from '@/hooks/useHotels';
@@ -48,6 +49,7 @@ function matchStatus(status: string, tab: StatusTab) {
 }
 
 export default function BookingsScreen() {
+  const styles = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const { bookings, loading, error, refresh } = useBookings();
   const {
@@ -333,51 +335,54 @@ export default function BookingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+const createStyles = (colors: ColorTokens) => StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.background },
   content: {
     flex: 1,
     paddingHorizontal: Spacing.screen,
-    gap: Spacing.md,
+    gap: Spacing.lg,
   },
   segment: {
     flexDirection: 'row',
-    backgroundColor: Colors.card,
-    borderRadius: Radius.lg,
+    backgroundColor: colors.card,
+    borderRadius: Radius.full,
     padding: 4,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   segmentItem: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: Radius.md,
+    paddingVertical: Spacing.md,
+    minHeight: Size.touch,
+    borderRadius: Radius.full,
     alignItems: 'center',
   },
-  segmentItemActive: { backgroundColor: Colors.action },
+  segmentItemActive: { backgroundColor: colors.primary },
   segmentText: {
     fontFamily: Fonts.bodySemiBold,
     fontSize: 12,
-    color: Colors.muted,
+    color: colors.muted,
   },
-  segmentTextActive: { color: Colors.white },
+  segmentTextActive: { color: colors.white },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   chip: {
     paddingHorizontal: Spacing.md,
-    paddingVertical: 8,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.card,
+    paddingVertical: Spacing.sm,
+    minHeight: Size.touch,
+    justifyContent: 'center',
+    borderRadius: Radius.full,
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   chipActive: {
-    backgroundColor: Colors.actionSoft,
-    borderColor: Colors.action,
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.primary,
   },
   chipText: {
     fontFamily: Fonts.bodySemiBold,
     fontSize: 12,
-    color: Colors.muted,
+    color: colors.muted,
   },
-  chipTextActive: { color: Colors.action },
+  chipTextActive: { color: colors.primaryText },
 });
