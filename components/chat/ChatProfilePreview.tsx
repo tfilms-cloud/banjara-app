@@ -1,9 +1,10 @@
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
-import { Colors } from '@/constants/colors';
-import { Radius, Spacing } from '@/constants/spacing';
-import { Typography } from '@/constants/typography';
+import { type ColorTokens } from '@/constants/colors';
+import { Radius, Shadows, Spacing } from '@/constants/spacing';
+import { CustomerType, Typography } from '@/constants/typography';
 import { formatPresenceLabel } from '@/components/chat/chatTime';
 
 type Props = {
@@ -27,6 +28,7 @@ export function ChatProfilePreview({
   lastSeenAt,
   onViewProfile,
 }: Props) {
+  const styles = useThemedStyles(createStyles);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
@@ -49,10 +51,10 @@ export function ChatProfilePreview({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTokens) => StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: Colors.overlay,
+    backgroundColor: colors.overlay,
     alignItems: 'center',
     justifyContent: 'center',
     padding: Spacing.lg,
@@ -60,16 +62,17 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: Colors.card,
-    borderRadius: Radius['2xl'],
+    backgroundColor: colors.card,
+    borderRadius: Radius.xl,
+    ...Shadows.float,
     padding: Spacing.xl,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
-  name: { ...Typography.h2, color: Colors.primary, marginTop: Spacing.md },
-  meta: { ...Typography.body, color: Colors.muted, marginTop: 4 },
-  presence: { ...Typography.caption, color: Colors.secondary, marginTop: Spacing.sm },
+  name: { ...CustomerType.section, textAlign: 'center', color: colors.dark, marginTop: Spacing.md },
+  meta: { ...CustomerType.body, color: colors.muted, marginTop: 4 },
+  presence: { ...Typography.caption, color: colors.secondary, marginTop: Spacing.sm },
   close: { marginTop: Spacing.lg, padding: Spacing.sm },
-  closeText: { ...Typography.body, color: Colors.muted },
+  closeText: { ...Typography.body, color: colors.muted },
 });

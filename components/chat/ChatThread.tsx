@@ -1,3 +1,4 @@
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
@@ -18,8 +19,8 @@ import { TypingDots } from '@/components/chat/TypingDots';
 import { Avatar } from '@/components/ui/Avatar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Header } from '@/components/ui/Header';
-import { Colors } from '@/constants/colors';
-import { Spacing } from '@/constants/spacing';
+import { type ColorTokens } from '@/constants/colors';
+import { Radius, Size, Spacing } from '@/constants/spacing';
 import { Typography } from '@/constants/typography';
 import { getApiErrorMessage } from '@/services/apiError';
 import * as uploadService from '@/services/uploadService';
@@ -40,6 +41,7 @@ type Props = {
 };
 
 export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, avatarUri }: Props) {
+  const styles = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const me = useAuthStore((s) => s.user?.id);
   const messages = useChatStore((s) => s.messages);
@@ -240,7 +242,7 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
             contentContainerStyle={{
               paddingHorizontal: Spacing.lg,
               paddingTop: Spacing.md,
-              paddingBottom: insets.bottom + 12,
+              paddingBottom: insets.bottom + Spacing.md,
               flexGrow: 1,
               gap: Spacing.xs,
             }}
@@ -329,9 +331,9 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  chatBg: { flex: 1, backgroundColor: Colors.background },
+const createStyles = (colors: ColorTokens) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  chatBg: { flex: 1, backgroundColor: colors.background },
   headerRight: { position: 'relative' },
   onlineDot: {
     position: 'absolute',
@@ -340,12 +342,12 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: Colors.success,
+    backgroundColor: colors.success,
     borderWidth: 2,
-    borderColor: Colors.background,
+    borderColor: colors.background,
   },
   skeletonWrap: { flex: 1, padding: Spacing.lg, gap: Spacing.md },
-  skeleton: { height: 44, borderRadius: 16, backgroundColor: Colors.border, opacity: 0.55 },
+  skeleton: { height: Size.touch, borderRadius: Radius.lg, backgroundColor: colors.border, opacity: 0.55 },
   skeletonMine: { alignSelf: 'flex-end', width: '58%' },
   skeletonTheirs: { alignSelf: 'flex-start', width: '64%' },
   row: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginVertical: 2 },
@@ -357,18 +359,18 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     marginVertical: Spacing.md,
   },
-  sepLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: Colors.border },
-  sepText: { ...Typography.caption, color: Colors.muted },
+  sepLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
+  sepText: { ...Typography.caption, color: colors.muted },
   typingBar: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xs,
   },
-  typingText: { ...Typography.caption, color: Colors.muted },
+  typingText: { ...Typography.caption, color: colors.muted },
   loadingOlder: {
     ...Typography.caption,
-    color: Colors.muted,
+    color: colors.primaryText,
     textAlign: 'center',
     marginBottom: Spacing.sm,
   },
@@ -376,10 +378,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     alignSelf: 'center',
     bottom: 12,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: 999,
+    borderRadius: Radius.full,
   },
-  newPillText: { ...Typography.caption, color: Colors.white, fontWeight: '600' },
+  newPillText: { ...Typography.caption, color: colors.white, fontWeight: '600' },
 });

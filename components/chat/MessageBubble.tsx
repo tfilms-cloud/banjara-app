@@ -1,11 +1,12 @@
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { formatMessageTime } from '@/components/chat/chatTime';
-import { Colors, useIsDarkMode } from '@/constants/colors';
-import { Spacing } from '@/constants/spacing';
-import { Typography } from '@/constants/typography';
+import { useThemeColors, type ColorTokens } from '@/constants/colors';
+import { Radius, Shadows, Size, Spacing } from '@/constants/spacing';
+import { CustomerType, Typography } from '@/constants/typography';
 import type { ChatMessage } from '@/types/chat';
 import { normalizeMediaUrl } from '@/utils/mediaUrl';
 
@@ -17,23 +18,25 @@ type Props = {
 };
 
 function Receipt({ status }: { status: ChatMessage['status'] }) {
+  const colors = useThemeColors();
   if (status === 'sending') {
-    return <Ionicons name="time-outline" size={12} color="rgba(255,255,255,0.75)" />;
+    return <Ionicons name="time-outline" size={12} color={colors.white} />;
   }
   if (status === 'failed') {
-    return <Ionicons name="alert-circle" size={13} color={Colors.danger} />;
+    return <Ionicons name="alert-circle" size={13} color={colors.danger} />;
   }
   if (status === 'read') {
-    return <Ionicons name="checkmark-done" size={14} color="#B8D4FF" />;
+    return <Ionicons name="checkmark-done" size={14} color={colors.softBlue} />;
   }
   if (status === 'delivered') {
-    return <Ionicons name="checkmark-done" size={14} color="rgba(255,255,255,0.85)" />;
+    return <Ionicons name="checkmark-done" size={14} color={colors.white} />;
   }
-  return <Ionicons name="checkmark" size={13} color="rgba(255,255,255,0.85)" />;
+  return <Ionicons name="checkmark" size={13} color={colors.white} />;
 }
 
 function MessageBubbleComponent({ message, mine, showTail, onRetry }: Props) {
-  useIsDarkMode();
+  const styles = useThemedStyles(createStyles);
+
   const failed = message.status === 'failed';
   const images = (message.attachments ?? []).filter(Boolean);
   const showText = Boolean(message.text && message.text !== 'Photo');
@@ -80,13 +83,14 @@ function MessageBubbleComponent({ message, mine, showTail, onRetry }: Props) {
 
 export const MessageBubble = memo(MessageBubbleComponent);
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTokens) => StyleSheet.create({
   bubble: {
     maxWidth: '82%',
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.sm + 2,
     paddingBottom: Spacing.sm,
-    borderRadius: 18,
+    borderRadius: Radius.xl,
+    ...Shadows.soft,
     gap: 4,
   },
   mediaBubble: {
@@ -95,27 +99,27 @@ const styles = StyleSheet.create({
   },
   mine: {
     alignSelf: 'flex-end',
-    backgroundColor: Colors.action,
+    backgroundColor: colors.primary,
     borderBottomRightRadius: 6,
   },
   theirs: {
     alignSelf: 'flex-start',
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     borderBottomLeftRadius: 6,
   },
   mineTail: { borderBottomRightRadius: 6 },
   theirsTail: { borderBottomLeftRadius: 6 },
   failed: { opacity: 0.92 },
   image: {
-    width: 220,
-    height: 220,
-    borderRadius: 14,
-    backgroundColor: Colors.border,
+    width: Size.hero,
+    height: Size.hero,
+    borderRadius: Radius.lg,
+    backgroundColor: colors.border,
   },
-  text: { ...Typography.body, color: Colors.dark, lineHeight: 20, paddingHorizontal: Spacing.sm },
-  mineText: { color: Colors.white },
+  text: { ...CustomerType.body, color: colors.dark, lineHeight: 20, paddingHorizontal: Spacing.sm },
+  mineText: { color: colors.white },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -124,11 +128,11 @@ const styles = StyleSheet.create({
     marginTop: 2,
     paddingHorizontal: Spacing.sm,
   },
-  time: { ...Typography.small, color: Colors.muted, fontSize: 11 },
-  mineTime: { color: 'rgba(255,255,255,0.75)' },
+  time: { ...Typography.small, color: colors.muted, fontSize: 11 },
+  mineTime: { color: colors.white },
   retry: {
     ...Typography.caption,
-    color: Colors.danger,
+    color: colors.danger,
     alignSelf: 'flex-end',
     marginTop: 4,
     marginRight: 4,

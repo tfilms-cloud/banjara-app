@@ -1,8 +1,9 @@
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Colors } from '@/constants/colors';
-import { Radius, Spacing } from '@/constants/spacing';
-import { Typography } from '@/constants/typography';
+import { useThemeColors, type ColorTokens } from '@/constants/colors';
+import { Radius, Size, Spacing } from '@/constants/spacing';
+import { CustomerType } from '@/constants/typography';
 
 type Props = {
   value: string;
@@ -23,6 +24,8 @@ export function MessageComposer({
   bottomInset = 0,
   onAttachPress,
 }: Props) {
+  const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const canSend = Boolean(value.trim()) && !sending && !disabled;
 
   return (
@@ -35,7 +38,7 @@ export function MessageComposer({
         accessibilityLabel="Attachments"
         hitSlop={8}
       >
-        <Ionicons name="add" size={22} color={onAttachPress ? Colors.action : Colors.muted} />
+        <Ionicons name="add" size={22} color={onAttachPress ? colors.action : colors.muted} />
       </Pressable>
 
       <TextInput
@@ -43,7 +46,7 @@ export function MessageComposer({
         value={value}
         onChangeText={onChangeText}
         placeholder="Type a message..."
-        placeholderTextColor={Colors.muted}
+        placeholderTextColor={colors.muted}
         editable={!disabled && !sending}
         multiline
         maxLength={4000}
@@ -59,13 +62,13 @@ export function MessageComposer({
         accessibilityLabel={sending ? 'Sending' : 'Send message'}
         hitSlop={6}
       >
-        <Ionicons name={sending ? 'hourglass-outline' : 'send'} size={18} color={Colors.white} />
+        <Ionicons name={sending ? 'hourglass-outline' : 'send'} size={18} color={colors.white} />
       </Pressable>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTokens) => StyleSheet.create({
   wrap: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -73,41 +76,43 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    backgroundColor: Colors.background,
+    borderTopColor: colors.border,
+    backgroundColor: colors.card,
   },
   attach: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.inputBg,
+    width: Size.touch,
+    height: Size.touch,
+    borderRadius: Radius.full,
+    backgroundColor: colors.surfaceSecondary,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   input: {
     flex: 1,
-    minHeight: 44,
+    minHeight: Size.touch,
     maxHeight: 120,
-    backgroundColor: Colors.inputBg,
+    backgroundColor: colors.inputBg,
     borderRadius: Radius.xl,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
-    ...Typography.body,
-    color: Colors.dark,
+    paddingVertical: Spacing.md,
+    textAlignVertical: 'top',
+    includeFontPadding: false,
+    ...CustomerType.body,
+    color: colors.dark,
   },
   send: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.action,
+    width: Size.touch,
+    height: Size.touch,
+    borderRadius: Radius.full,
+    backgroundColor: colors.action,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sendDisabled: {
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
   },
 });

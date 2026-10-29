@@ -28,3 +28,7 @@ Changed search.tsx, ExplorePanels, ThumbnailGrid; added useThemedStyles. Home he
 ## Step 4 — Bookings
 
 Changed bookings.tsx, BookingCard, HotelBookingCard, PackageBookingCard and GuideBookingCard. Round teal status/filter controls, softer cards, Outfit titles, green prices, wrapping actions and separate code/status rows. Theme-dependent styles now update with the theme. Every payment/ticket condition, filter, newest-first merge, loading/error branch and navigation target is preserved. TypeScript passed; Expo lint: 0 new errors against baseline, 60 warnings. No Bookings reference image supplied; no phone test.
+
+## Step 5 — Messages
+
+Changed ConversationListScreen, ConversationRow, ChatThread, MessageBubble, MessageComposer and ChatProfilePreview. Round search with icon, 52px avatars, soft unread cards, teal pills/bubbles, lighter incoming cards and theme-derived styles. Local search, connection text, typing, pagination, attachments, retry, receipts and keyboard handling remain. No chatStore/socket edits. TypeScript passed; Expo lint: 0 new errors against baseline, 60 warnings. No Messages reference image supplied; no phone test.

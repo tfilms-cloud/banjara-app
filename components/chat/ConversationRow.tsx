@@ -1,9 +1,10 @@
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { formatConversationTime, formatPresenceLabel } from '@/components/chat/chatTime';
 import { Avatar } from '@/components/ui/Avatar';
-import { Colors } from '@/constants/colors';
-import { Radius, Spacing } from '@/constants/spacing';
-import { Fonts, Typography } from '@/constants/typography';
+import { type ColorTokens } from '@/constants/colors';
+import { Radius, Shadows, Size, Spacing } from '@/constants/spacing';
+import { CustomerType, Fonts, Typography } from '@/constants/typography';
 import type { ChatConversation } from '@/types/chat';
 
 type Props = {
@@ -22,6 +23,7 @@ function roleLabel(role?: string) {
 }
 
 export function ConversationRow({ item, onPress }: Props) {
+  const styles = useThemedStyles(createStyles);
   const unread = item.unreadCount > 0;
   const role = roleLabel(item.otherUserRole);
 
@@ -33,7 +35,7 @@ export function ConversationRow({ item, onPress }: Props) {
       accessibilityLabel={`Conversation with ${item.otherUserName}${unread ? `, ${item.unreadCount} unread` : ''}`}
     >
       <View style={styles.avatarWrap}>
-        <Avatar uri={item.otherUserAvatar} name={item.otherUserName} size={52} />
+        <Avatar uri={item.otherUserAvatar} name={item.otherUserName} size={Size.avatar} />
         {item.online ? <View style={styles.online} /> : null}
       </View>
       <View style={styles.body}>
@@ -76,20 +78,21 @@ export function ConversationRow({ item, onPress }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTokens) => StyleSheet.create({
   card: {
     flexDirection: 'row',
     gap: Spacing.md,
-    backgroundColor: Colors.card,
+    backgroundColor: colors.card,
     borderRadius: Radius.xl,
-    padding: Spacing.md,
+    padding: Spacing.lg,
+    ...Shadows.soft,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     alignItems: 'flex-start',
   },
   cardUnread: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primarySoft,
+    borderColor: colors.primary,
+    backgroundColor: colors.primarySoft,
   },
   avatarWrap: { position: 'relative', marginTop: 2 },
   online: {
@@ -99,28 +102,27 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: Colors.success,
+    backgroundColor: colors.success,
     borderWidth: 2,
-    borderColor: Colors.white,
+    borderColor: colors.white,
   },
   body: { flex: 1, gap: 4, minWidth: 0 },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
   title: {
-    fontFamily: Fonts.bodyBold,
-    fontSize: 16,
-    color: Colors.dark,
+    ...CustomerType.card,
+    color: colors.dark,
     flex: 1,
   },
-  titleUnread: { color: Colors.primary },
-  time: { ...Typography.caption, color: Colors.muted },
-  timeUnread: { color: Colors.action, fontFamily: Fonts.bodySemiBold },
+  titleUnread: { color: colors.primaryText },
+  time: { ...Typography.caption, color: colors.muted },
+  timeUnread: { color: colors.primaryText, fontFamily: Fonts.bodySemiBold },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
   rolePill: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: colors.surfaceSecondary,
     borderRadius: Radius.full,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -128,33 +130,33 @@ const styles = StyleSheet.create({
   roleText: {
     fontFamily: Fonts.bodySemiBold,
     fontSize: 11,
-    color: Colors.muted,
+    color: colors.muted,
   },
-  presence: { ...Typography.small, color: Colors.muted, flex: 1 },
+  presence: { ...Typography.small, color: colors.muted, flex: 1 },
   bottom: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 2 },
   preview: {
     fontFamily: Fonts.body,
     fontSize: 13,
-    color: Colors.muted,
+    color: colors.muted,
     flex: 1,
     lineHeight: 18,
   },
-  previewUnread: { color: Colors.dark, fontFamily: Fonts.bodySemiBold },
+  previewUnread: { color: colors.dark, fontFamily: Fonts.bodySemiBold },
   badge: {
     minWidth: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: Colors.action,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
     marginTop: 2,
   },
-  badgeText: { ...Typography.small, color: Colors.white, fontWeight: '700' },
+  badgeText: { ...Typography.small, color: colors.white, fontWeight: '700' },
   bookingHint: {
     fontFamily: Fonts.bodyMedium,
     fontSize: 11,
-    color: Colors.primary,
+    color: colors.primary,
     marginTop: 2,
   },
 });
