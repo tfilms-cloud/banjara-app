@@ -1,0 +1,18 @@
+# Customer UI implementation
+
+The explicit brief in REDESIGN-BRIEF.md takes precedence over DESIGN-reference.md.
+Only home.png was supplied. The other four screens use the same visual system;
+they cannot be compared with missing reference images. API data, routes and
+booking/payment rules remain owned by the existing code.
+
+## Step 1 — shared controls
+
+- Added darker teal, coral, accessible coral text, media overlays and size/type tokens.
+- Softer shared shadows; round buttons/badges; Outfit screen titles.
+- Preserved all existing props and exports. See SHARED-CONSUMERS.md for the
+  inventory recorded before editing.
+- Added the missing Expo ESLint setup and a TypeScript resolver for the Windows
+  workspace path. Existing findings are explicitly recorded in LINT-BASELINE.md
+  and eslint-suppressions.json, rather than changing unrelated application logic.
+- Checks: TypeScript passes; Expo lint checked against that existing baseline.
+- Expo Go visual/device checks are still required; no phone testing is claimed.

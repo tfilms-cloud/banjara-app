@@ -1,0 +1,434 @@
+{
+  "app/(auth)/register.tsx": {
+    "react-hooks/immutability": {
+      "count": 2
+    }
+  },
+  "app/(customer)/(tabs)/bookings.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(customer)/(tabs)/index.tsx": {
+    "react-hooks/immutability": {
+      "count": 6
+    }
+  },
+  "app/(customer)/agency/[id].tsx": {
+    "react-hooks/preserve-manual-memoization": {
+      "count": 2
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(customer)/booking/payment.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(customer)/guides/[id].tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(customer)/guides/book/[id].tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(customer)/guides/index.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(customer)/guides/payment.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(customer)/hotels/payment.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(customer)/hotels/room-detail/[roomId].tsx": {
+    "react-hooks/refs": {
+      "count": 9
+    }
+  },
+  "app/(customer)/hotels/rooms/[id].tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(customer)/payments/[paymentId].tsx": {
+    "react-hooks/purity": {
+      "count": 1
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(customer)/payments/proof/[paymentId].tsx": {
+    "react-hooks/purity": {
+      "count": 1
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(customer)/rate/[bookingId].tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(customer)/seat/[id].tsx": {
+    "react-hooks/preserve-manual-memoization": {
+      "count": 1
+    }
+  },
+  "app/(customer)/tours/book/[id].tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(customer)/tours/payment.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(customer)/trip/[id].tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(provider)/(tabs)/index.tsx": {
+    "react-hooks/preserve-manual-memoization": {
+      "count": 1
+    }
+  },
+  "app/(provider)/(tabs)/services.tsx": {
+    "react-hooks/preserve-manual-memoization": {
+      "count": 1
+    },
+    "react-hooks/rules-of-hooks": {
+      "count": 8
+    }
+  },
+  "app/(provider)/_layout.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 2
+    }
+  },
+  "app/(provider)/booking/[id].tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(provider)/itineraries/add.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(provider)/notifications.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(provider)/register/hotel.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(provider)/register/restaurant.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(provider)/register/services.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(provider)/register/tours.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(provider)/register/verification.tsx": {
+    "react-hooks/static-components": {
+      "count": 4
+    }
+  },
+  "app/(provider)/rooms/add.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/(provider)/transport/trips/create.tsx": {
+    "react-hooks/purity": {
+      "count": 1
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 2
+    }
+  },
+  "app/_layout.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/index.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/chat/ChatThread.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/chat/TypingDots.tsx": {
+    "react-hooks/refs": {
+      "count": 9
+    }
+  },
+  "components/explore/ExplorePanels.tsx": {
+    "react-hooks/preserve-manual-memoization": {
+      "count": 1
+    }
+  },
+  "components/hotels/FavoriteButton.tsx": {
+    "react-hooks/immutability": {
+      "count": 2
+    }
+  },
+  "components/hotels/HotelSearchCard.tsx": {
+    "react-hooks/immutability": {
+      "count": 2
+    },
+    "react/no-children-prop": {
+      "count": 1
+    }
+  },
+  "components/location/LocationWebMap.tsx": {
+    "react-hooks/refs": {
+      "count": 4
+    }
+  },
+  "components/map/PickupMap.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 2
+    }
+  },
+  "components/map/nativeMaps.ts": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/notifications/NotificationPreferencesPanel.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/payments/PaymentChat.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/payments/ReceiptViewer.tsx": {
+    "react-hooks/immutability": {
+      "count": 4
+    }
+  },
+  "components/provider/CnicCropModal.tsx": {
+    "react-hooks/immutability": {
+      "count": 3
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/provider/PaymentAccountsEmptyHero.tsx": {
+    "react-hooks/refs": {
+      "count": 15
+    }
+  },
+  "components/seat/Seat.tsx": {
+    "react-hooks/immutability": {
+      "count": 2
+    }
+  },
+  "components/travel/DestinationCard.tsx": {
+    "react-hooks/immutability": {
+      "count": 2
+    }
+  },
+  "components/travel/HomeHeroHeader.tsx": {
+    "react-hooks/immutability": {
+      "count": 2
+    }
+  },
+  "components/travel/QuickDateChips.tsx": {
+    "react-hooks/immutability": {
+      "count": 2
+    }
+  },
+  "components/travel/SearchCard.tsx": {
+    "react-hooks/immutability": {
+      "count": 4
+    }
+  },
+  "components/travel/TrustGrid.tsx": {
+    "react-hooks/immutability": {
+      "count": 2
+    }
+  },
+  "components/trip/AgencyCard.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/trip/AgencyTripSummaryCard.tsx": {
+    "react-hooks/immutability": {
+      "count": 2
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/trip/TripCard.tsx": {
+    "react-hooks/immutability": {
+      "count": 2
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/ui/ActionGrid.tsx": {
+    "react-hooks/immutability": {
+      "count": 2
+    }
+  },
+  "components/ui/Button.tsx": {
+    "react-hooks/immutability": {
+      "count": 2
+    }
+  },
+  "components/ui/DatePickerModal.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "components/ui/MultiSearchSelect.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 2
+    }
+  },
+  "components/ui/PlaceAutocompleteSelect.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 2
+    }
+  },
+  "components/ui/SearchSelect.tsx": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "hooks/useBooking.ts": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "hooks/useHotels.ts": {
+    "react-hooks/set-state-in-effect": {
+      "count": 3
+    }
+  },
+  "hooks/useIdentityDraft.ts": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "hooks/useLocation.ts": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "hooks/useNotifications.ts": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "hooks/usePaymentAccountsGate.ts": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "hooks/useProviderPaymentMethods.ts": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "hooks/useRestaurants.ts": {
+    "react-hooks/set-state-in-effect": {
+      "count": 4
+    }
+  },
+  "hooks/useTourItineraries.ts": {
+    "react-hooks/set-state-in-effect": {
+      "count": 3
+    }
+  },
+  "hooks/useTrips.ts": {
+    "react-hooks/set-state-in-effect": {
+      "count": 3
+    }
+  },
+  "hooks/useVehicles.ts": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "scripts/agency-gallery.test.cjs": {
+    "no-undef": {
+      "count": 1
+    }
+  },
+  "scripts/eslint-resolver.cjs": {
+    "no-undef": {
+      "count": 1
+    }
+  },
+  "scripts/metro-runtime.test.cjs": {
+    "no-undef": {
+      "count": 3
+    }
+  },
+  "scripts/provider-details.test.cjs": {
+    "no-undef": {
+      "count": 1
+    }
+  },
+  "scripts/service-area.test.cjs": {
+    "no-undef": {
+      "count": 1
+    }
+  },
+  "scripts/transport-onboarding.test.cjs": {
+    "no-undef": {
+      "count": 1
+    }
+  },
+  "scripts/verify-location-pickers.cjs": {
+    "no-undef": {
+      "count": 1
+    }
+  },
+  "utils/navigation.ts": {
+    "react-hooks/refs": {
+      "count": 1
+    }
+  }
+}

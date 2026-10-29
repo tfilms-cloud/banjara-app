@@ -67,9 +67,9 @@ export function Button({
     (resolvedVariant === 'outline'
       ? colors.action
       : resolvedVariant === 'ghost'
-        ? colors.primary
+        ? colors.primaryText
         : resolvedVariant === 'secondary'
-          ? colors.primary
+          ? colors.primaryText
           : resolvedVariant === 'accent'
             ? colors.dark
             : colors.white);
@@ -118,7 +118,7 @@ export function Button({
 const styles = StyleSheet.create({
   base: {
     minHeight: 48,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
   },
   title: {
-    fontFamily: Fonts.body,
+    fontFamily: Fonts.bodySemiBold,
     fontSize: 14,
     lineHeight: 18,
     letterSpacing: 0,

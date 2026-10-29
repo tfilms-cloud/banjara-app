@@ -6,7 +6,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BrandMark } from '@/components/brand/BrandMark';
 import { useThemeColors } from '@/constants/colors';
-import { Spacing } from '@/constants/spacing';
+import { Radius, Size, Spacing } from '@/constants/spacing';
 import { Brand, Fonts } from '@/constants/typography';
 import { shouldSkipHistoryBack } from '@/utils/navigation';
 
@@ -151,21 +151,21 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.md,
   },
   row: {
-    minHeight: 44,
+    minHeight: Size.touch,
     flexDirection: 'row',
     alignItems: 'center',
   },
   iconBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1,
+    width: Size.touch,
+    height: Size.touch,
+    borderRadius: Radius.full,
+    borderWidth: Size.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sideSlot: {
-    width: 44,
-    height: 44,
+    width: Size.sideSlot,
+    height: Size.touch,
   },
   center: {
     flex: 1,
@@ -183,9 +183,9 @@ const styles = StyleSheet.create({
     letterSpacing: 1.6,
   },
   title: {
-    fontFamily: Fonts.bodySemiBold,
+    fontFamily: Fonts.display,
     fontSize: 18,
-    lineHeight: 22,
+    lineHeight: 24,
   },
   subtitle: {
     fontFamily: Fonts.body,

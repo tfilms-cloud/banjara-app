@@ -24,6 +24,16 @@ export const AuthFonts = {
   bodyBold: Fonts.bodyBold,
 } as const;
 
+export const CustomerType = {
+  hero: { fontFamily: Fonts.displayBold, fontSize: 24, lineHeight: 32 },
+  section: { fontFamily: Fonts.display, fontSize: 19, lineHeight: 26 },
+  card: { fontFamily: Fonts.display, fontSize: 16, lineHeight: 22 },
+  body: { fontFamily: Fonts.body, fontSize: 14, lineHeight: 20 },
+  label: { fontFamily: Fonts.bodySemiBold, fontSize: 13, lineHeight: 18 },
+  caption: { fontFamily: Fonts.bodyMedium, fontSize: 12, lineHeight: 18 },
+  micro: { fontFamily: Fonts.bodyMedium, fontSize: 11, lineHeight: 16 },
+} as const;
+
 function makeTypography(c: ColorTokens) {
   return {
     display: {

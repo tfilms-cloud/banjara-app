@@ -11,6 +11,11 @@ export const Spacing = {
   '6xl': 64,
   screen: 16,
   hero: 20,
+  section: 24,
+  sectionContent: 12,
+  overlap: 28,
+  micro: 6,
+  badge: 5,
 } as const;
 
 export const Radius = {
@@ -28,30 +33,39 @@ export const Radius = {
 export const Shadows = {
   premium: {
     shadowColor: '#08111F',
-    shadowOpacity: 0.055,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
     elevation: 1,
   },
   soft: {
     shadowColor: '#000000',
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
     elevation: 2,
   },
   card: {
     shadowColor: '#000000',
-    shadowOpacity: 0.22,
-    shadowRadius: 12,
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
   },
   float: {
     shadowColor: '#000000',
-    shadowOpacity: 0.28,
+    shadowOpacity: 0.08,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
     elevation: 4,
   },
+} as const;
+
+/** Shared control/media dimensions for the customer redesign. */
+export const Size = {
+  iconSm: 16, iconMd: 18, icon: 20, iconLg: 22, iconHero: 28,
+  touch: 44, button: 48, avatar: 52, avatarSmall: 34,
+  badgeDot: 6, photoDot: 7, sideSlot: 44,
+  hero: 220, tripHero: 260, map: 240, thumbnail: 68,
+  border: 1, borderStrong: 1.5, borderActive: 2,
 } as const;

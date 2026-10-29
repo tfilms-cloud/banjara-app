@@ -7,6 +7,13 @@ import { getCachedDarkMode } from '@/utils/themeModeCache';
  */
 export type ColorTokens = {
   primary: string;
+  primaryText: string;
+  coral: string;
+  coralText: string;
+  coralSoft: string;
+  transparent: string;
+  mediaScrim: string;
+  mediaScrimSoft: string;
   primaryDark: string;
   primarySoft: string;
   action: string;
@@ -45,6 +52,13 @@ export type ColorTokens = {
 
 export const DarkColors: ColorTokens = {
   primary: '#0F9B98',
+  primaryText: '#72DEDA',
+  coral: '#FF8D73',
+  coralText: '#FFAC94',
+  coralSoft: '#3D2729',
+  transparent: 'transparent',
+  mediaScrim: 'rgba(8,17,31,0.88)',
+  mediaScrimSoft: 'rgba(8,17,31,0.08)',
   primaryDark: '#08111F',
   primarySoft: '#123A3D',
 
@@ -93,6 +107,13 @@ export const DarkColors: ColorTokens = {
 
 export const LightColors: ColorTokens = {
   primary: '#0F9B98',
+  primaryText: '#0B7A78',
+  coral: '#FF6B4A',
+  coralText: '#BA3C23',
+  coralSoft: '#FFF0EB',
+  transparent: 'transparent',
+  mediaScrim: 'rgba(8,17,31,0.88)',
+  mediaScrimSoft: 'rgba(8,17,31,0.08)',
   primaryDark: '#1C1917',
   primarySoft: '#CCFBF1',
 
