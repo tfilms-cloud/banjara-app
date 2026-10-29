@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BrandMark } from '@/components/brand/BrandMark';
 import { useThemeColors } from '@/constants/colors';
 import { Radius, Size, Spacing } from '@/constants/spacing';
-import { Brand, Fonts } from '@/constants/typography';
+import { Brand, Fonts, TypeSize, Leading } from '@/constants/typography';
 import { shouldSkipHistoryBack } from '@/utils/navigation';
 
 type ScreenHeaderProps = {
@@ -69,7 +69,7 @@ export function ScreenHeader({
         styles.container,
         {
           paddingTop: insets.top + Spacing.sm,
-          backgroundColor: transparent ? 'transparent' : colors.background,
+          backgroundColor: transparent ? colors.transparent : colors.background,
         },
       ]}
     >
@@ -81,7 +81,7 @@ export function ScreenHeader({
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
-            <ArrowLeft size={22} color={iconColor} strokeWidth={2} />
+            <ArrowLeft size={Size.iconLg} color={iconColor} strokeWidth={2} />
           </Pressable>
         ) : showMenu ? (
           <Pressable
@@ -89,7 +89,7 @@ export function ScreenHeader({
             style={[styles.iconBtn, { backgroundColor: colors.inputBg, borderColor: colors.border }]}
             accessibilityLabel="Menu"
           >
-            <Menu size={22} color={iconColor} strokeWidth={2} />
+            <Menu size={Size.iconLg} color={iconColor} strokeWidth={2} />
           </Pressable>
         ) : (
           <View style={styles.sideSlot} />
@@ -98,7 +98,7 @@ export function ScreenHeader({
         <View style={styles.center}>
           {showBrand ? (
             <View style={styles.brandRow}>
-              <BrandMark size={28} />
+              <BrandMark size={Size.iconHero} />
               <Text style={[styles.brand, { color: titleColor }]}>{Brand.name}</Text>
             </View>
           ) : title ? (
@@ -122,7 +122,7 @@ export function ScreenHeader({
               style={[styles.iconBtn, { backgroundColor: colors.inputBg, borderColor: colors.border }]}
               accessibilityLabel="Search"
             >
-              <Search size={20} color={iconColor} strokeWidth={2} />
+              <Search size={Size.icon} color={iconColor} strokeWidth={2} />
             </Pressable>
           ) : null}
           {showNotifications ? (
@@ -131,7 +131,7 @@ export function ScreenHeader({
               style={[styles.iconBtn, { backgroundColor: colors.inputBg, borderColor: colors.border }]}
               accessibilityLabel="Notifications"
             >
-              <Bell size={20} color={iconColor} strokeWidth={2} />
+              <Bell size={Size.icon} color={iconColor} strokeWidth={2} />
             </Pressable>
           ) : null}
           {right}
@@ -175,27 +175,27 @@ const styles = StyleSheet.create({
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.sm,
   },
   brand: {
     fontFamily: Fonts.displayBold,
-    fontSize: 22,
+    fontSize: TypeSize.heading,
     letterSpacing: 1.6,
   },
   title: {
     fontFamily: Fonts.display,
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: TypeSize.subtitle,
+    lineHeight: Leading.title,
   },
   subtitle: {
     fontFamily: Fonts.body,
-    fontSize: 13,
-    marginTop: 1,
+    fontSize: TypeSize.label,
+    marginTop: Spacing.hairline,
   },
   right: {
     flexDirection: 'row',
     alignItems: 'center',
-    minWidth: 40,
+    minWidth: Size.compactControl,
     justifyContent: 'flex-end',
   },
 });

@@ -18,7 +18,7 @@ import {
   type ExploreServiceTab,
 } from '@/constants/exploreCatalog';
 import { Spacing } from '@/constants/spacing';
-import { CustomerType, Fonts } from '@/constants/typography';
+import { CustomerType, Fonts, TypeSize } from '@/constants/typography';
 import { usePopularHotels } from '@/hooks/useHotels';
 import { useGuides, useRestaurants, useTourOperators } from '@/hooks/useRestaurants';
 import { useRecommendedTrips } from '@/hooks/useTrips';
@@ -97,7 +97,7 @@ export default function ExploreScreen() {
           <Text style={[styles.introSub, { color: colors.muted }]}>{subtitle}</Text>
         </View>
 
-        <View style={{ paddingHorizontal: Spacing.screen }}><SearchModeTabs mode={tab} onChange={setTab} compact /></View>
+        <SearchModeTabs mode={tab} onChange={setTab} compact />
 
         <ExplorePanels
           tab={tab}
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.screen,
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.md,
-    gap: 4,
+    gap: Spacing.xs,
   },
   introTitle: {
     ...CustomerType.section,
@@ -142,12 +142,12 @@ const styles = StyleSheet.create({
   },
   introSub: {
     fontFamily: Fonts.body,
-    fontSize: 13,
+    fontSize: TypeSize.label,
   },
   loadingHint: {
     textAlign: 'center',
     fontFamily: Fonts.body,
-    fontSize: 12,
+    fontSize: TypeSize.caption,
     marginTop: Spacing.md,
   },
 });

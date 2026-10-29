@@ -38,7 +38,7 @@ export function MessageComposer({
         accessibilityLabel="Attachments"
         hitSlop={8}
       >
-        <Ionicons name="add" size={22} color={onAttachPress ? colors.action : colors.muted} />
+        <Ionicons name="add" size={Size.iconLg} color={onAttachPress ? colors.action : colors.muted} />
       </Pressable>
 
       <TextInput
@@ -62,7 +62,7 @@ export function MessageComposer({
         accessibilityLabel={sending ? 'Sending' : 'Send message'}
         hitSlop={6}
       >
-        <Ionicons name={sending ? 'hourglass-outline' : 'send'} size={18} color={colors.white} />
+        <Ionicons name={sending ? 'hourglass-outline' : 'send'} size={Size.iconMd} color={colors.white} />
       </Pressable>
     </View>
   );
@@ -75,7 +75,7 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     gap: Spacing.sm,
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.md,
-    borderTopWidth: 1,
+    borderTopWidth: Size.border,
     borderTopColor: colors.border,
     backgroundColor: colors.card,
   },
@@ -84,7 +84,7 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     height: Size.touch,
     borderRadius: Radius.full,
     backgroundColor: colors.surfaceSecondary,
-    borderWidth: 1,
+    borderWidth: Size.border,
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
@@ -92,10 +92,10 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   input: {
     flex: 1,
     minHeight: Size.touch,
-    maxHeight: 120,
+    maxHeight: Size.photoSmall,
     backgroundColor: colors.inputBg,
     borderRadius: Radius.xl,
-    borderWidth: 1,
+    borderWidth: Size.border,
     borderColor: colors.border,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,

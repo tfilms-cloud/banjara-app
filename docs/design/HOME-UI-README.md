@@ -1,19 +1,19 @@
 # Banjara Home page UI guide
 
-For the other mobile pages, see the [complete screen guide index](SCREENS-UI-README.md).
+For the other mobile pages, see the [complete screen guide index](../../../SCREENS-UI-README.md).
 
 This file explains the **current customer Home screen**: what users see, how the
 layout changes between services, which components render it, and where its colors,
 fonts and alignment come from. It documents the source reviewed on 28 October 2026.
 
-Main screen: [`Banjara/app/(customer)/(tabs)/index.tsx`](<Banjara/app/(customer)/(tabs)/index.tsx>).
+Main screen: [`Banjara/app/(customer)/(tabs)/index.tsx`](<../../app/(customer)/(tabs)/index.tsx>).
 The provider's dashboard is a separate screen; this guide covers the traveler Home.
 
-For all app screens/components, read [UI-README.md](UI-README.md). For system and
-backend connections, read [ARCHITECTURE.md](ARCHITECTURE.md).
+For all app screens/components, read [UI-README.md](../../../UI-README.md). For system and
+backend connections, read [ARCHITECTURE.md](../../../ARCHITECTURE.md).
 
 Other customer tabs: [Bookings UI](BOOKINGS-UI-README.md),
-[Messages UI](MESSAGES-UI-README.md) and [Profile UI](PROFILE-UI-README.md).
+[Messages UI](MESSAGES-UI-README.md) and [Profile UI](../../../PROFILE-UI-README.md).
 
 ## What the Home screen looks like
 
@@ -49,7 +49,7 @@ the middle of the page rather than navigating to a different Home route.
 
 ## Header and hero
 
-Component: [`HomeHeroHeader.tsx`](Banjara/components/travel/HomeHeroHeader.tsx).
+Component: [`HomeHeroHeader.tsx`](../../components/travel/HomeHeroHeader.tsx).
 
 ### Top row
 
@@ -59,15 +59,15 @@ Component: [`HomeHeroHeader.tsx`](Banjara/components/travel/HomeHeroHeader.tsx).
 - The row uses `justifyContent: 'space-between'` to separate identity from actions.
 - The header adds the phone's top safe-area inset before its content.
 
-[`BrandMark.tsx`](Banjara/components/brand/BrandMark.tsx) currently uses
+[`BrandMark.tsx`](../../components/brand/BrandMark.tsx) currently uses
 `assets/logo-gold.png`, clipped into a circle. The Home header requests a 30-unit
 mark; the avatar is 34 units inside a 36-unit ring and a 44-unit press target.
 
 ### Service selector
 
 `SearchModeTabs`, exported from
-[`SearchCard.tsx`](Banjara/components/travel/SearchCard.tsx), displays the service
-categories defined in [`productModes.ts`](Banjara/constants/productModes.ts).
+[`SearchCard.tsx`](../../components/travel/SearchCard.tsx), displays the service
+categories defined in [`productModes.ts`](../../constants/productModes.ts).
 The header uses its compact variant. Service selection changes the feed and hero
 copy, and Home scrolls back to the top when the service changes.
 
@@ -184,7 +184,7 @@ restaurant cards and provider/inspiration sections. It can request location for
 nearby results. Its cross-service suggestion can offer a local guide.
 
 Category sections are controlled by
-[`ExplorePanels.tsx`](Banjara/components/explore/ExplorePanels.tsx). They are
+[`ExplorePanels.tsx`](../../components/explore/ExplorePanels.tsx). They are
 conditional on the selected category and available records; every heading is not
 guaranteed to appear in every session.
 
@@ -192,7 +192,7 @@ guaranteed to appear in every session.
 
 ### `HomeSection`
 
-[`HomeSection.tsx`](Banjara/components/travel/HomeSection.tsx) standardizes section
+[`HomeSection.tsx`](../../components/travel/HomeSection.tsx) standardizes section
 headings, optional subtitles and an optional action such as View all or Explore.
 It places the heading and action side by side, with a flexible title area.
 
@@ -208,24 +208,24 @@ hotel rails and destination rails supply their own layout.
 
 ### Trip and hotel cards
 
-[`TripCard.tsx`](Banjara/components/trip/TripCard.tsx) presents provider identity,
+[`TripCard.tsx`](../../components/trip/TripCard.tsx) presents provider identity,
 rating when available, journey type, vehicle/route details, departure/arrival
 information, seat availability, price and the booking action. Availability colors
 change with the seat count; three or fewer remaining seats use the danger tint.
 Card taps call Home's `openTrip` handler, which sets the selected trip and opens
 trip details. The full booking flow continues on subsequent screens.
 
-[`HotelCard.tsx`](Banjara/components/hotels/HotelCard.tsx) is reused by stay sections.
+[`HotelCard.tsx`](../../components/hotels/HotelCard.tsx) is reused by stay sections.
 Because these are shared components, changing their styles also changes other
 screens that import them.
 
 ### Popular destinations
 
 The Home destination rail uses curated metadata from
-[`destinations.ts`](Banjara/constants/destinations.ts), filtered against place names
+[`destinations.ts`](../../constants/destinations.ts), filtered against place names
 found in loaded trips/hotels. If none match, that Home section is omitted.
 
-[`DestinationCard.tsx`](Banjara/components/travel/DestinationCard.tsx) uses an
+[`DestinationCard.tsx`](../../components/travel/DestinationCard.tsx) uses an
 image-cover layout with a gradient and white overlaid text. Normal cards are
 **172 × 218** with radius **20**; its featured variant is **230 × 218** with radius
 **28**. Cards are horizontally scrollable, and press feedback scales to `0.97`.
@@ -240,7 +240,7 @@ not a set of customer-written testimonials. Taps open the agency profile.
 
 ### Trust grid
 
-[`TrustGrid.tsx`](Banjara/components/travel/TrustGrid.tsx) renders the static
+[`TrustGrid.tsx`](../../components/travel/TrustGrid.tsx) renders the static
 `TRUST_POINTS` copy under **Why travelers choose BANJARA**. It uses wrapping cards,
 colored icon backgrounds and short descriptions. The press animation is visual
 feedback; these items do not currently have a destination navigation handler.
@@ -248,7 +248,7 @@ Trust copy is marketing content, not a live payment/verification status check.
 
 ## Colors and theme behavior
 
-Source: [`colors.ts`](Banjara/constants/colors.ts).
+Source: [`colors.ts`](../../constants/colors.ts).
 
 Main light-mode tokens:
 
@@ -271,8 +271,8 @@ tones. It is not implemented using only teal and green everywhere.
 
 ## Fonts, spacing, corners and shadows
 
-Font definitions: [`typography.ts`](Banjara/constants/typography.ts).
-Spacing/shapes: [`spacing.ts`](Banjara/constants/spacing.ts).
+Font definitions: [`typography.ts`](../../constants/typography.ts).
+Spacing/shapes: [`spacing.ts`](../../constants/spacing.ts).
 
 - Headings: **Outfit 600/700**.
 - Body, labels and actions: **Plus Jakarta Sans 400/500/600/700**.
@@ -302,7 +302,7 @@ These numbers are React Native layout values, not a guarantee of physical pixels
 
 ## Bottom navigation
 
-Owned by [`(tabs)/_layout.tsx`](<Banjara/app/(customer)/(tabs)/_layout.tsx>), not
+Owned by [`(tabs)/_layout.tsx`](<../../app/(customer)/(tabs)/_layout.tsx>), not
 the Home feed. Visible tabs are **Home, Explore, Bookings, Messages, Profile**.
 Hotels and Notifications also have tab routes but are hidden from the visible bar.
 

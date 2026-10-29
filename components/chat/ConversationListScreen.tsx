@@ -82,7 +82,7 @@ export function ConversationListScreen({ threadBasePath, backHref }: Props) {
           contentContainerStyle={{
             padding: Spacing.lg,
             gap: Spacing.md,
-            paddingBottom: insets.bottom + 24,
+            paddingBottom: insets.bottom + Spacing['2xl'],
             flexGrow: 1,
           }}
           refreshControl={

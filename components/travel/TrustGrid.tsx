@@ -3,10 +3,11 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useThemeColors } from '@/constants/colors';
 import { TRUST_POINTS } from '@/constants/destinations';
-import { Radius, Shadows, Spacing } from '@/constants/spacing';
-import { Fonts } from '@/constants/typography';
+import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
+import { Fonts, TypeSize, Leading } from '@/constants/typography';
 
-const ICON_TONES = ['#16B364', '#0F9B98', '#7C6CFF', '#F5B83D'] as const;
+const ICON_TONES = ['action', 'primary', 'coral', 'warning'] as const;
+const ICON_BACKGROUNDS = ['actionSoft', 'primarySoft', 'coralSoft', 'softAmber'] as const;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -18,7 +19,8 @@ function TrustCard({
   index: number;
 }) {
   const colors = useThemeColors();
-  const tone = ICON_TONES[index % ICON_TONES.length];
+  const tone = colors[ICON_TONES[index % ICON_TONES.length]];
+  const softTone = colors[ICON_BACKGROUNDS[index % ICON_BACKGROUNDS.length]];
   const scale = useSharedValue(1);
 
   const animStyle = useAnimatedStyle(() => ({
@@ -44,8 +46,8 @@ function TrustCard({
       accessibilityRole="summary"
       accessibilityLabel={`${point.label}. ${point.caption}`}
     >
-      <View style={[styles.icon, { backgroundColor: `${tone}1A` }]}>
-        <Ionicons name={point.icon} size={19} color={tone} />
+      <View style={[styles.icon, { backgroundColor: softTone }]}>
+        <Ionicons name={point.icon} size={Size.icon} color={tone} />
       </View>
       <View style={styles.copy}>
         <Text style={[styles.label, { color: colors.dark }]}>{point.label}</Text>
@@ -75,18 +77,18 @@ const styles = StyleSheet.create({
   card: {
     width: '48%',
     flexGrow: 1,
-    minHeight: 100,
+    minHeight: Size.benefit,
     borderRadius: Radius.lg,
-    borderWidth: 1,
+    borderWidth: Spacing.hairline,
     padding: Spacing.md,
     gap: Spacing.sm,
     justifyContent: 'center',
     ...Shadows.soft,
   },
   icon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: Size.compactControl,
+    height: Size.compactControl,
+    borderRadius: Radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -95,13 +97,13 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: TypeSize.label,
+    lineHeight: Leading.caption,
   },
   caption: {
     fontFamily: Fonts.body,
-    fontSize: 11,
-    lineHeight: 15,
-    marginTop: 2,
+    fontSize: TypeSize.micro,
+    lineHeight: Leading.compact,
+    marginTop: Spacing.xxs,
   },
 });

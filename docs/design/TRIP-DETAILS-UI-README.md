@@ -5,10 +5,10 @@ Islamabad → Hunza screenshot. This document explains the existing screen and
 includes a copyable prompt for future visual work. **This documentation change
 does not redesign the page or change its behavior.**
 
-Main source: [Trip Details screen](<Banjara/app/(customer)/trip/[id].tsx>).
-Related guides: [Transport journey](TRANSPORT-UI-README.md),
-[Agency profile](AGENCY-UI-README.md), [payments/tickets](PAYMENTS-TICKETS-UI-README.md)
-and [all screens](SCREENS-UI-README.md).
+Main source: [Trip Details screen](<../../app/(customer)/trip/[id].tsx>).
+Related guides: [Transport journey](../../../TRANSPORT-UI-README.md),
+[Agency profile](../../../AGENCY-UI-README.md), [payments/tickets](../../../PAYMENTS-TICKETS-UI-README.md)
+and [all screens](../../../SCREENS-UI-README.md).
 
 ## 1. What this page is for
 
@@ -70,8 +70,8 @@ It is not part of the documented Trip Details layout or the copyable prompt.
 
 ## 3. Header and its actions
 
-The route uses [Header](Banjara/components/ui/Header.tsx), a compatibility wrapper
-around [ScreenHeader](Banjara/components/navigation/ScreenHeader.tsx).
+The route uses [Header](../../components/ui/Header.tsx), a compatibility wrapper
+around [ScreenHeader](../../components/navigation/ScreenHeader.tsx).
 
 - Back occupies a **44 × 44** circular bordered control.
 - The title displays the actual origin and destination, otherwise “Trip.”
@@ -114,7 +114,7 @@ viewer for this hero.
 ## 5. Badges and journey summary
 
 The body uses **16** padding and a **12** gap. Its badge row wraps with **8** gaps.
-[Badge](Banjara/components/ui/Badge.tsx) supplies **12** semibold labels, **12**
+[Badge](../../components/ui/Badge.tsx) supplies **12** semibold labels, **12**
 horizontal / **5** vertical padding and radius **14**.
 
 | Badge | When it appears | Tone |
@@ -154,7 +154,7 @@ complete an otherwise uneven row.
 
 ## 7. Route and pickup sections
 
-[TripRouteTimeline](Banjara/components/trip/TripRouteTimeline.tsx) shows origin,
+[TripRouteTimeline](../../components/trip/TripRouteTimeline.tsx) shows origin,
 named boarding points and destination. It does not automatically draw every
 item in the trip's generic en-route stops array. Each timeline row can show
 title, caption/address and formatted time.
@@ -165,15 +165,15 @@ and a border. Rows have **64** minimum height. The rail is **20** wide with
 coral boarding dots.
 
 When pickup locations exist, the page displays
-[PickupMap](Banjara/components/map/PickupMap.tsx) at **240** height with full-screen
+[PickupMap](../../components/map/PickupMap.tsx) at **240** height with full-screen
 support, controls and a selected-point panel. A stack of
-[PickupCard](Banjara/components/map/PickupCard.tsx) items follows with **8** gaps.
+[PickupCard](../../components/map/PickupCard.tsx) items follows with **8** gaps.
 Their selection stays in sync with the map preview.
 
 The page requests the user's location through the existing hook, and supplies
 available traveler/vehicle context to the map. Permission and map fallback
 behavior remain in the shared map/location implementation. Keep the existing
-Expo Go-compatible map path; see [Maps](LOCATION-SETTINGS-UI-README.md).
+Expo Go-compatible map path; see [Maps](../../../LOCATION-SETTINGS-UI-README.md).
 
 The first pickup becomes the initial preview when available. Selecting a pin/card
 here changes the local preview. **Choose pickup saves the trip and opens the
@@ -188,7 +188,7 @@ provider publishes them. It does not fabricate a stop at the customer's GPS pin.
 Amenities appear only when supplied. They wrap as green-tinted chips with pill
 radius, **12** horizontal / **8** vertical padding and **13** semibold text.
 
-[VehicleCard](Banjara/components/trip/VehicleCard.tsx) presents vehicle photo,
+[VehicleCard](../../components/trip/VehicleCard.tsx) presents vehicle photo,
 type, name, optional brand/model and registration, plus separate **Capacity** and
 **Available now** boxes. Its image is **160** high; thumbnail choices are
 **56 × 44**, with the active one highlighted. The card has radius **16**, a
@@ -198,7 +198,7 @@ Physical vehicle capacity and seats remaining on this trip are different values.
 The route passes vehicleCapacity with totalSeats as its fallback, and passes
 availableSeats separately. A design must preserve that distinction.
 
-[AgencyCard](Banjara/components/trip/AgencyCard.tsx) displays the provider logo or
+[AgencyCard](../../components/trip/AgencyCard.tsx) displays the provider logo or
 initials, business name, conditional verification/rating/city and **View provider**.
 The logo is **52 × 52**, radius **14**. The card uses radius **16**, **16** padding
 and a **12** gap. It opens the provider's Agency profile.
@@ -215,11 +215,11 @@ no review records, it says “No reviews yet for this trip.” A review-load fai
 currently falls back to an empty review list; there is no separate review error
 panel in this route.
 
-Trip notes use [ExpandableText](Banjara/components/agency/ExpandableText.tsx),
+Trip notes use [ExpandableText](../../components/agency/ExpandableText.tsx),
 initially limited to **four lines**. Read more / Show less appears if the measured
 text needs it. Text is body **15 / 22**, muted; the toggle is green **14** semibold.
 
-[JourneyTypePanel](Banjara/components/trip/JourneyTypePanel.tsx) explains One way
+[JourneyTypePanel](../../components/trip/JourneyTypePanel.tsx) explains One way
 or Round trip. It shows Going, then Return home for a round trip, using the
 available return date/time or reverse route. One-way copy says no return is
 included. The full panel is used here, not its compact variant.
@@ -317,17 +317,17 @@ cache invalidation. This route does not attach a pull-to-refresh control.
 
 | What you want to change | Edit here |
 | --- | --- |
-| Hero, fact grid, summary, footer, section order | [trip/[id].tsx](<Banjara/app/(customer)/trip/[id].tsx>) |
-| Header geometry/typography | [ScreenHeader](Banjara/components/navigation/ScreenHeader.tsx) |
-| Badge padding/tones | [Badge](Banjara/components/ui/Badge.tsx) |
-| Route rail/boarding rows | [TripRouteTimeline](Banjara/components/trip/TripRouteTimeline.tsx) |
-| Pickup map and full-screen behavior | [PickupMap](Banjara/components/map/PickupMap.tsx) |
-| Pickup selection card | [PickupCard](Banjara/components/map/PickupCard.tsx) |
-| Vehicle gallery/specifications | [VehicleCard](Banjara/components/trip/VehicleCard.tsx) |
-| Provider identity/link | [AgencyCard](Banjara/components/trip/AgencyCard.tsx) |
-| Journey/return explanation | [JourneyTypePanel](Banjara/components/trip/JourneyTypePanel.tsx) |
-| Shared action colors/sizing | [Button](Banjara/components/ui/Button.tsx) |
-| Palette, type scale, spacing/shadows | [colors](Banjara/constants/colors.ts), [typography](Banjara/constants/typography.ts), [spacing](Banjara/constants/spacing.ts) |
+| Hero, fact grid, summary, footer, section order | [trip/[id].tsx](<../../app/(customer)/trip/[id].tsx>) |
+| Header geometry/typography | [ScreenHeader](../../components/navigation/ScreenHeader.tsx) |
+| Badge padding/tones | [Badge](../../components/ui/Badge.tsx) |
+| Route rail/boarding rows | [TripRouteTimeline](../../components/trip/TripRouteTimeline.tsx) |
+| Pickup map and full-screen behavior | [PickupMap](../../components/map/PickupMap.tsx) |
+| Pickup selection card | [PickupCard](../../components/map/PickupCard.tsx) |
+| Vehicle gallery/specifications | [VehicleCard](../../components/trip/VehicleCard.tsx) |
+| Provider identity/link | [AgencyCard](../../components/trip/AgencyCard.tsx) |
+| Journey/return explanation | [JourneyTypePanel](../../components/trip/JourneyTypePanel.tsx) |
+| Shared action colors/sizing | [Button](../../components/ui/Button.tsx) |
+| Palette, type scale, spacing/shadows | [colors](../../constants/colors.ts), [typography](../../constants/typography.ts), [spacing](../../constants/spacing.ts) |
 
 Shared-component edits also affect other pages. Use route-specific styles when
 the requested change belongs only to Trip Details.

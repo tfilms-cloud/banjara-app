@@ -206,7 +206,7 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
             accessibilityRole="button"
             accessibilityLabel={`${title} profile`}
           >
-            <Avatar uri={avatarUri ?? conversation?.otherUserAvatar} name={title} size={36} />
+            <Avatar uri={avatarUri ?? conversation?.otherUserAvatar} name={title} size={Size.avatarRing} />
             {presence?.online ? <View style={styles.onlineDot} /> : null}
           </Pressable>
         }
@@ -276,9 +276,9 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
               return (
                 <View style={[styles.row, mine ? styles.rowMine : styles.rowTheirs]}>
                   {!mine && item.showAvatar ? (
-                    <Avatar uri={avatarUri} name={title} size={28} />
+                    <Avatar uri={avatarUri} name={title} size={Size.iconHero} />
                   ) : !mine ? (
-                    <View style={{ width: 28 }} />
+                    <View style={{ width: Size.iconHero }} />
                   ) : null}
                   <MessageBubble
                     message={item.message}
@@ -339,18 +339,18 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     position: 'absolute',
     right: 0,
     bottom: 0,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: Size.iconTiny,
+    height: Size.iconTiny,
+    borderRadius: Radius.full,
     backgroundColor: colors.success,
-    borderWidth: 2,
+    borderWidth: Size.borderActive,
     borderColor: colors.background,
   },
   skeletonWrap: { flex: 1, padding: Spacing.lg, gap: Spacing.md },
   skeleton: { height: Size.touch, borderRadius: Radius.lg, backgroundColor: colors.border, opacity: 0.55 },
   skeletonMine: { alignSelf: 'flex-end', width: '58%' },
   skeletonTheirs: { alignSelf: 'flex-start', width: '64%' },
-  row: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginVertical: 2 },
+  row: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.sm, marginVertical: Spacing.xxs },
   rowMine: { justifyContent: 'flex-end' },
   rowTheirs: { justifyContent: 'flex-start' },
   separator: {
@@ -377,7 +377,7 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   newPill: {
     position: 'absolute',
     alignSelf: 'center',
-    bottom: 12,
+    bottom: Spacing.md,
     backgroundColor: colors.primary,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,

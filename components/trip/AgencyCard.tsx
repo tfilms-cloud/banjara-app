@@ -5,8 +5,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Badge } from '@/components/ui/Badge';
 import { Rating } from '@/components/ui/Rating';
 import { type ColorTokens } from '@/constants/colors';
-import { Radius, Shadows, Spacing } from '@/constants/spacing';
-import { CustomerType, Fonts, Typography } from '@/constants/typography';
+import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
+import { CustomerType, Fonts, Typography, TypeSize, Leading } from '@/constants/typography';
 import type { Agency } from '@/types/trip';
 import { normalizeMediaUrl } from '@/utils/mediaUrl';
 
@@ -88,13 +88,13 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     borderRadius: Radius.xl,
     ...Shadows.soft,
     padding: Spacing.lg,
-    borderWidth: 1,
+    borderWidth: Size.border,
     borderColor: colors.border,
   },
   logo: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
+    width: Size.avatar,
+    height: Size.avatar,
+    borderRadius: Radius.md,
     backgroundColor: colors.border,
   },
   logoFallback: {
@@ -104,15 +104,15 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   logoInitials: {
     fontFamily: Fonts.bodyBold,
-    fontSize: 15,
+    fontSize: TypeSize.medium,
     color: colors.primary,
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 4,
+    gap: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   name: {
     ...CustomerType.card,
@@ -122,13 +122,13 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   desc: {
     ...Typography.caption,
     color: colors.muted,
-    marginTop: 6,
-    lineHeight: 18,
+    marginTop: Spacing.micro,
+    lineHeight: Leading.caption,
   },
   link: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 13,
+    fontSize: TypeSize.label,
     color: colors.primaryText,
-    marginTop: 8,
+    marginTop: Spacing.sm,
   },
 });

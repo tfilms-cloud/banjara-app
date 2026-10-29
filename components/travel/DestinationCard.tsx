@@ -1,10 +1,11 @@
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { Colors } from '@/constants/colors';
-import { Radius, Shadows, Spacing } from '@/constants/spacing';
-import { Fonts } from '@/constants/typography';
+import { useThemeColors, type ColorTokens } from '@/constants/colors';
+import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
+import { Fonts, TypeSize, Leading } from '@/constants/typography';
 
 type DestinationCardProps = {
   name: string;
@@ -27,6 +28,8 @@ export function DestinationCard({
   onPress,
   featured,
 }: DestinationCardProps) {
+  const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -48,8 +51,7 @@ export function DestinationCard({
       <View style={[styles.card, featured && styles.cardFeatured]}>
         <Image source={{ uri: image }} style={styles.image} contentFit="cover" transition={250} />
         <LinearGradient
-          colors={['rgba(8,17,31,0.02)', 'rgba(8,17,31,0.32)', 'rgba(8,17,31,0.88)']}
-          locations={[0, 0.44, 1]}
+          colors={[colors.mediaScrimSoft, colors.mediaScrim]}
           style={styles.overlay}
         >
           {tag ? (
@@ -80,21 +82,21 @@ export function DestinationCard({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTokens) => StyleSheet.create({
   wrap: {
     marginRight: Spacing.md,
   },
   card: {
-    width: 172,
-    height: 218,
+    width: Size.destination,
+    height: Size.destinationHeight,
     borderRadius: Radius.xl,
     overflow: 'hidden',
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     ...Shadows.card,
   },
   cardFeatured: {
-    width: 230,
-    height: 218,
+    width: Size.destinationFeatured,
+    height: Size.destinationHeight,
     borderRadius: Radius.hero,
   },
   image: {
@@ -107,51 +109,51 @@ const styles = StyleSheet.create({
   },
   tag: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(8,17,31,0.65)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    minHeight: 26,
+    backgroundColor: colors.mediaScrim,
+    borderWidth: Spacing.hairline,
+    borderColor: colors.border,
+    paddingHorizontal: Spacing.control,
+    paddingVertical: Spacing.badge,
+    minHeight: Size.badge,
     borderRadius: Radius.full,
     justifyContent: 'center',
   },
   tagText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 10,
-    color: '#FFFFFF',
+    fontSize: TypeSize.overline,
+    color: colors.white,
     letterSpacing: 0.3,
   },
   contentWrap: {
-    gap: 3,
+    gap: Spacing.tight,
   },
   name: {
     fontFamily: Fonts.display,
-    fontSize: 18,
-    lineHeight: 22,
-    color: '#FFFFFF',
+    fontSize: TypeSize.subtitle,
+    lineHeight: Leading.card,
+    color: colors.white,
     letterSpacing: -0.2,
   },
   nameFeatured: {
-    fontSize: 21,
-    lineHeight: 25,
+    fontSize: TypeSize.heading,
+    lineHeight: Leading.section,
   },
   subtitle: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.85)',
+    fontSize: TypeSize.caption,
+    color: colors.white,
   },
   pricePill: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    backgroundColor: colors.primaryDark,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.tight,
     borderRadius: Radius.full,
-    marginTop: 4,
+    marginTop: Spacing.xs,
   },
   price: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 11,
-    color: '#FFFFFF',
+    fontSize: TypeSize.micro,
+    color: colors.white,
   },
 });

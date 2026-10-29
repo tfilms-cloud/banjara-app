@@ -18,7 +18,7 @@ import { ScreenHeader } from '@/components/navigation/ScreenHeader';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/EmptyState';
 import type { ColorTokens } from '@/constants/colors';
 import { Radius, Size, Spacing } from '@/constants/spacing';
-import { Fonts } from '@/constants/typography';
+import { Fonts, TypeSize } from '@/constants/typography';
 import { useBookings } from '@/hooks/useBooking';
 import { useHotelBookings } from '@/hooks/useHotels';
 import * as hotelService from '@/services/hotelService';
@@ -276,7 +276,7 @@ export default function BookingsScreen() {
             data={items}
             keyExtractor={(item) => `${item.kind}-${item.data.id}`}
             contentContainerStyle={{
-              paddingBottom: insets.bottom + 24,
+              paddingBottom: insets.bottom + Spacing['2xl'],
               gap: Spacing.md,
               flexGrow: 1,
             }}
@@ -346,8 +346,8 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: colors.card,
     borderRadius: Radius.full,
-    padding: 4,
-    borderWidth: 1,
+    padding: Spacing.xs,
+    borderWidth: Size.border,
     borderColor: colors.border,
   },
   segmentItem: {
@@ -360,7 +360,7 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   segmentItemActive: { backgroundColor: colors.primary },
   segmentText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 12,
+    fontSize: TypeSize.caption,
     color: colors.muted,
   },
   segmentTextActive: { color: colors.white },
@@ -372,7 +372,7 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     justifyContent: 'center',
     borderRadius: Radius.full,
     backgroundColor: colors.card,
-    borderWidth: 1,
+    borderWidth: Size.border,
     borderColor: colors.border,
   },
   chipActive: {
@@ -381,7 +381,7 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   chipText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 12,
+    fontSize: TypeSize.caption,
     color: colors.muted,
   },
   chipTextActive: { color: colors.primaryText },

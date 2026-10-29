@@ -14,7 +14,7 @@ import { useThemeColors } from '@/constants/colors';
 import { HERO_IMAGE, destinationImageFor } from '@/constants/destinations';
 import type { HomeServiceCategory } from '@/constants/productModes';
 import { Radius, Shadows, Size, Spacing } from '@/constants/spacing';
-import { CustomerType, Fonts } from '@/constants/typography';
+import { CustomerType, Fonts, TypeSize, Leading } from '@/constants/typography';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -141,7 +141,7 @@ export function HomeHeroHeader({
             >
               {routeTitle}
             </Text>
-            <ChevronRight size={20} color={colors.white} strokeWidth={2.4} />
+            <ChevronRight size={Size.icon} color={colors.white} strokeWidth={2.4} />
           </View>
           {mode === 'hotels' ? (
             <Text style={[styles.heroSubtitle, { color: colors.white }]} numberOfLines={2}>
@@ -153,7 +153,7 @@ export function HomeHeroHeader({
                 <Text style={[styles.metaText, { color: colors.white }]}>{durationLabel}</Text>
               </View>
               <View style={[styles.metaChip, { backgroundColor: colors.mediaScrimSoft }]}>
-                <Sparkles size={11} color={colors.white} />
+                <Sparkles size={Size.iconXs} color={colors.white} />
                 <Text style={[styles.metaText, { color: colors.white }]}>Direct corridor</Text>
               </View>
             </View>
@@ -168,47 +168,6 @@ const styles = StyleSheet.create({
   wrap: {
     paddingBottom: 0,
     gap: Spacing.md,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  brandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 9,
-  },
-  brand: {
-    fontFamily: Fonts.display,
-    fontSize: 19,
-    letterSpacing: 1.2,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  topActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  avatarHit: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarRing: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    ...Shadows.soft,
   },
   heroCard: {
     minHeight: Size.hero,
@@ -226,36 +185,36 @@ const styles = StyleSheet.create({
   livePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    gap: Spacing.micro,
+    borderWidth: Size.border,
+    paddingHorizontal: Spacing.control,
+    paddingVertical: Spacing.badge,
     borderRadius: Radius.full,
   },
   liveDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
+    width: Size.photoDot,
+    height: Size.photoDot,
+    borderRadius: Radius.full,
   },
   livePillText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 11,
+    fontSize: TypeSize.micro,
     letterSpacing: 0.2,
   },
   heroCopy: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.overlap + Spacing.lg,
     paddingTop: Spacing.sm,
-    gap: 4,
+    gap: Spacing.xs,
   },
   eyebrowRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: Spacing.micro,
   },
   eyebrow: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: 13,
+    fontSize: TypeSize.label,
     letterSpacing: 0.1,
   },
   titleRow: {
@@ -271,27 +230,27 @@ const styles = StyleSheet.create({
   },
   heroSubtitle: {
     fontFamily: Fonts.body,
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 2,
+    fontSize: TypeSize.label,
+    lineHeight: Leading.caption,
+    marginTop: Spacing.xxs,
     paddingRight: Spacing.lg,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
-    marginTop: 4,
+    marginTop: Spacing.xs,
   },
   metaChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.tight,
     borderRadius: Radius.full,
   },
   metaText: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: 11,
+    fontSize: TypeSize.micro,
   },
 });

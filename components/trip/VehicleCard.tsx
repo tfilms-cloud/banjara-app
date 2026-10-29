@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Badge } from '@/components/ui/Badge';
 import { type ColorTokens } from '@/constants/colors';
-import { Radius, Shadows, Spacing } from '@/constants/spacing';
+import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
 import { CustomerType, Typography } from '@/constants/typography';
 import type { VehicleType } from '@/types/trip';
 import { vehicleTypeLabel } from '@/utils/helpers';
@@ -101,12 +101,12 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     borderRadius: Radius.xl,
     ...Shadows.soft,
     overflow: 'hidden',
-    borderWidth: 1,
+    borderWidth: Size.border,
     borderColor: colors.border,
   },
   image: {
     width: '100%',
-    height: 160,
+    height: Size.vehiclePhoto,
     backgroundColor: colors.border,
   },
   thumbs: {
@@ -115,10 +115,10 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     gap: Spacing.sm,
   },
   thumb: {
-    width: 56,
-    height: 44,
+    width: Size.thumbSmall,
+    height: Size.touch,
     borderRadius: Radius.md,
-    borderWidth: 2,
+    borderWidth: Size.borderActive,
     borderColor: colors.transparent,
   },
   thumbActive: {
@@ -146,7 +146,7 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     backgroundColor: colors.background,
     borderRadius: Radius.md,
     padding: Spacing.md,
-    borderWidth: 1,
+    borderWidth: Size.border,
     borderColor: colors.border,
   },
   seatLabel: {
@@ -156,7 +156,7 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   seatValue: {
     ...Typography.bodyBold,
     color: colors.primary,
-    marginTop: 2,
+    marginTop: Spacing.xxs,
   },
   seatAvailable: {
     color: colors.success,

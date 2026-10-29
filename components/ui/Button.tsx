@@ -6,8 +6,8 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { useThemeColors } from '@/constants/colors';
-import { Radius, Spacing } from '@/constants/spacing';
-import { Fonts } from '@/constants/typography';
+import { Radius, Spacing, Size } from '@/constants/spacing';
+import { Fonts, TypeSize, Leading } from '@/constants/typography';
 
 type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'tertiary' | 'accent' | 'danger';
 
@@ -60,7 +60,7 @@ export function Button({
             ? colors.danger
             : resolvedVariant === 'outline'
               ? colors.card
-              : 'transparent';
+              : colors.transparent;
 
   const textColor =
     textColorProp ??
@@ -93,8 +93,8 @@ export function Button({
         compact ? styles.compact : null,
         {
           backgroundColor: background,
-          borderColor: resolvedVariant === 'outline' ? colors.border : 'transparent',
-          borderWidth: resolvedVariant === 'outline' ? 1.5 : 0,
+          borderColor: resolvedVariant === 'outline' ? colors.border : colors.transparent,
+          borderWidth: resolvedVariant === 'outline' ? Size.borderStrong : 0,
           opacity: isDisabled ? 0.5 : 1,
           alignSelf: fullWidth ? 'stretch' : 'flex-start',
         },
@@ -117,7 +117,7 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 48,
+    minHeight: Size.button,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
@@ -126,17 +126,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
   },
   compact: {
-    minHeight: 38,
+    minHeight: Size.compactControl,
     paddingHorizontal: Spacing.md,
   },
   title: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: TypeSize.body,
+    lineHeight: Leading.caption,
     letterSpacing: 0,
   },
   compactTitle: {
-    fontSize: 13,
-    lineHeight: 16,
+    fontSize: TypeSize.label,
+    lineHeight: Leading.compact,
   },
 });

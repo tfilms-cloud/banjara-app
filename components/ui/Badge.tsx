@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { useThemeColors } from '@/constants/colors';
 import { Radius, Spacing } from '@/constants/spacing';
-import { Fonts } from '@/constants/typography';
+import { Fonts, TypeSize } from '@/constants/typography';
 
 interface BadgeProps {
   label: string;
@@ -37,6 +37,6 @@ const styles = StyleSheet.create({
   },
   text: {
     fontFamily: Fonts.secondarySemiBold,
-    fontSize: 12,
+    fontSize: TypeSize.caption,
   },
 });

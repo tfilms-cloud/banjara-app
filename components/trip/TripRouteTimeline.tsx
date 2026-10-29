@@ -1,8 +1,8 @@
 import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { StyleSheet, Text, View } from 'react-native';
 import { type ColorTokens } from '@/constants/colors';
-import { CustomerType, Fonts, Typography } from '@/constants/typography';
-import { Radius, Shadows, Spacing } from '@/constants/spacing';
+import { CustomerType, Fonts, Typography, TypeSize } from '@/constants/typography';
+import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
 import type { PickupPoint } from '@/types/route';
 import { formatTime } from '@/utils/formatTime';
 
@@ -98,7 +98,7 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   card: {
     backgroundColor: colors.card,
     borderRadius: Radius['2xl'],
-    borderWidth: 1,
+    borderWidth: Size.border,
     borderColor: colors.border,
     ...Shadows.soft,
     paddingHorizontal: Spacing.lg,
@@ -106,33 +106,33 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    minHeight: 64,
+    minHeight: Size.row,
   },
   rail: {
-    width: 20,
+    width: Size.icon,
     alignItems: 'center',
   },
   line: {
-    width: 2,
+    width: Size.borderActive,
     flex: 1,
     backgroundColor: colors.border,
   },
-  lineTop: { marginBottom: 2 },
-  lineBottom: { marginTop: 2 },
+  lineTop: { marginBottom: Spacing.xxs },
+  lineBottom: { marginTop: Spacing.xxs },
   lineSpacer: { flex: 1 },
   dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: Size.iconXs,
+    height: Size.iconXs,
+    borderRadius: Radius.full,
     backgroundColor: colors.primary,
   },
   dotLast: {
     backgroundColor: colors.action,
   },
   dotBranch: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: Size.iconTiny,
+    height: Size.iconTiny,
+    borderRadius: Radius.full,
     backgroundColor: colors.coral,
   },
   copy: {
@@ -148,12 +148,12 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   caption: {
     ...Typography.caption,
     color: colors.muted,
-    marginTop: 2,
+    marginTop: Spacing.xxs,
   },
   time: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 13,
+    fontSize: TypeSize.label,
     color: colors.dark,
-    marginTop: 4,
+    marginTop: Spacing.xs,
   },
 });

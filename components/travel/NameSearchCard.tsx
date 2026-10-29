@@ -1,3 +1,4 @@
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { useEffect, useState } from 'react';
 import { ArrowLeftRight, Route, Search, X } from 'lucide-react-native';
 import { Keyboard, Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
@@ -7,9 +8,9 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { Button } from '@/components/ui/Button';
-import { Colors, useThemeColors } from '@/constants/colors';
-import { Radius, Shadows, Spacing } from '@/constants/spacing';
-import { Fonts } from '@/constants/typography';
+import { useThemeColors, type ColorTokens } from '@/constants/colors';
+import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
+import { Fonts, TypeSize } from '@/constants/typography';
 
 export type HomeSearchKind = 'route' | 'name';
 
@@ -18,12 +19,13 @@ type HomeSearchKindTabsProps = {
   onChange: (value: HomeSearchKind) => void;
 };
 
-const TAB_INSET = 3;
+const TAB_INSET = Spacing.tight;
 
 export function HomeSearchKindTabs({ value, onChange }: HomeSearchKindTabsProps) {
   const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const { width: windowWidth } = useWindowDimensions();
-  const initialWidth = Math.max(280, windowWidth - Spacing.screen * 2);
+  const initialWidth = Math.max(Size.minimumContent, windowWidth - Spacing.screen * 2);
   const [trackW, setTrackW] = useState(initialWidth);
   const pillW = (trackW - TAB_INSET * 2) / 2;
   const translateX = useSharedValue(value === 'route' ? 0 : pillW);
@@ -76,7 +78,7 @@ export function HomeSearchKindTabs({ value, onChange }: HomeSearchKindTabsProps)
       >
         <View style={styles.tabContent}>
           <Route
-            size={15}
+            size={Size.iconDetail}
             color={value === 'route' ? colors.white : colors.muted}
             strokeWidth={2.2}
           />
@@ -102,7 +104,7 @@ export function HomeSearchKindTabs({ value, onChange }: HomeSearchKindTabsProps)
       >
         <View style={styles.tabContent}>
           <Search
-            size={15}
+            size={Size.iconDetail}
             color={value === 'name' ? colors.white : colors.muted}
             strokeWidth={2.2}
           />
@@ -139,6 +141,7 @@ export function NameSearchCard({
   ctaLabel = 'Search',
 }: NameSearchCardProps) {
   const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const [focused, setFocused] = useState(false);
 
   const submit = () => {
@@ -164,7 +167,7 @@ export function NameSearchCard({
           },
         ]}
       >
-        <Search size={18} color={focused ? colors.primary : colors.muted} strokeWidth={2.2} />
+        <Search size={Size.iconMd} color={focused ? colors.primary : colors.muted} strokeWidth={2.2} />
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -187,7 +190,7 @@ export function NameSearchCard({
             style={[styles.clearBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
             accessibilityLabel="Clear text"
           >
-            <X size={13} color={colors.muted} strokeWidth={2.4} />
+            <X size={Size.iconSmall} color={colors.muted} strokeWidth={2.4} />
           </Pressable>
         ) : null}
       </View>
@@ -195,19 +198,19 @@ export function NameSearchCard({
       <Button
         title={ctaLabel}
         onPress={submit}
-        icon={<Search size={16} color={colors.white} strokeWidth={2.4} />}
+        icon={<Search size={Size.iconSm} color={colors.white} strokeWidth={2.4} />}
         style={styles.cta}
       />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTokens) => StyleSheet.create({
   tabs: {
     flexDirection: 'row',
     borderRadius: Radius.full,
     padding: TAB_INSET,
-    borderWidth: 1,
+    borderWidth: Spacing.hairline,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -217,15 +220,11 @@ const styles = StyleSheet.create({
     bottom: TAB_INSET,
     left: TAB_INSET,
     borderRadius: Radius.full,
-    shadowColor: '#000000',
-    shadowOpacity: 0.16,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    ...Shadows.soft,
   },
   tab: {
     flex: 1,
-    minHeight: 42,
+    minHeight: Size.touch,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
@@ -236,17 +235,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: Spacing.micro,
   },
   tabText: {
-    fontSize: 13,
+    fontSize: TypeSize.label,
     letterSpacing: -0.1,
   },
   card: {
-    backgroundColor: Colors.card,
+    backgroundColor: colors.card,
     borderRadius: Radius.xl,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: Spacing.hairline,
+    borderColor: colors.border,
     padding: Spacing.lg,
     gap: Spacing.md,
     ...Shadows.card,
@@ -254,44 +253,44 @@ const styles = StyleSheet.create({
   hintRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: Spacing.micro,
   },
   hintDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: Size.badgeDot,
+    height: Size.badgeDot,
+    borderRadius: Radius.full,
   },
   hint: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: 12,
+    fontSize: TypeSize.caption,
     letterSpacing: 0.1,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    minHeight: 50,
+    minHeight: Size.button,
     borderRadius: Radius.lg,
-    borderWidth: 1.2,
+    borderWidth: Size.borderStrong,
     paddingHorizontal: Spacing.md,
   },
   input: {
     flex: 1,
     fontFamily: Fonts.body,
-    fontSize: 15,
+    fontSize: TypeSize.medium,
     paddingVertical: Spacing.sm,
   },
   clearBtn: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 1,
+    width: Spacing['2xl'],
+    height: Spacing['2xl'],
+    borderRadius: Radius.lg,
+    borderWidth: Spacing.hairline,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cta: {
     marginTop: Spacing.xs,
-    minHeight: 50,
+    minHeight: Size.button,
     borderRadius: Radius.full,
   },
 });

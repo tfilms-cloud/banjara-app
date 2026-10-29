@@ -4,9 +4,9 @@ Current customer Bookings tab, reviewed against the source on 28 October 2026.
 This explains the existing layout and behavior; it does not change the screen or
 add demo bookings.
 
-Main screen: [`bookings.tsx`](<Banjara/app/(customer)/(tabs)/bookings.tsx>).
+Main screen: [`bookings.tsx`](<../../app/(customer)/(tabs)/bookings.tsx>).
 Related guides: [Home](HOME-UI-README.md), [Messages](MESSAGES-UI-README.md),
-[Profile](PROFILE-UI-README.md) and [shared app UI](UI-README.md).
+[Profile](../../../PROFILE-UI-README.md) and [shared app UI](../../../UI-README.md).
 
 ## What the user sees
 
@@ -54,7 +54,7 @@ booking/payment status. Payment state and booking state are separate concerns.
 
 ### Transport — `BookingCard`
 
-Source: [`BookingCard.tsx`](Banjara/components/booking/BookingCard.tsx).
+Source: [`BookingCard.tsx`](../../components/booking/BookingCard.tsx).
 
 The top row places provider/route copy on the left and journey/status badges on
 the right. Below that are payment or approval hints, a journey description when
@@ -68,7 +68,7 @@ the available text actions.
 - Status tone changes for cancelled, completed, pending and payment-action states.
 - The price currently uses primary text color; it is not universally green.
 - Payment labels/actions come from
-  [`continuePayment.ts`](Banjara/utils/continuePayment.ts).
+  [`continuePayment.ts`](../../utils/continuePayment.ts).
 
 Tapping the card opens transport booking details. An eligible payment action
 opens that booking's payment flow. A **Ticket** action appears only when the
@@ -77,7 +77,7 @@ The list itself does not implement a universal Cancel button.
 
 ### Hotels — `HotelBookingCard`
 
-Source: [`HotelBookingCard.tsx`](Banjara/components/hotels/HotelBookingCard.tsx).
+Source: [`HotelBookingCard.tsx`](../../components/hotels/HotelBookingCard.tsx).
 
 When hotel details are available, a full-width **120**-high image appears above
 the body. The body includes hotel name and status, room name, check-in/out dates,
@@ -95,7 +95,7 @@ the component can display fallback labels such as **Hotel booking** and **Room**
 
 ### Tours — `PackageBookingCard`
 
-Source: [`PackageBookingCard.tsx`](Banjara/components/booking/PackageBookingCard.tsx).
+Source: [`PackageBookingCard.tsx`](../../components/booking/PackageBookingCard.tsx).
 
 This is a horizontal card with a compass icon, package title, tour type/destination,
 start date, traveler count, optional pending-approval copy and price. The right
@@ -106,7 +106,7 @@ not route to a dedicated package-booking detail page from this list.
 
 ### Guides — `GuideBookingCard`
 
-Source: [`GuideBookingCard.tsx`](Banjara/components/booking/GuideBookingCard.tsx).
+Source: [`GuideBookingCard.tsx`](../../components/booking/GuideBookingCard.tsx).
 
 The guide card has a **44 × 44** icon tile, service name, provider name, booking
 date/time, guest information, price, status badge and booking code. Its outer
@@ -145,7 +145,7 @@ The screen uses the same tokens as Home:
 - Dark background `#0B1424`, card `#18263A`, main text `#F8FAFC`.
 
 `Colors` and `useThemeColors()` provide the existing theme behavior. Badge tones
-are defined by [`Badge.tsx`](Banjara/components/ui/Badge.tsx); a tone name should
+are defined by [`Badge.tsx`](../../components/ui/Badge.tsx); a tone name should
 not be assumed to be a hardcoded color on every theme.
 
 Main content has a **16** horizontal gutter and **12** vertical gaps. List bottom
@@ -159,8 +159,8 @@ and Urdu names on a narrow device before changing widths or fixed heights.
 ## Where to edit
 
 - Filter labels/order, combined sorting and navigation:
-  [`bookings.tsx`](<Banjara/app/(customer)/(tabs)/bookings.tsx>).
-- Header: [`ScreenHeader.tsx`](Banjara/components/navigation/ScreenHeader.tsx).
+  [`bookings.tsx`](<../../app/(customer)/(tabs)/bookings.tsx>).
+- Header: [`ScreenHeader.tsx`](../../components/navigation/ScreenHeader.tsx).
 - Card content/layout: the four card components described above.
 - Status pills: `components/ui/Badge.tsx`.
 - Loading/error/empty presentation: `components/ui/EmptyState.tsx`.

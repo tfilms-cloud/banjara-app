@@ -2,8 +2,8 @@ import type { ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useThemeColors } from '@/constants/colors';
-import { Spacing } from '@/constants/spacing';
-import { CustomerType, Fonts } from '@/constants/typography';
+import { Spacing, Size } from '@/constants/spacing';
+import { CustomerType, Fonts, TypeSize } from '@/constants/typography';
 
 type HomeSectionProps = {
   title: string;
@@ -37,7 +37,7 @@ export function HomeSection({
           >
             <View style={styles.actionRow}>
               <Text style={[styles.action, { color: colors.primaryText }]}>{actionLabel}</Text>
-              <ChevronRight size={14} color={colors.primaryText} strokeWidth={2.4} />
+              <ChevronRight size={Size.iconSmall} color={colors.primaryText} strokeWidth={2.4} />
             </View>
           </Pressable>
         ) : null}
@@ -68,8 +68,8 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontFamily: Fonts.body,
-    fontSize: 12,
-    marginTop: 3,
+    fontSize: TypeSize.caption,
+    marginTop: Spacing.tight,
   },
   actionHit: {
     minHeight: Spacing['5xl'],
@@ -79,10 +79,10 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: Spacing.tight,
   },
   action: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 13,
+    fontSize: TypeSize.label,
   },
 });

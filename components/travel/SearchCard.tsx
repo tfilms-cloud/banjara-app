@@ -1,3 +1,4 @@
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { useEffect, useState } from 'react';
 import { ArrowLeftRight, Calendar, ChevronRight, MapPin, Search, Users } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { QuickDateChips } from '@/components/travel/QuickDateChips';
 import { Button } from '@/components/ui/Button';
-import { Colors, useThemeColors } from '@/constants/colors';
+import { useThemeColors, type ColorTokens } from '@/constants/colors';
 import {
   PRODUCT_MODES,
   SERVICE_CATEGORIES,
@@ -17,7 +18,7 @@ import {
   type HomeServiceCategory,
 } from '@/constants/productModes';
 import { Radius, Shadows, Size, Spacing } from '@/constants/spacing';
-import { Fonts } from '@/constants/typography';
+import { Fonts, TypeSize, Leading } from '@/constants/typography';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -31,6 +32,7 @@ type SearchFieldProps = {
 
 function SearchField({ icon, label, value, onPress, compact }: SearchFieldProps) {
   const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const scale = useSharedValue(1);
 
   const animStyle = useAnimatedStyle(() => ({
@@ -64,7 +66,7 @@ function SearchField({ icon, label, value, onPress, compact }: SearchFieldProps)
           {value || 'Select'}
         </Text>
       </View>
-      <ChevronRight size={15} color={colors.mutedLight} strokeWidth={2} />
+      <ChevronRight size={Size.iconDetail} color={colors.mutedLight} strokeWidth={2} />
     </AnimatedPressable>
   );
 }
@@ -113,6 +115,7 @@ export function TransportSearchCard({
   const meta = PRODUCT_MODES.find((m) => m.id === intent) ?? PRODUCT_MODES[0];
   const isTrip = intent === 'trips';
   const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const swapScale = useSharedValue(1);
 
   const swapAnim = useAnimatedStyle(() => ({
@@ -152,7 +155,7 @@ export function TransportSearchCard({
                 {from || 'Select departure'}
               </Text>
             </View>
-            <ChevronRight size={15} color={colors.mutedLight} strokeWidth={2} />
+            <ChevronRight size={Size.iconDetail} color={colors.mutedLight} strokeWidth={2} />
           </Pressable>
 
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -169,7 +172,7 @@ export function TransportSearchCard({
                 {to || 'Select destination'}
               </Text>
             </View>
-            <ChevronRight size={15} color={colors.mutedLight} strokeWidth={2} />
+            <ChevronRight size={Size.iconDetail} color={colors.mutedLight} strokeWidth={2} />
           </Pressable>
         </View>
 
@@ -190,7 +193,7 @@ export function TransportSearchCard({
             accessibilityLabel="Swap locations"
             accessibilityRole="button"
           >
-            <ArrowLeftRight size={16} color={colors.primary} strokeWidth={2.2} />
+            <ArrowLeftRight size={Size.iconSm} color={colors.primary} strokeWidth={2.2} />
           </AnimatedPressable>
         ) : null}
       </View>
@@ -199,7 +202,7 @@ export function TransportSearchCard({
         <View style={styles.metaCell}>
           <SearchField
             compact
-            icon={<Calendar size={15} color={colors.primary} strokeWidth={2} />}
+            icon={<Calendar size={Size.iconDetail} color={colors.primary} strokeWidth={2} />}
             label={isTrip ? 'Going' : 'Date'}
             value={dateLabel}
             onPress={onDate}
@@ -210,7 +213,7 @@ export function TransportSearchCard({
           {isTrip && onReturnDate ? (
             <SearchField
               compact
-              icon={<Calendar size={15} color={colors.action} strokeWidth={2} />}
+              icon={<Calendar size={Size.iconDetail} color={colors.action} strokeWidth={2} />}
               label="Return home"
               value={returnDateLabel || 'Pick return'}
               onPress={onReturnDate}
@@ -218,7 +221,7 @@ export function TransportSearchCard({
           ) : (
             <SearchField
               compact
-              icon={<Users size={15} color={colors.primary} strokeWidth={2} />}
+              icon={<Users size={Size.iconDetail} color={colors.primary} strokeWidth={2} />}
               label="Passengers"
               value={passengersLabel}
               onPress={onPassengers}
@@ -230,7 +233,7 @@ export function TransportSearchCard({
       {isTrip ? (
         <SearchField
           compact
-          icon={<Users size={15} color={colors.primary} strokeWidth={2} />}
+          icon={<Users size={Size.iconDetail} color={colors.primary} strokeWidth={2} />}
           label="Passengers"
           value={passengersLabel}
           onPress={onPassengers}
@@ -251,7 +254,7 @@ export function TransportSearchCard({
         <Button
           title={meta.cta}
           onPress={onSearch}
-          icon={<Search size={16} color={colors.white} strokeWidth={2.4} />}
+          icon={<Search size={Size.iconSm} color={colors.white} strokeWidth={2.4} />}
           style={styles.cta}
         />
       ) : null}
@@ -285,12 +288,13 @@ function CategoryIcon({
           : icon === 'person'
             ? 'person'
             : 'restaurant';
-  return <Ionicons name={name} size={16} color={iconColor} />;
+  return <Ionicons name={name} size={Size.iconSm} color={iconColor} />;
 }
 
 /** Five Banjara service categories on the traveler home heading. */
 export function SearchModeTabs({ mode, onChange, compact = false }: ModeTabsProps) {
   const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
 
   return (
     <ScrollView
@@ -345,8 +349,9 @@ export function ProductModeTabs({
   onChange: (mode: CustomerProductMode) => void;
 }) {
   const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const { width: windowWidth } = useWindowDimensions();
-  const initialWidth = Math.max(280, windowWidth - Spacing.screen * 2);
+  const initialWidth = Math.max(Size.minimumContent, windowWidth - Spacing.screen * 2);
   const index = Math.max(0, PRODUCT_MODES.findIndex((item) => item.id === mode));
   const [trackW, setTrackW] = useState(initialWidth);
   const MODE_INSET = 3;
@@ -424,12 +429,12 @@ export function ProductModeTabs({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorTokens) => StyleSheet.create({
   card: {
-    backgroundColor: Colors.card,
+    backgroundColor: colors.card,
     borderRadius: Radius.xl,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: Size.border,
+    borderColor: colors.border,
     padding: Spacing.lg,
     gap: Spacing.md,
     ...Shadows.card,
@@ -437,49 +442,49 @@ const styles = StyleSheet.create({
   hintRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: Spacing.micro,
   },
   hintDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: Size.badgeDot,
+    height: Size.badgeDot,
+    borderRadius: Radius.full,
   },
   intentHint: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: 12,
+    fontSize: TypeSize.caption,
     letterSpacing: 0.1,
   },
   routeBlock: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: Radius.lg,
-    borderWidth: 1,
+    borderWidth: Size.border,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
   },
   connectorCol: {
-    width: 20,
+    width: Size.icon,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    paddingVertical: Spacing.md,
   },
   routeDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 1.8,
+    width: Size.iconSmall,
+    height: Size.iconSmall,
+    borderRadius: Radius.full,
+    borderWidth: Size.borderActive,
     alignItems: 'center',
     justifyContent: 'center',
   },
   routeDotInner: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: Size.badgeDot,
+    height: Size.badgeDot,
+    borderRadius: Radius.full,
   },
   connectorLine: {
-    width: 1.5,
-    height: 22,
-    marginVertical: 2,
+    width: Size.borderStrong,
+    height: Size.iconLg,
+    marginVertical: Spacing.xxs,
   },
   routeFields: {
     flex: 1,
@@ -488,29 +493,29 @@ const styles = StyleSheet.create({
   fieldClean: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 46,
-    paddingVertical: 4,
+    minHeight: Size.field,
+    paddingVertical: Spacing.xs,
     paddingRight: Spacing.xs,
   },
   field: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 48,
+    minHeight: Size.button,
     paddingVertical: Spacing.xs,
     paddingHorizontal: Spacing.sm,
     borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: 'transparent',
+    borderWidth: Size.border,
+    borderColor: colors.transparent,
   },
   fieldCompact: {
-    minHeight: 46,
-    paddingVertical: 4,
+    minHeight: Size.field,
+    paddingVertical: Spacing.xs,
   },
   fieldIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
-    borderWidth: 1,
+    width: Size.iconHero,
+    height: Size.iconHero,
+    borderRadius: Radius.sm,
+    borderWidth: Size.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.sm,
@@ -518,27 +523,27 @@ const styles = StyleSheet.create({
   fieldCopy: {
     flex: 1,
     minWidth: 0,
-    marginRight: 4,
+    marginRight: Spacing.xs,
   },
   fieldLabel: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: 10,
+    fontSize: TypeSize.overline,
     letterSpacing: 0.3,
     textTransform: 'uppercase',
   },
   fieldValue: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 14,
-    marginTop: 1,
+    fontSize: TypeSize.body,
+    marginTop: Spacing.hairline,
   },
   divider: {
-    height: 1,
+    height: Size.border,
   },
   swapBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
+    width: Size.compactControl,
+    height: Size.compactControl,
+    borderRadius: Radius.xl,
+    borderWidth: Size.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: Spacing.xs,
@@ -557,13 +562,13 @@ const styles = StyleSheet.create({
   },
   tripLengthBadge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: Spacing.control,
+    paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
   },
   tripLengthText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 11,
+    fontSize: TypeSize.micro,
   },
   cta: {
     marginTop: Spacing.xs,
@@ -574,55 +579,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: '100%',
     borderRadius: Radius.full,
-    padding: 3,
+    padding: Spacing.tight,
     marginBottom: Spacing.sm,
-    borderWidth: 1,
+    borderWidth: Size.border,
     position: 'relative',
     overflow: 'hidden',
   },
   modePill: {
     position: 'absolute',
-    top: 3,
-    bottom: 3,
-    left: 3,
+    top: Spacing.tight,
+    bottom: Spacing.tight,
+    left: Spacing.tight,
     borderRadius: Radius.full,
-    shadowColor: '#000000',
-    shadowOpacity: 0.16,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    ...Shadows.soft,
   },
   modeTab: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: Spacing.control,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
-    minHeight: 46,
+    paddingHorizontal: Spacing.xs,
+    minHeight: Size.field,
     zIndex: 1,
   },
-  modeTabCompact: {
-    paddingVertical: 9,
-    minHeight: 44,
-  },
-  modeTabInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 7,
-  },
   modeText: {
-    fontSize: 13,
+    fontSize: TypeSize.label,
     letterSpacing: -0.2,
   },
   modesScroll: {
     paddingHorizontal: Spacing.screen,
-    gap: 8,
+    gap: Spacing.sm,
     paddingBottom: Spacing.sm,
   },
   categoryIcon: { width: Size.touch, height: Size.touch, borderRadius: Radius.full, borderWidth: Size.border, alignItems: 'center', justifyContent: 'center' },
   categoryIndicator: { height: Size.borderActive, width: Spacing.xl, borderRadius: Radius.full },
   modeChip: { width: Size.category, minHeight: Size.category, alignItems: 'center', justifyContent: 'flex-start', gap: Spacing.xs },
-  modeChipText: { fontSize: 11, lineHeight: 16, textAlign: 'center', minHeight: Spacing['3xl'] },
+  modeChipText: { fontSize: TypeSize.micro, lineHeight: Leading.compact, textAlign: 'center', minHeight: Spacing['3xl'] },
 });

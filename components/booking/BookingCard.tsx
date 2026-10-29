@@ -3,8 +3,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Badge } from '@/components/ui/Badge';
 import { useThemeColors, type ColorTokens } from '@/constants/colors';
 import { journeyTypeMeta } from '@/constants/journeyTypes';
-import { Radius, Shadows, Spacing } from '@/constants/spacing';
-import { CustomerType, Fonts } from '@/constants/typography';
+import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
+import { CustomerType, Fonts, TypeSize, Leading } from '@/constants/typography';
 import type { Booking } from '@/types/booking';
 import type { TripWithDetails } from '@/types/trip';
 import {
@@ -125,7 +125,7 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     borderRadius: Radius.xl,
     padding: Spacing.lg,
     gap: Spacing.sm,
-    borderWidth: 1,
+    borderWidth: Size.border,
     borderColor: colors.border,
   },
   top: {
@@ -142,32 +142,32 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   provider: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: 12,
+    fontSize: TypeSize.caption,
     color: colors.muted,
   },
   route: {
     ...CustomerType.card,
     color: colors.dark,
-    marginTop: 2,
+    marginTop: Spacing.xxs,
   },
   journeyHint: {
     fontFamily: Fonts.body,
-    fontSize: 12,
+    fontSize: TypeSize.caption,
     color: colors.muted,
   },
   pendingHint: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: 12,
-    marginTop: 4,
-    lineHeight: 16,
+    fontSize: TypeSize.caption,
+    marginTop: Spacing.xs,
+    lineHeight: Leading.compact,
   },
   meta: {
     fontFamily: Fonts.body,
-    fontSize: 13,
+    fontSize: TypeSize.label,
     color: colors.muted,
   },
   footer: {
-    marginTop: 4,
+    marginTop: Spacing.xs,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -176,7 +176,7 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   price: {
     fontFamily: Fonts.bodyBold,
-    fontSize: 16,
+    fontSize: TypeSize.card,
     color: colors.action,
   },
   actions: {
@@ -187,12 +187,12 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   link: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 13,
+    fontSize: TypeSize.label,
     color: colors.primaryText,
   },
   cta: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 13,
+    fontSize: TypeSize.label,
     color: colors.action,
   },
 });

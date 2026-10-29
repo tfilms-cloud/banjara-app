@@ -3,8 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import { journeyTypeMeta, type JourneyType } from '@/constants/journeyTypes';
 import { useThemeColors, type ColorTokens } from '@/constants/colors';
-import { Radius, Shadows, Spacing } from '@/constants/spacing';
-import { CustomerType, Fonts } from '@/constants/typography';
+import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
+import { CustomerType, Fonts, TypeSize, Leading } from '@/constants/typography';
 import { formatDate } from '@/utils/formatDate';
 import { formatTime } from '@/utils/formatTime';
 
@@ -36,7 +36,7 @@ export function JourneyTypePanel({
         <View style={[styles.iconWrap, isRound ? styles.iconRound : styles.iconOne]}>
           <Ionicons
             name={isRound ? 'swap-horizontal' : 'arrow-forward'}
-            size={18}
+            size={Size.iconMd}
             color={isRound ? colors.actionDark : colors.primary}
           />
         </View>
@@ -93,7 +93,7 @@ function PathRow({
   const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.pathRow}>
-      <Ionicons name={icon} size={16} color={colors.action} />
+      <Ionicons name={icon} size={Size.iconSm} color={colors.action} />
       <View style={{ flex: 1 }}>
         <Text style={styles.pathTitle}>{title}</Text>
         <Text style={styles.pathDetail}>{detail}</Text>
@@ -105,7 +105,7 @@ function PathRow({
 const createStyles = (colors: ColorTokens) => StyleSheet.create({
   card: {
     borderRadius: Radius.xl,
-    borderWidth: 1,
+    borderWidth: Size.border,
     padding: Spacing.lg,
     ...Shadows.soft,
     gap: Spacing.md,
@@ -128,9 +128,9 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     gap: Spacing.sm,
   },
   iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: Size.avatarRing,
+    height: Size.avatarRing,
+    borderRadius: Radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -142,10 +142,10 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   hint: {
     fontFamily: Fonts.body,
-    fontSize: 12,
+    fontSize: TypeSize.caption,
     color: colors.muted,
-    marginTop: 2,
-    lineHeight: 20,
+    marginTop: Spacing.xxs,
+    lineHeight: Leading.body,
   },
   path: { gap: Spacing.sm },
   pathRow: {
@@ -158,13 +158,13 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   pathTitle: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 12,
+    fontSize: TypeSize.caption,
     color: colors.dark,
   },
   pathDetail: {
     fontFamily: Fonts.body,
-    fontSize: 12,
+    fontSize: TypeSize.caption,
     color: colors.muted,
-    marginTop: 1,
+    marginTop: Spacing.hairline,
   },
 });

@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Badge } from '@/components/ui/Badge';
 import type { ColorTokens } from '@/constants/colors';
-import { Radius, Shadows, Spacing } from '@/constants/spacing';
+import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
 import { CustomerType, Typography } from '@/constants/typography';
 import type { Hotel, HotelBooking, HotelRoom } from '@/types/hotel';
 import { formatCurrency } from '@/utils/formatCurrency';
@@ -69,10 +69,10 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: Radius.xl,
     overflow: 'hidden',
-    borderWidth: 1,
+    borderWidth: Size.border,
     borderColor: colors.border,
   },
-  image: { width: '100%', height: 120 },
+  image: { width: '100%', height: Size.photoSmall },
   body: { padding: Spacing.lg, gap: Spacing.xs },
   top: { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.md, alignItems: 'center' },
   name: { ...CustomerType.card, color: colors.dark, flex: 1 },
@@ -81,9 +81,9 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     ...Typography.caption,
     color: colors.warning,
     fontWeight: '600',
-    marginTop: 2,
+    marginTop: Spacing.xxs,
   },
-  code: { ...Typography.small, color: colors.secondary, fontWeight: '700', marginTop: 4 },
+  code: { ...Typography.small, color: colors.secondary, fontWeight: '700', marginTop: Spacing.xs },
   footer: {
     marginTop: Spacing.sm,
     flexDirection: 'row',

@@ -1,3 +1,4 @@
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
@@ -30,7 +31,7 @@ import { DatePickerModal } from '@/components/ui/DatePickerModal';
 import { PassengerPicker } from '@/components/ui/PassengerPicker';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { HotelCardSkeleton, TripCardSkeleton } from '@/components/ui/Skeleton';
-import { Colors, useThemeColors } from '@/constants/colors';
+import { useThemeColors, type ColorTokens } from '@/constants/colors';
 import {
   POPULAR_DESTINATIONS,
   POPULAR_ROUTE_SUGGESTIONS,
@@ -43,8 +44,8 @@ import {
   type TransportPanel,
   todayIsoDate,
 } from '@/constants/productModes';
-import { Radius, Shadows, Spacing } from '@/constants/spacing';
-import { Fonts } from '@/constants/typography';
+import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
+import { Fonts, TypeSize, Leading } from '@/constants/typography';
 import { usePopularHotels } from '@/hooks/useHotels';
 import { useGuides, useRestaurants, useTourOperators } from '@/hooks/useRestaurants';
 import { useRecommendedTrips } from '@/hooks/useTrips';
@@ -80,6 +81,7 @@ function SegmentChips<T extends string>({
   onChange: (id: T) => void;
 }) {
   const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={[styles.segmentTrack, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
       {options.map((option) => {
@@ -129,6 +131,7 @@ function RecentHotelRow({
   onPress: () => void;
 }) {
   const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -170,13 +173,14 @@ function RecentHotelRow({
           {shortDate(item.checkIn)} → {shortDate(item.checkOut)} · {nights} night{nights === 1 ? '' : 's'}
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={17} color={colors.mutedLight} />
+      <Ionicons name="chevron-forward" size={Size.iconMd} color={colors.mutedLight} />
     </AnimatedPressable>
   );
 }
 
 function RecentRideRow({ item, onPress }: { item: any; onPress: () => void }) {
   const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -220,7 +224,7 @@ function RecentRideRow({ item, onPress }: { item: any; onPress: () => void }) {
           {shortDate(item.date)} · {item.passengers} passenger{item.passengers === 1 ? '' : 's'}
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={17} color={colors.mutedLight} />
+      <Ionicons name="chevron-forward" size={Size.iconMd} color={colors.mutedLight} />
     </AnimatedPressable>
   );
 }
@@ -237,6 +241,7 @@ function PopularRouteCard({
   onPress: () => void;
 }) {
   const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -290,7 +295,7 @@ function PopularRouteCard({
           <Text style={[styles.routeMeta, { color: colors.mutedLight }]}>Explore corridor</Text>
         )}
       </View>
-      <Ionicons name="chevron-forward" size={17} color={colors.mutedLight} />
+      <Ionicons name="chevron-forward" size={Size.iconMd} color={colors.mutedLight} />
     </AnimatedPressable>
   );
 }
@@ -349,6 +354,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const colors = useThemeColors();
+  const styles = useThemedStyles(createStyles);
   const notifications = useUserStore((state) => state.notifications);
   const loadNotifications = useUserStore((state) => state.loadNotifications);
   const hasUnread = notifications.some((item) => !item.read);
@@ -846,7 +852,7 @@ export default function HomeScreen() {
         </ScrollView>
       </HomeSection>
     );
-  }, [hotels, mode, trips]);
+  }, [hotels, mode, trips, styles.hRow]);
 
   const inspirationFromProviders = useMemo(() => {
     return groupTripsByAgency(trips)
@@ -1175,7 +1181,7 @@ export default function HomeScreen() {
                   </View>
                   {item.rating > 0 ? (
                     <View style={[styles.ratingPill, { backgroundColor: colors.softGreen }]}>
-                      <Ionicons name="star" size={12} color={colors.action} />
+                      <Ionicons name="star" size={Size.iconXs} color={colors.action} />
                       <Text style={[styles.ratingText, { color: colors.action }]}>
                         {item.rating.toFixed(1)}
                       </Text>
@@ -1199,8 +1205,8 @@ export default function HomeScreen() {
     </View>
   );
 }
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+const createStyles = (colors: ColorTokens) => StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1 },
   feed: {
     paddingBottom: Spacing['4xl'],
@@ -1213,7 +1219,7 @@ const styles = StyleSheet.create({
   },
   transportControls: {
     borderRadius: Radius.xl,
-    borderWidth: 1,
+    borderWidth: Size.border,
     padding: Spacing.sm,
     gap: Spacing.sm,
     ...Shadows.soft,
@@ -1223,70 +1229,32 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'stretch',
     borderRadius: Radius.full,
-    borderWidth: 1,
-    padding: 3,
+    borderWidth: Size.border,
+    padding: Spacing.tight,
     gap: 0,
   },
   segmentChip: {
     flex: 1,
-    minHeight: 42,
-    paddingHorizontal: 8,
-    paddingVertical: 10,
+    minHeight: Size.touch,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.control,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
   segmentChipText: {
-    fontSize: 12,
+    fontSize: TypeSize.caption,
     letterSpacing: -0.2,
     textAlign: 'center',
   },
   hRow: {
     paddingHorizontal: Spacing.screen,
   },
-  blogCard: {
-    width: 268,
-    marginRight: Spacing.sm,
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    overflow: 'hidden',
-    ...Shadows.card,
-  },
-  blogImage: {
-    width: '100%',
-    height: 120,
-    backgroundColor: Colors.border,
-  },
-  blogCopy: {
-    padding: Spacing.md,
-    gap: 4,
-  },
-  blogPlace: {
-    fontFamily: Fonts.bodySemiBold,
-    fontSize: 11,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  blogTitle: {
-    fontFamily: Fonts.bodySemiBold,
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  blogExcerpt: {
-    fontFamily: Fonts.body,
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  blogMeta: {
-    fontFamily: Fonts.bodyMedium,
-    fontSize: 11,
-    marginTop: 4,
-  },
   testimonialCard: {
-    width: 300,
+    width: Size.testimonialCard,
     marginRight: Spacing.sm,
     borderRadius: Radius.xl,
-    borderWidth: 1,
+    borderWidth: Size.border,
     padding: Spacing.lg,
     gap: Spacing.md,
     ...Shadows.card,
@@ -1297,36 +1265,36 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   testimonialAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.border,
+    width: Size.touch,
+    height: Size.touch,
+    borderRadius: Radius.full,
+    backgroundColor: colors.border,
   },
   testimonialName: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 14,
+    fontSize: TypeSize.body,
   },
   testimonialMeta: {
     fontFamily: Fonts.body,
-    fontSize: 11,
-    marginTop: 2,
+    fontSize: TypeSize.micro,
+    marginTop: Spacing.xxs,
   },
   ratingPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    gap: Spacing.tight,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
   },
   ratingText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 12,
+    fontSize: TypeSize.caption,
   },
   testimonialQuote: {
     fontFamily: Fonts.body,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: TypeSize.label,
+    lineHeight: Leading.body,
   },
   stack: {
     paddingHorizontal: Spacing.screen,
@@ -1342,154 +1310,103 @@ const styles = StyleSheet.create({
   recentRowCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.card,
+    backgroundColor: colors.card,
     borderRadius: Radius.xl,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: Size.border,
+    borderColor: colors.border,
     padding: Spacing.sm,
     gap: Spacing.md,
     ...Shadows.card,
   },
   recentThumb: {
-    width: 68,
-    height: 68,
+    width: Size.thumbnail,
+    height: Size.thumbnail,
     borderRadius: Radius.md,
-    backgroundColor: Colors.primarySoft,
+    backgroundColor: colors.primarySoft,
   },
   recentBody: { flex: 1, minWidth: 0 },
   recentTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 6,
+    gap: Spacing.micro,
   },
   recentPlace: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 15,
+    fontSize: TypeSize.medium,
   },
   recentTypeChip: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xxs,
     borderRadius: Radius.full,
   },
   recentTypeText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 10,
+    fontSize: TypeSize.overline,
     letterSpacing: 0.3,
   },
   recentDetails: {
     fontFamily: Fonts.body,
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: TypeSize.caption,
+    marginTop: Spacing.xs,
   },
   routeCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.card,
+    backgroundColor: colors.card,
     borderRadius: Radius.xl,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: Size.border,
+    borderColor: colors.border,
     padding: Spacing.sm,
     gap: Spacing.md,
     ...Shadows.card,
   },
   routeThumb: {
-    width: 64,
-    height: 64,
+    width: Size.row,
+    height: Size.row,
     borderRadius: Radius.md,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
   },
   routeCopy: { flex: 1, minWidth: 0 },
   routeHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 6,
+    gap: Spacing.micro,
   },
   routeTitle: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 15,
+    fontSize: TypeSize.medium,
     flex: 1,
   },
   routeDurationBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.tight,
     borderRadius: Radius.full,
   },
   routeDurationText: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: 11,
+    fontSize: TypeSize.micro,
   },
   routeMeta: {
     fontFamily: Fonts.body,
-    fontSize: 12,
-    marginTop: 3,
+    fontSize: TypeSize.caption,
+    marginTop: Spacing.tight,
   },
   routeLiveRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    marginTop: 4,
+    gap: Spacing.badge,
+    marginTop: Spacing.xs,
   },
   routeLiveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#20C978',
+    width: Size.badgeDot,
+    height: Size.badgeDot,
+    borderRadius: Radius.full,
+    backgroundColor: colors.action,
   },
   routeLive: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 12,
-  },
-  storyCard: {
-    width: 260,
-    height: 180,
-    marginRight: Spacing.sm,
-    borderRadius: Radius['3xl'],
-    overflow: 'hidden',
-    backgroundColor: Colors.border,
-  },
-  storyImage: { ...StyleSheet.absoluteFill },
-  storyOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    padding: Spacing.lg,
-  },
-  storyTitle: {
-    fontFamily: Fonts.display,
-    fontSize: 20,
-    color: Colors.card,
-  },
-  storySub: {
-    fontFamily: Fonts.body,
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.86)',
-    marginTop: 4,
-  },
-  finalCta: {
-    marginHorizontal: Spacing.screen,
-    marginTop: Spacing.xl,
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.hero,
-    padding: Spacing.xl,
-    gap: Spacing.sm,
-  },
-  finalCtaTitle: {
-    fontFamily: Fonts.display,
-    fontSize: 24,
-    lineHeight: 30,
-    color: Colors.white,
-  },
-  finalCtaSub: {
-    fontFamily: Fonts.body,
-    fontSize: 14,
-    lineHeight: 20,
-    color: 'rgba(255,255,255,0.78)',
-    marginBottom: Spacing.sm,
-  },
-  finalCtaBtn: {
-    backgroundColor: '#08111F',
-    borderRadius: Radius.full,
-    paddingHorizontal: Spacing.xl,
+    fontSize: TypeSize.caption,
   },
 });

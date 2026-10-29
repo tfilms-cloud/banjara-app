@@ -4,8 +4,8 @@ import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-na
 import { useThemeColors, type ColorTokens } from '@/constants/colors';
 import type { ExploreThumb } from '@/constants/exploreCatalog';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
-import { Radius, Shadows, Spacing } from '@/constants/spacing';
-import { Fonts } from '@/constants/typography';
+import { Radius, Shadows, Spacing, Size } from '@/constants/spacing';
+import { Fonts, TypeSize, Leading } from '@/constants/typography';
 import { pushPath } from '@/utils/navigation';
 
 type ThumbnailGridProps = {
@@ -76,7 +76,7 @@ export function ThumbnailGrid({
               ) : null}
               {item.rating != null ? (
                 <View style={styles.rating}>
-                  <Ionicons name="star" size={10} color={colors.warning} />
+                  <Ionicons name="star" size={Size.iconTiny} color={colors.warning} />
                   <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
                 </View>
               ) : null}
@@ -100,7 +100,7 @@ export function ThumbnailGrid({
           accessibilityLabel={showMoreLabel}
         >
           <Text style={[styles.moreText, { color: colors.primary }]}>{showMoreLabel}</Text>
-          <Ionicons name="chevron-forward" size={16} color={colors.primaryText} />
+          <Ionicons name="chevron-forward" size={Size.iconSm} color={colors.primaryText} />
         </Pressable>
       ) : null}
     </View>
@@ -178,59 +178,59 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: 6,
-    left: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    top: Spacing.micro,
+    left: Spacing.micro,
+    paddingHorizontal: Spacing.micro,
+    paddingVertical: Spacing.xxs,
     borderRadius: Radius.full,
   },
   badgeText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 9,
+    fontSize: TypeSize.tiny,
     color: colors.white,
   },
   rating: {
     position: 'absolute',
-    bottom: 6,
-    right: 6,
+    bottom: Spacing.micro,
+    right: Spacing.micro,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: Spacing.xxs,
     backgroundColor: colors.mediaScrim,
-    paddingHorizontal: 5,
-    paddingVertical: 2,
+    paddingHorizontal: Spacing.badge,
+    paddingVertical: Spacing.xxs,
     borderRadius: Radius.full,
   },
   ratingText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 10,
-    color: '#fff',
+    fontSize: TypeSize.overline,
+    color: colors.white,
   },
   title: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 11,
-    marginTop: 5,
-    lineHeight: 18,
+    fontSize: TypeSize.micro,
+    marginTop: Spacing.badge,
+    lineHeight: Leading.caption,
   },
   meta: {
     fontFamily: Fonts.body,
-    fontSize: 10,
-    marginTop: 1,
-    lineHeight: 16,
+    fontSize: TypeSize.overline,
+    marginTop: Spacing.hairline,
+    lineHeight: Leading.compact,
   },
   moreBtn: {
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.control,
     borderRadius: Radius.full,
-    borderWidth: 1,
+    borderWidth: Size.border,
   },
   moreText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 13,
+    fontSize: TypeSize.label,
   },
   empty: {
     paddingHorizontal: Spacing.screen,
@@ -238,26 +238,26 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   emptyText: {
     fontFamily: Fonts.body,
-    fontSize: 13,
+    fontSize: TypeSize.label,
     textAlign: 'center',
   },
   filters: {
     flexDirection: 'row',
     marginHorizontal: Spacing.screen,
     borderRadius: Radius.full,
-    borderWidth: 1,
-    padding: 3,
+    borderWidth: Size.border,
+    padding: Spacing.tight,
   },
   filterChip: {
     flex: 1,
-    minHeight: 40,
+    minHeight: Size.compactControl,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: Radius.full,
-    paddingHorizontal: 6,
+    paddingHorizontal: Spacing.micro,
   },
   filterText: {
-    fontSize: 12,
+    fontSize: TypeSize.caption,
     letterSpacing: -0.2,
   },
 });

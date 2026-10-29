@@ -2,11 +2,11 @@
 
 Reviewed against the mobile source on **28 October 2026**. This explains the
 current page and its alignment; it does not change search or listing behavior.
-See [all screen guides](SCREENS-UI-README.md), [Home](HOME-UI-README.md),
-[Transport](TRANSPORT-UI-README.md), [Hotels](HOTELS-UI-README.md) and
-[other services](SERVICES-UI-README.md).
+See [all screen guides](../../../SCREENS-UI-README.md), [Home](HOME-UI-README.md),
+[Transport](../../../TRANSPORT-UI-README.md), [Hotels](../../../HOTELS-UI-README.md) and
+[other services](../../../SERVICES-UI-README.md).
 
-Main page: [tabs/search.tsx](<Banjara/app/(customer)/(tabs)/search.tsx>).
+Main page: [tabs/search.tsx](<../../app/(customer)/(tabs)/search.tsx>).
 Its visible title is **Explore**, even though the source filename is search.
 
 ## What the user sees
@@ -24,7 +24,7 @@ Bottom customer navigation
 
 The default local category is Transport. ExplorePanels draws the main category
 content, and FloatingCrossSell draws the related-service suggestions. Both are
-exported from [ExplorePanels.tsx](Banjara/components/explore/ExplorePanels.tsx).
+exported from [ExplorePanels.tsx](../../components/explore/ExplorePanels.tsx).
 
 ## Category content and controls
 
@@ -37,7 +37,7 @@ exported from [ExplorePanels.tsx](Banjara/components/explore/ExplorePanels.tsx).
 | Restaurants | Destination search, relevant restaurant lists, offers and visited/nearby ranking presentations. |
 
 Category definitions/options are in
-[exploreCatalog.ts](Banjara/constants/exploreCatalog.ts). The page receives live
+[exploreCatalog.ts](../../constants/exploreCatalog.ts). The page receives live
 trip, hotel, restaurant, guide and tour-provider data through the existing hooks;
 the panels also load their relevant tour catalog. It refreshes datasets on focus
 and through pull-to-refresh.
@@ -49,7 +49,7 @@ bookable record from a decorative tile.
 
 ## Header, chips and grid alignment
 
-The header is [ScreenHeader](Banjara/components/navigation/ScreenHeader.tsx).
+The header is [ScreenHeader](../../components/navigation/ScreenHeader.tsx).
 The introduction uses **16** horizontal padding, **8** top, **12** bottom and
 **4** gap. The heading is Outfit **22**, subtitle Plus Jakarta Sans **13**.
 
@@ -59,7 +59,7 @@ a border and soft shadow. Selected chips use teal with white semibold text;
 unselected chips use card background, border and normal text. This is separate
 from the customer's bottom navigation.
 
-[ThumbnailGrid](Banjara/components/explore/ThumbnailGrid.tsx) defaults to **4**
+[ThumbnailGrid](../../components/explore/ThumbnailGrid.tsx) defaults to **4**
 columns and **3** rows. Cell width is calculated, not fixed:
 
 ~~~text
@@ -84,7 +84,7 @@ other existing route. They are not all one universal detail page.
 
 Restaurant destination selection can use LocationPinSheet. A listing map opens
 the dedicated Explore map route with supplied location/context. Its behavior is
-explained in [Maps and settings](LOCATION-SETTINGS-UI-README.md).
+explained in [Maps and settings](../../../LOCATION-SETTINGS-UI-README.md).
 
 ## Loading and visual maintenance
 

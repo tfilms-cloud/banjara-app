@@ -32,7 +32,7 @@ import { TripDetailsSkeleton } from '@/components/ui/Skeleton';
 import { useThemeColors, type ColorTokens } from '@/constants/colors';
 import { journeyTypeMeta } from '@/constants/journeyTypes';
 import { Radius, Shadows, Size, Spacing } from '@/constants/spacing';
-import { CustomerType, Fonts, Typography } from '@/constants/typography';
+import { CustomerType, Fonts, Typography, TypeSize, Leading } from '@/constants/typography';
 import { useLocation } from '@/hooks/useLocation';
 import { useTrip } from '@/hooks/useTrips';
 import * as tripService from '@/services/tripService';
@@ -156,13 +156,13 @@ export default function TripDetailsScreen() {
         onBack={() => safeBack('/(customer)/results')}
         right={
           <Pressable onPress={() => void onShare()} hitSlop={8} accessibilityRole="button" accessibilityLabel="Share trip">
-            <Ionicons name="share-outline" size={22} color={colors.dark} />
+            <Ionicons name="share-outline" size={Size.iconLg} color={colors.dark} />
           </Pressable>
         }
       />
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 118 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + Size.footerClearance }}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.hero}>
@@ -346,7 +346,7 @@ export default function TripDetailsScreen() {
               <Rating
                 value={trip.agency.rating || trip.rating}
                 count={reviewCount || undefined}
-                size={16}
+                size={Size.iconSm}
               />
             </View>
           ) : null}
@@ -358,7 +358,7 @@ export default function TripDetailsScreen() {
                 return (
                   <Card key={review.id} elevated={false} style={{ borderRadius: Radius.xl }}>
                     <View style={styles.reviewHead}>
-                      <Avatar uri={review.userAvatar} name={displayName} size={40} />
+                      <Avatar uri={review.userAvatar} name={displayName} size={Size.compactControl} />
                       <View style={{ flex: 1, minWidth: 0 }}>
                         <Text style={styles.reviewName}>{displayName}</Text>
                         {review.date ? (
@@ -465,17 +465,17 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     ...StyleSheet.absoluteFill,
     justifyContent: 'flex-end',
     padding: Spacing.lg,
-    gap: 4,
+    gap: Spacing.xs,
   },
   heroRoute: {
     fontFamily: Fonts.displayBold,
-    fontSize: 26,
-    lineHeight: 32,
+    fontSize: TypeSize.display,
+    lineHeight: Leading.display,
     color: colors.white,
   },
   heroMeta: {
     fontFamily: Fonts.bodyMedium,
-    fontSize: 14,
+    fontSize: TypeSize.body,
     color: colors.white,
   },
   heroFacts: {
@@ -487,12 +487,12 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   heroPrice: {
     fontFamily: Fonts.bodyBold,
-    fontSize: 20,
+    fontSize: TypeSize.title,
     color: colors.white,
   },
   heroSeats: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 13,
+    fontSize: TypeSize.label,
     color: colors.white,
     flexShrink: 1,
     textAlign: 'right',
@@ -502,12 +502,12 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     top: Spacing.md,
     right: Spacing.md,
     flexDirection: 'row',
-    gap: 6,
+    gap: Spacing.micro,
   },
   dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
+    width: Size.photoDot,
+    height: Size.photoDot,
+    borderRadius: Radius.full,
     backgroundColor: colors.border,
   },
   dotActive: {
@@ -520,14 +520,14 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   badgeRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: Spacing.sm,
   },
   summaryCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.card,
     borderRadius: Radius['2xl'],
-    borderWidth: 1,
+    borderWidth: Size.border,
     borderColor: colors.border,
     padding: Spacing.lg,
     gap: Spacing.md,
@@ -541,25 +541,25 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   time: {
     fontFamily: Fonts.display,
-    fontSize: 22,
+    fontSize: TypeSize.heading,
     color: colors.dark,
-    marginTop: 4,
+    marginTop: Spacing.xs,
   },
   summaryMid: {
     alignItems: 'center',
     width: Size.touch,
   },
   summaryLine: {
-    width: 40,
-    height: 2,
+    width: Size.compactControl,
+    height: Size.borderActive,
     backgroundColor: colors.action,
-    borderRadius: 1,
+    borderRadius: Radius.full,
   },
   duration: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 11,
+    fontSize: TypeSize.micro,
     color: colors.muted,
-    marginTop: 6,
+    marginTop: Spacing.micro,
     textAlign: 'center',
   },
   facts: {
@@ -573,11 +573,11 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: Radius.lg,
     padding: Spacing.lg,
-    borderWidth: 1,
+    borderWidth: Size.border,
     borderColor: colors.border,
   },
   factLabel: { ...Typography.small, color: colors.muted },
-  factValue: { ...Typography.bodyBold, color: colors.dark, marginTop: 4 },
+  factValue: { ...Typography.bodyBold, color: colors.dark, marginTop: Spacing.xs },
   section: {
     ...CustomerType.section,
     color: colors.dark,
@@ -593,19 +593,19 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     backgroundColor: colors.actionSoft,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.md,
-    paddingVertical: 8,
+    paddingVertical: Spacing.sm,
   },
   amenityText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 13,
+    fontSize: TypeSize.label,
     color: colors.action,
   },
   emptyCopy: {
     ...Typography.caption,
     color: colors.muted,
-    lineHeight: 20,
+    lineHeight: Leading.body,
   },
-  reviewSummary: { marginBottom: 2 },
+  reviewSummary: { marginBottom: Spacing.xxs },
   reviewList: { gap: Spacing.md },
   reviewHead: {
     flexDirection: 'row',
@@ -615,35 +615,35 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   },
   reviewName: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 15,
+    fontSize: TypeSize.medium,
     color: colors.dark,
   },
   reviewDate: {
     ...Typography.small,
     color: colors.muted,
-    marginTop: 2,
+    marginTop: Spacing.xxs,
   },
   reviewComment: {
     ...Typography.body,
     color: colors.muted,
-    lineHeight: 22,
+    lineHeight: Leading.card,
   },
   reply: {
     marginTop: Spacing.md,
     paddingTop: Spacing.md,
-    borderTopWidth: 1,
+    borderTopWidth: Size.border,
     borderTopColor: colors.border,
-    gap: 4,
+    gap: Spacing.xs,
   },
   replyLabel: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 12,
+    fontSize: TypeSize.caption,
     color: colors.primary,
   },
   priceCard: {
     backgroundColor: colors.card,
     borderRadius: Radius.xl,
-    borderWidth: 1,
+    borderWidth: Size.border,
     borderColor: colors.border,
     padding: Spacing.lg,
     gap: Spacing.sm,
@@ -666,7 +666,7 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   priceHint: {
     ...Typography.caption,
     color: colors.muted,
-    lineHeight: 18,
+    lineHeight: Leading.caption,
   },
   cta: {
     position: 'absolute',
@@ -677,7 +677,7 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md,
     backgroundColor: colors.card,
-    borderTopWidth: 1,
+    borderTopWidth: Size.border,
     borderTopColor: colors.border,
     paddingHorizontal: Spacing.screen,
     paddingTop: Spacing.md,

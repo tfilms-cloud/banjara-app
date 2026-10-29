@@ -4,9 +4,9 @@ Current customer inbox and conversation UI, reviewed on 28 October 2026.
 This documents existing presentation and interactions; it does not add seeded
 conversations or alter Socket.IO/API behavior.
 
-Entry screen: [`inbox.tsx`](<Banjara/app/(customer)/(tabs)/inbox.tsx>).
+Entry screen: [`inbox.tsx`](<../../app/(customer)/(tabs)/inbox.tsx>).
 Related guides: [Home](HOME-UI-README.md), [Bookings](BOOKINGS-UI-README.md),
-[Profile](PROFILE-UI-README.md) and [shared UI](UI-README.md).
+[Profile](../../../PROFILE-UI-README.md) and [shared UI](../../../UI-README.md).
 
 ## Inbox layout
 
@@ -24,7 +24,7 @@ Customer bottom navigation
 ```
 
 The customer tab is a small wrapper around
-[`ConversationListScreen.tsx`](Banjara/components/chat/ConversationListScreen.tsx).
+[`ConversationListScreen.tsx`](../../components/chat/ConversationListScreen.tsx).
 It passes `threadBasePath="/(customer)/messages"` and a customer-tabs back fallback.
 The component refreshes the inbox when focused and supports pull-to-refresh.
 
@@ -45,7 +45,7 @@ all historical message bodies.
 
 ## Conversation cards
 
-Source: [`ConversationRow.tsx`](Banjara/components/chat/ConversationRow.tsx).
+Source: [`ConversationRow.tsx`](../../components/chat/ConversationRow.tsx).
 
 The row places a **52**-unit circular avatar beside a flexible text body. A **12**
 online dot overlays the avatar when the loaded presence says online. Name and
@@ -88,8 +88,8 @@ the chat store's total unread count in the shared customer tab layout.
 
 ## Conversation thread layout
 
-Route: [`messages/[userId].tsx`](<Banjara/app/(customer)/messages/[userId].tsx>).
-Shared implementation: [`ChatThread.tsx`](Banjara/components/chat/ChatThread.tsx).
+Route: [`messages/[userId].tsx`](<../../app/(customer)/messages/[userId].tsx>).
+Shared implementation: [`ChatThread.tsx`](../../components/chat/ChatThread.tsx).
 
 ```text
 Back / person name / presence or connection text / avatar
@@ -114,7 +114,7 @@ reader automatically. Typing is shown through `TypingDots` and accompanying text
 
 ## Message bubbles and status
 
-Source: [`MessageBubble.tsx`](Banjara/components/chat/MessageBubble.tsx).
+Source: [`MessageBubble.tsx`](../../components/chat/MessageBubble.tsx).
 
 - Maximum bubble width: **82%** of its containing layout.
 - Standard radius: **18**, with a **6** lower corner on the corresponding side.
@@ -136,7 +136,7 @@ does not by itself implement a full-screen photo viewer.
 
 ## Message composer
 
-Source: [`MessageComposer.tsx`](Banjara/components/chat/MessageComposer.tsx).
+Source: [`MessageComposer.tsx`](../../components/chat/MessageComposer.tsx).
 
 The composer is a horizontal row aligned along its lower edge. Attachment and send
 controls are **44 × 44** circles. The flexible input grows from **44** to a maximum
@@ -156,7 +156,7 @@ padding; verify keyboard layout on both device platforms before changing heights
 ## Chat profile preview
 
 Tapping the thread-header avatar opens
-[`ChatProfilePreview.tsx`](Banjara/components/chat/ChatProfilePreview.tsx): a centered
+[`ChatProfilePreview.tsx`](../../components/chat/ChatProfilePreview.tsx): a centered
 modal with an overlay, a **72**-unit avatar, name, role, presence and Close action.
 The card has maximum width **360**, radius **20** and padding **20**.
 

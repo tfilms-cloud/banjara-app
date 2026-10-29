@@ -24,8 +24,8 @@ import {
   type VehicleClass,
 } from '@/constants/exploreCatalog';
 import { POPULAR_DESTINATIONS, FEATURED_STORIES } from '@/constants/destinations';
-import { Radius, Spacing } from '@/constants/spacing';
-import { Fonts } from '@/constants/typography';
+import { Radius, Spacing, Size } from '@/constants/spacing';
+import { Fonts, TypeSize, Leading } from '@/constants/typography';
 import { useBestTourOperators, useTourCatalog } from '@/hooks/useTourItineraries';
 import { useLocation } from '@/hooks/useLocation';
 import { groupTripsByAgency } from '@/utils/groupTripsByAgency';
@@ -498,7 +498,7 @@ export function ExplorePanels({
                     style={{
                       color: vehicleClass === 'all' ? colors.white : colors.dark,
                       fontFamily: Fonts.bodySemiBold,
-                      fontSize: 12,
+                      fontSize: TypeSize.caption,
                     }}
                   >
                     All
@@ -520,7 +520,7 @@ export function ExplorePanels({
                       style={{
                         color: vehicleClass === v.id ? colors.white : colors.dark,
                         fontFamily: Fonts.bodyMedium,
-                        fontSize: 12,
+                        fontSize: TypeSize.caption,
                       }}
                     >
                       {v.label}
@@ -679,7 +679,7 @@ export function ExplorePanels({
                   { borderColor: colors.border, backgroundColor: colors.inputBg },
                 ]}
               >
-                <Ionicons name="location-outline" size={18} color={colors.muted} />
+                <Ionicons name="location-outline" size={Size.iconMd} color={colors.muted} />
                 <TextInput
                   value={restoCity}
                   onChangeText={setRestoCity}
@@ -690,7 +690,7 @@ export function ExplorePanels({
                   returnKeyType="search"
                 />
                 <Pressable onPress={() => setDestinationMapOpen(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel="Pin restaurant destination on map">
-                  <Ionicons name="map-outline" size={20} color={colors.primary} />
+                  <Ionicons name="map-outline" size={Size.icon} color={colors.primary} />
                 </Pressable>
                 {restoCity.length > 0 ? (
                   <Pressable
@@ -702,7 +702,7 @@ export function ExplorePanels({
                     hitSlop={8}
                     accessibilityLabel="Clear destination"
                   >
-                    <Ionicons name="close-circle" size={18} color={colors.muted} />
+                    <Ionicons name="close-circle" size={Size.iconMd} color={colors.muted} />
                   </Pressable>
                 ) : null}
               </View>
@@ -712,7 +712,7 @@ export function ExplorePanels({
                 accessibilityRole="button"
                 accessibilityLabel="Search restaurants by destination"
               >
-                <Ionicons name="search" size={18} color="#fff" />
+                <Ionicons name="search" size={Size.iconMd} color={colors.white} />
                 <Text style={styles.searchBtnText}>Search restaurants by destination</Text>
               </Pressable>
               {userLocation ? (
@@ -958,14 +958,14 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
   root: { gap: 0 },
   classRow: {
     paddingHorizontal: Spacing.screen,
-    gap: 8,
+    gap: Spacing.sm,
     paddingBottom: Spacing.sm,
   },
   miniChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
     borderRadius: Radius.full,
-    borderWidth: 1,
+    borderWidth: Size.border,
   },
   stack: {
     paddingHorizontal: Spacing.screen,
@@ -977,28 +977,16 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     marginBottom: Spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    borderWidth: 1,
+    gap: Spacing.sm,
+    borderWidth: Size.border,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.lg,
     minHeight: Spacing['5xl'],
-  },
-  restoSearchRow: {
-    paddingHorizontal: Spacing.screen,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: Spacing.sm,
   },
   restoSearchCol: {
     paddingHorizontal: Spacing.screen,
     gap: Spacing.md,
     marginBottom: Spacing.sm,
-  },
-  restoSearchField: {
-    flex: 1,
-    marginHorizontal: 0,
-    marginBottom: 0,
   },
   restoSearchFieldFull: {
     marginHorizontal: 0,
@@ -1008,41 +996,34 @@ const createStyles = (colors: ColorTokens) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    minHeight: 48,
+    gap: Spacing.sm,
+    minHeight: Size.button,
     borderRadius: Radius.full,
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing.lg,
   },
   nearHint: {
     fontFamily: Fonts.body,
-    fontSize: 12,
-    paddingHorizontal: 4,
-  },
-  searchBtn: {
-    paddingHorizontal: 16,
-    minHeight: 46,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
+    fontSize: TypeSize.caption,
+    paddingHorizontal: Spacing.xs,
   },
   searchBtnText: {
     fontFamily: Fonts.bodySemiBold,
-    fontSize: 13,
+    fontSize: TypeSize.label,
     color: colors.white,
   },
   searchInput: {
     flex: 1,
     fontFamily: Fonts.body,
-    fontSize: 14,
-    paddingVertical: 8,
+    fontSize: TypeSize.body,
+    paddingVertical: Spacing.sm,
   },
   emptyBox: {
     marginHorizontal: Spacing.screen,
     padding: Spacing.lg,
     borderRadius: Radius.xl,
-    borderWidth: 1,
-    gap: 6,
+    borderWidth: Size.border,
+    gap: Spacing.micro,
   },
-  emptyTitle: { fontFamily: Fonts.bodySemiBold, fontSize: 15 },
-  emptyBody: { fontFamily: Fonts.body, fontSize: 13, lineHeight: 18 },
+  emptyTitle: { fontFamily: Fonts.bodySemiBold, fontSize: TypeSize.medium },
+  emptyBody: { fontFamily: Fonts.body, fontSize: TypeSize.label, lineHeight: Leading.caption },
 });

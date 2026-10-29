@@ -2,7 +2,7 @@
 
 The repository had no ESLint setup. After resolving Windows path aliases, the first scan found these existing errors. ESLint bulk suppressions record existing file/rule counts; newly introduced errors still fail. These are not fixed by this visual-only redesign. TypeScript is checked separately. Do not regenerate suppressions to hide new findings.
 
-`json
+```json
 {
   "react-hooks/immutability": 41,
   "react-hooks/set-state-in-effect": 65,
@@ -14,4 +14,4 @@ The repository had no ESLint setup. After resolving Windows path aliases, the fi
   "react/no-children-prop": 1,
   "no-undef": 9
 }
-`
+```
