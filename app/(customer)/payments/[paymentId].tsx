@@ -1,7 +1,9 @@
+import { useBackendFocusEffect as useFocusEffect } from '@/hooks/useBackendFocusEffect';
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Keyboard,
@@ -22,9 +24,8 @@ import {
 import { PaymentChat } from '@/components/payments/PaymentChat';
 import { PaymentMethodIcon } from '@/components/payments/PayoutChannelIcon';
 import { Button } from '@/components/ui/Button';
-import { Header } from '@/components/ui/Header';
 import { LoadingState } from '@/components/ui/EmptyState';
-import { Colors } from '@/constants/colors';
+import { BookingFlowHeader as Header, useBookingColors, withBookingFlow, BookingJourneyCard, BookingFlowNotice } from '@/components/booking/BookingFlowPresentation';
 import {
   channelForBackendMethod,
   channelForCustomerMethod,
@@ -88,7 +89,9 @@ function countdownLabel(expiresAt?: string) {
   return `${mins}:${String(secs).padStart(2, '0')} left`;
 }
 
-export default function CustomerPaymentTransactionScreen() {
+function CustomerPaymentTransactionScreen() {
+  const Colors = useBookingColors();
+  const styles = makeStyles(Colors);
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
     paymentId: string;
@@ -99,8 +102,8 @@ export default function CustomerPaymentTransactionScreen() {
   const bookingId = paramString(params.bookingId);
   const paramMethod = paramString(params.method);
 
-  const [payment, setPayment] = useState<p2p.PaymentTransaction | null>(null);
-  const [accounts, setAccounts] = useState<p2p.ProviderPaymentAccount[]>([]);
+  const [payment, setPayment] = useBackendState<p2p.PaymentTransaction | null>(null);
+  const [accounts, setAccounts] = useBackendState<p2p.ProviderPaymentAccount[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const loadingRef = useRef(false);
@@ -523,6 +526,8 @@ export default function CustomerPaymentTransactionScreen() {
 }
 
 function MetaRow({ label, value }: { label: string; value: string }) {
+  const Colors = useBookingColors();
+  const styles = makeStyles(Colors);
   return (
     <View style={styles.metaRow}>
       <Text style={styles.metaLabel}>{label}</Text>
@@ -542,6 +547,8 @@ function CopyRow({
   value?: string;
   onCopy: () => void;
 }) {
+  const Colors = useBookingColors();
+  const styles = makeStyles(Colors);
   if (!value) return null;
   return (
     <View style={styles.copyRow}>
@@ -559,11 +566,13 @@ function CopyRow({
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(Colors: ReturnType<typeof useBookingColors>) { return StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   hero: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.xl,
+    backgroundColor: Colors.primarySoft,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: Spacing['2xl'],
     gap: 4,
   },
@@ -573,9 +582,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 4,
   },
-  heroLabel: { ...Typography.caption, color: 'rgba(255,255,255,0.7)' },
-  heroAmount: { ...Typography.h1, color: Colors.white },
-  heroMeta: { ...Typography.caption, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
+  heroLabel: { ...Typography.caption, color: Colors.muted },
+  heroAmount: { ...Typography.h1, color: Colors.primary },
+  heroMeta: { ...Typography.caption, color: Colors.muted, marginTop: 4 },
   deadline: {
     marginTop: 8,
     fontFamily: Fonts.bodySemiBold,
@@ -584,14 +593,14 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: Colors.card,
-    borderRadius: Radius.xl,
+    borderRadius: 28,
     padding: Spacing.lg,
     borderWidth: 1,
     borderColor: Colors.border,
     gap: Spacing.md,
   },
   block: { gap: Spacing.sm },
-  section: { fontFamily: Fonts.bodySemiBold, fontSize: 15, color: Colors.primary },
+  section: { fontFamily: Fonts.display, fontSize: 18, color: Colors.dark },
   sectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -618,7 +627,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   accountActive: { borderColor: Colors.primary, backgroundColor: Colors.primarySoft },
-  accountTitle: { ...Typography.bodyBold, color: Colors.primary },
+  accountTitle: { ...Typography.bodyBold, color: Colors.dark },
   accountHint: { ...Typography.caption, color: Colors.muted, marginTop: 2 },
   copyRow: {
     flexDirection: 'row',
@@ -649,7 +658,7 @@ const styles = StyleSheet.create({
   warn: {
     flexDirection: 'row',
     gap: Spacing.md,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: Colors.primarySoft,
     borderRadius: Radius.lg,
     padding: Spacing.lg,
     alignItems: 'flex-start',
@@ -682,4 +691,6 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     gap: Spacing.sm,
   },
-});
+}); }
+
+export default withBookingFlow(CustomerPaymentTransactionScreen);

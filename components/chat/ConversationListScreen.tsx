@@ -1,6 +1,7 @@
+import { useBackendFocusEffect as useFocusEffect } from '@/hooks/useBackendFocusEffect';
 import { useCallback, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, TextInput, View } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ConversationRow } from '@/components/chat/ConversationRow';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/EmptyState';
@@ -10,13 +11,20 @@ import { Radius, Spacing } from '@/constants/spacing';
 import { Typography } from '@/constants/typography';
 import { useChatStore } from '@/store/chatStore';
 import { pushPath } from '@/utils/navigation';
+import { safeBack } from '@/utils/navigation';
+import { useTravelPresentation } from '@/components/ui/TravelDesignProvider';
+import { useAuthStore } from '@/store/authStore';
+import { TravelConversationInbox } from './TravelConversationInbox';
 
 type Props = {
   threadBasePath: string;
   backHref: string;
+  tab?: boolean;
 };
 
-export function ConversationListScreen({ threadBasePath, backHref }: Props) {
+export function ConversationListScreen({ threadBasePath, backHref, tab = false }: Props) {
+  const travel = useTravelPresentation();
+  const user = useAuthStore((state) => state.user);
   const insets = useSafeAreaInsets();
   const conversations = useChatStore((s) => s.conversations);
   const loadingInbox = useChatStore((s) => s.loadingInbox);
@@ -27,18 +35,41 @@ export function ConversationListScreen({ threadBasePath, backHref }: Props) {
 
   useFocusEffect(
     useCallback(() => {
+      if (travel && !user) return;
       void loadInbox();
-    }, [loadInbox])
+    }, [loadInbox, travel, user?.id]),
   );
 
   const filtered = conversations.filter((item) => {
     if (!query.trim()) return true;
     const q = query.trim().toLowerCase();
     return (
-      item.otherUserName.toLowerCase().includes(q) ||
-      item.lastMessage.toLowerCase().includes(q)
+      item.otherUserName.toLowerCase().includes(q) || item.lastMessage.toLowerCase().includes(q)
     );
   });
+
+  if (travel)
+    return (
+      <TravelConversationInbox
+        conversations={conversations}
+        loading={loadingInbox}
+        error={error}
+        connectionStatus={connectionStatus}
+        onRefresh={() => void loadInbox()}
+        userName={user?.name}
+        userAvatar={user?.avatar}
+        onSignIn={!user ? () => pushPath('/(auth)/login') : undefined}
+        onBack={tab ? undefined : () => safeBack(backHref as Href)}
+        onNotifications={() => pushPath('/(customer)/(tabs)/notifications')}
+        onProfile={() => pushPath('/(customer)/(tabs)/profile')}
+        onHelp={() => pushPath('/(customer)/settings')}
+        onOpen={(item) =>
+          pushPath(
+            `${threadBasePath}/${encodeURIComponent(item.otherUserId)}${item.bookingId ? `?bookingId=${encodeURIComponent(item.bookingId)}` : ''}`,
+          )
+        }
+      />
+    );
 
   return (
     <View style={styles.container}>
@@ -95,7 +126,7 @@ export function ConversationListScreen({ threadBasePath, backHref }: Props) {
                 pushPath(
                   `${threadBasePath}/${item.otherUserId}${
                     item.bookingId ? `?bookingId=${item.bookingId}` : ''
-                  }`
+                  }`,
                 )
               }
             />

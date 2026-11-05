@@ -7,7 +7,11 @@ import { HomeSection } from '@/components/travel/HomeSection';
 import { DestinationCard } from '@/components/travel/DestinationCard';
 import { AgencyTripSummaryCard } from '@/components/trip/AgencyTripSummaryCard';
 import { LocationPinSheet, formatPickedCity } from '@/components/location/LocationPinSheet';
-import { useThemeColors } from '@/constants/colors';
+import {
+  usePresentationColors as useThemeColors,
+  useTravelPresentation,
+} from '@/components/ui/TravelDesignProvider';
+import { TravelFormCard, TravelTextField, TravelSearchButton } from '@/components/ui/TravelForm';
 import {
   GUIDE_GENDERS,
   RESIDENCE_CLASSES,
@@ -54,16 +58,25 @@ type ExplorePanelsProps = {
   guides?: Provider[];
   tourProviders?: Provider[];
   compact?: boolean;
+  query?: string;
   onOpenDestination?: (name: string) => void;
   onSearchRestaurants?: (city: string) => void;
 };
 
 function EmptyCatalog({ title, message }: { title: string; message: string }) {
   const colors = useThemeColors();
+  const travel = useTravelPresentation();
   return (
-    <View style={[styles.emptyBox, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.emptyBox,
+        { backgroundColor: colors.surfaceSecondary, borderColor: colors.border },
+      ]}
+    >
       <Text style={[styles.emptyTitle, { color: colors.dark }]}>{title}</Text>
-      <Text style={[styles.emptyBody, { color: colors.muted }]}>{message}</Text>
+      <Text style={[styles.emptyBody, { color: colors.muted }]}>
+        {travel ? 'Try another filter or destination, or check back for new listings.' : message}
+      </Text>
     </View>
   );
 }
@@ -84,8 +97,10 @@ function hotelThumbs(hotels: Hotel[], residence: ResidenceClass): ExploreThumb[]
     }));
 }
 
-/** Vehicle listings published by transporters (from live trips). */
-function tripVehicleThumbs(trips: TripWithDetails[]): Array<ExploreThumb & { vehicleClass: VehicleClass }> {
+/** Vehicles of the local drivers offering live trips. */
+function tripVehicleThumbs(
+  trips: TripWithDetails[],
+): Array<ExploreThumb & { vehicleClass: VehicleClass }> {
   const byVehicle = new Map<string, ExploreThumb & { vehicleClass: VehicleClass }>();
   for (const trip of trips) {
     const vehicleClass = mapTripVehicleClass(trip.vehicleType);
@@ -94,7 +109,7 @@ function tripVehicleThumbs(trips: TripWithDetails[]): Array<ExploreThumb & { veh
     byVehicle.set(key, {
       id: key,
       title: trip.vehicleName || trip.vehicleType || 'Vehicle',
-      subtitle: trip.agency?.name || 'Transporter',
+      subtitle: trip.agency?.name || 'Local driver',
       image: trip.image || trip.vehicleImages?.[0] || FALLBACK_IMAGE,
       rating: trip.agency?.rating || trip.rating,
       badge: vehicleClass.replace('_', ' '),
@@ -131,7 +146,7 @@ function hotelOfferThumbs(hotels: Hotel[], residence?: ResidenceClass): ExploreT
         h.popular ||
         h.breakfastIncluded ||
         h.freeCancellation ||
-        h.amenities?.includes('Breakfast')
+        h.amenities?.includes('Breakfast'),
     )
     .sort((a, b) => b.rating - a.rating || a.priceFrom - b.priceFrom)
     .map((h) => ({
@@ -204,7 +219,9 @@ function guideThumbs(list: Provider[], gender: GuideGender): ExploreThumb[] {
       if (!g) return true;
       return g === gender;
     })
-    .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0) || (b.reviewCount ?? 0) - (a.reviewCount ?? 0))
+    .sort(
+      (a, b) => (b.rating ?? 0) - (a.rating ?? 0) || (b.reviewCount ?? 0) - (a.reviewCount ?? 0),
+    )
     .map((p) => {
       const reg = p.tour?.regionalLanguages?.length ?? 0;
       const intl = p.tour?.internationalLanguages?.length ?? 0;
@@ -216,7 +233,8 @@ function guideThumbs(list: Provider[], gender: GuideGender): ExploreThumb[] {
         subtitle: years ? `${years} yrs · ${langLine}` : langLine,
         image: p.logo || p.tour?.images?.[0] || FALLBACK_IMAGE,
         rating: p.rating || undefined,
-        badge: p.tour?.gender === 'female' ? 'Female' : p.tour?.gender === 'male' ? 'Male' : undefined,
+        badge:
+          p.tour?.gender === 'female' ? 'Female' : p.tour?.gender === 'male' ? 'Male' : undefined,
         href: `/(customer)/guides/${p.id}`,
         meta: langLine,
       };
@@ -239,14 +257,19 @@ function itineraryThumbs(list: TourItinerary[], badge?: string): ExploreThumb[] 
   }));
 }
 
-function ToursPanel({ compact }: { compact?: boolean }) {
+function ToursPanel({ compact, query = '' }: { compact?: boolean; query?: string }) {
   const [tourType, setTourType] = useState<TourType>('trek');
   const { catalog } = useTourCatalog(tourType);
   const { operators } = useBestTourOperators(12);
 
-  const featured = itineraryThumbs(catalog?.featured ?? [], 'Featured');
-  const popular = itineraryThumbs(catalog?.popular ?? [], 'Popular');
-  const newest = itineraryThumbs(catalog?.newest ?? [], 'New');
+  const matches = (item: ExploreThumb) =>
+    [item.title, item.subtitle, item.meta]
+      .join(' ')
+      .toLowerCase()
+      .includes(query.trim().toLowerCase());
+  const featured = itineraryThumbs(catalog?.featured ?? [], 'Featured').filter(matches);
+  const popular = itineraryThumbs(catalog?.popular ?? [], 'Popular').filter(matches);
+  const newest = itineraryThumbs(catalog?.newest ?? [], 'New').filter(matches);
   const bestOps: ExploreThumb[] = operators.map((op) => ({
     id: op.id,
     title: op.businessName,
@@ -273,7 +296,12 @@ function ToursPanel({ compact }: { compact?: boolean }) {
         subtitle={`${TOUR_TYPES.find((t) => t.id === tourType)?.label ?? 'Tour'} packages highlighted by BANJARA`}
       >
         {featured.length ? (
-          <ThumbnailGrid items={featured} columns={4} rows={compact ? 2 : 3} showMoreLabel="Show more" />
+          <ThumbnailGrid
+            items={featured}
+            columns={4}
+            rows={compact ? 2 : 3}
+            showMoreLabel="Show more"
+          />
         ) : (
           <EmptyCatalog
             title="No featured packages yet"
@@ -284,7 +312,12 @@ function ToursPanel({ compact }: { compact?: boolean }) {
 
       <HomeSection title="Popular" subtitle="Great value packages travelers can open">
         {popular.length ? (
-          <ThumbnailGrid items={popular} columns={4} rows={compact ? 2 : 3} showMoreLabel="Show more" />
+          <ThumbnailGrid
+            items={popular}
+            columns={4}
+            rows={compact ? 2 : 3}
+            showMoreLabel="Show more"
+          />
         ) : (
           <EmptyCatalog
             title="No popular packages yet"
@@ -295,7 +328,12 @@ function ToursPanel({ compact }: { compact?: boolean }) {
 
       <HomeSection title="Newest" subtitle="Recently published by tour operators">
         {newest.length ? (
-          <ThumbnailGrid items={newest} columns={4} rows={compact ? 2 : 3} showMoreLabel="Show more" />
+          <ThumbnailGrid
+            items={newest}
+            columns={4}
+            rows={compact ? 2 : 3}
+            showMoreLabel="Show more"
+          />
         ) : (
           <EmptyCatalog
             title="Nothing new yet"
@@ -304,9 +342,17 @@ function ToursPanel({ compact }: { compact?: boolean }) {
         )}
       </HomeSection>
 
-      <HomeSection title="Best tour operators" subtitle="Ranked by experience, ratings and live packages">
-        {bestOps.length ? (
-          <ThumbnailGrid items={bestOps} columns={4} rows={compact ? 2 : 3} showMoreLabel="Show more" />
+      <HomeSection
+        title="Best tour operators"
+        subtitle="Ranked by experience, ratings and live packages"
+      >
+        {bestOps.filter(matches).length ? (
+          <ThumbnailGrid
+            items={bestOps.filter(matches)}
+            columns={4}
+            rows={compact ? 2 : 3}
+            showMoreLabel="Show more"
+          />
         ) : (
           <EmptyCatalog
             title="No operators ranked yet"
@@ -328,8 +374,10 @@ export function ExplorePanels({
   compact,
   onOpenDestination,
   onSearchRestaurants,
+  query,
 }: ExplorePanelsProps) {
   const colors = useThemeColors();
+  const travel = useTravelPresentation();
   const [vehicleClass, setVehicleClass] = useState<VehicleClass | 'all'>('all');
   const [residence, setResidence] = useState<ResidenceClass>('hotel');
   const [guideGender, setGuideGender] = useState<GuideGender>('male');
@@ -361,33 +409,32 @@ export function ExplorePanels({
     return RESIDENCE_CLASSES.filter((r) => present.has(r.id));
   }, [hotels]);
 
-  const activeResidence =
-    residenceClassesWithData.some((r) => r.id === residence)
-      ? residence
-      : residenceClassesWithData[0]?.id ?? residence;
+  const activeResidence = residenceClassesWithData.some((r) => r.id === residence)
+    ? residence
+    : (residenceClassesWithData[0]?.id ?? residence);
 
   const residenceItems = useMemo(
     () => hotelThumbs(hotels, activeResidence),
-    [hotels, activeResidence]
+    [hotels, activeResidence],
   );
 
   const stayOffers = useMemo(
     () => hotelOfferThumbs(hotels, activeResidence),
-    [hotels, activeResidence]
+    [hotels, activeResidence],
   );
 
   const offerRestaurants = useMemo(
     () =>
       rankRestaurantsNearOffers(
         restaurants.filter((r) => r.offers.some((o) => o.active)),
-        userLocation
+        userLocation,
       ),
-    [restaurants, userLocation]
+    [restaurants, userLocation],
   );
 
   const mostVisitedRestaurants = useMemo(
     () => rankMostVisited(restaurants, userLocation).slice(0, 12),
-    [restaurants, userLocation]
+    [restaurants, userLocation],
   );
 
   const topRestaurantProviders = useMemo(
@@ -405,7 +452,7 @@ export function ExplorePanels({
           meta: r.cuisine.slice(0, 2).join(' · ') || undefined,
           badge: r.rating >= 4.5 ? 'Top' : undefined,
         })),
-    [restaurants]
+    [restaurants],
   );
 
   const liveDestinations = useMemo(() => {
@@ -431,17 +478,14 @@ export function ExplorePanels({
       [...names].some(
         (n) =>
           n.toLowerCase().includes(d.name.toLowerCase()) ||
-          d.name.toLowerCase().includes(n.toLowerCase())
-      )
+          d.name.toLowerCase().includes(n.toLowerCase()),
+      ),
     );
   }, [trips, hotels, restaurants, guides, tourProviders]);
 
   const agencyGroups = useMemo(() => groupTripsByAgency(trips).slice(0, 4), [trips]);
 
-  const guideItems = useMemo(
-    () => guideThumbs(guides, guideGender),
-    [guides, guideGender]
-  );
+  const guideItems = useMemo(() => guideThumbs(guides, guideGender), [guides, guideGender]);
 
   const openDest = (name: string) => {
     if (onOpenDestination) onOpenDestination(name);
@@ -461,7 +505,7 @@ export function ExplorePanels({
         title="Restaurant destination"
         confirmLabel="Use destination"
         onClose={() => setDestinationMapOpen(false)}
-        onConfirm={picked => {
+        onConfirm={(picked) => {
           const city = formatPickedCity(picked);
           setRestoCity(city);
           setSearchedCity(city);
@@ -473,7 +517,7 @@ export function ExplorePanels({
         <>
           <HomeSection
             title="Diverse vehicles"
-            subtitle="Vehicle types published by transporters on BANJARA"
+            subtitle="Cars, jeeps and vans driven by local drivers"
           >
             {availableClasses.length > 0 ? (
               <ScrollView
@@ -537,13 +581,13 @@ export function ExplorePanels({
             ) : (
               <EmptyCatalog
                 title="No vehicles yet"
-                message="Vehicles appear here when transporters add fleet and publish trips."
+                message="Vehicles appear here when local drivers register their vehicle and publish trips."
               />
             )}
           </HomeSection>
 
           <HomeSection
-            title="Transporters offering trips"
+            title="Local drivers offering trips"
             subtitle="Live trips from verified providers"
           >
             {transporterItems.length ? (
@@ -556,14 +600,14 @@ export function ExplorePanels({
               />
             ) : (
               <EmptyCatalog
-                title="No transporters yet"
-                message="When providers publish trips, they show up here."
+                title="No drivers yet"
+                message="When local drivers publish trips, they show up here."
               />
             )}
           </HomeSection>
 
           {agencyGroups.length ? (
-            <HomeSection title="Trips by agency" subtitle="Book from live schedules">
+            <HomeSection title="Trips by driver" subtitle="Book from live schedules">
               <View style={styles.stack}>
                 {agencyGroups.map((group) => (
                   <AgencyTripSummaryCard
@@ -608,10 +652,7 @@ export function ExplorePanels({
               />
             )}
           </HomeSection>
-          <HomeSection
-            title="Offerings & deals"
-            subtitle="Offers from lodging providers"
-          >
+          <HomeSection title="Offerings & deals" subtitle="Offers from lodging providers">
             {stayOffers.length ? (
               <ThumbnailGrid
                 items={stayOffers}
@@ -636,7 +677,11 @@ export function ExplorePanels({
             title="Guides"
             subtitle="Choose Male or Female — best-rated guides on BANJARA"
           >
-            <ExploreFilterChips options={GUIDE_GENDERS} value={guideGender} onChange={setGuideGender} />
+            <ExploreFilterChips
+              options={GUIDE_GENDERS}
+              value={guideGender}
+              onChange={setGuideGender}
+            />
           </HomeSection>
           {guideItems.length ? (
             <HomeSection
@@ -660,64 +705,111 @@ export function ExplorePanels({
         </>
       ) : null}
 
-      {tab === 'tours' ? <ToursPanel compact={compact} /> : null}
+      {tab === 'tours' ? <ToursPanel compact={compact} query={query} /> : null}
 
       {tab === 'restaurants' ? (
         <>
           <HomeSection
-            title="Search restaurants by destination"
+            title={travel ? 'Find a restaurant' : 'Search restaurants by destination'}
             subtitle="Enter a city — deals nearest to you show first"
           >
-            <View style={styles.restoSearchCol}>
-              <View
-                style={[
-                  styles.searchField,
-                  styles.restoSearchFieldFull,
-                  { borderColor: colors.border, backgroundColor: colors.inputBg },
-                ]}
-              >
-                <Ionicons name="location-outline" size={18} color={colors.muted} />
-                <TextInput
-                  value={restoCity}
-                  onChangeText={setRestoCity}
-                  placeholder="e.g. Hunza, Skardu, Gilgit"
-                  placeholderTextColor={colors.muted}
-                  style={[styles.searchInput, { color: colors.dark }]}
-                  onSubmitEditing={runRestaurantSearch}
-                  returnKeyType="search"
-                />
-                <Pressable onPress={() => setDestinationMapOpen(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel="Pin restaurant destination on map">
-                  <Ionicons name="map-outline" size={20} color={colors.primary} />
-                </Pressable>
-                {restoCity.length > 0 ? (
-                  <Pressable
-                    onPress={() => {
-                      setRestoCity('');
-                      setSearchedCity('');
-                      onSearchRestaurants?.('');
+            {travel ? (
+              <View style={{ marginHorizontal: 16 }}>
+                <TravelFormCard>
+                  <TravelTextField
+                    label="Destination"
+                    value={restoCity}
+                    onChangeText={(city) => {
+                      setRestoCity(city);
+                      if (!city) {
+                        setSearchedCity('');
+                        onSearchRestaurants?.('');
+                      }
                     }}
-                    hitSlop={8}
-                    accessibilityLabel="Clear destination"
+                    placeholder="Hunza, Skardu, Gilgit…"
+                    icon="location-outline"
+                    onSubmit={runRestaurantSearch}
+                    trailing={
+                      <Pressable
+                        onPress={() => setDestinationMapOpen(true)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Pin restaurant destination on map"
+                        style={{
+                          minWidth: 36,
+                          minHeight: 44,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Ionicons name="map-outline" size={20} color={colors.primary} />
+                      </Pressable>
+                    }
+                  />
+                  <TravelSearchButton title="Search restaurants" onPress={runRestaurantSearch} />
+                  {userLocation ? (
+                    <Text style={[styles.nearHint, { color: colors.muted }]}>
+                      Offers nearest to you appear first
+                    </Text>
+                  ) : null}
+                </TravelFormCard>
+              </View>
+            ) : (
+              <View style={styles.restoSearchCol}>
+                <View
+                  style={[
+                    styles.searchField,
+                    styles.restoSearchFieldFull,
+                    { borderColor: colors.border, backgroundColor: colors.inputBg },
+                  ]}
+                >
+                  <Ionicons name="location-outline" size={18} color={colors.muted} />
+                  <TextInput
+                    value={restoCity}
+                    onChangeText={setRestoCity}
+                    placeholder="e.g. Hunza, Skardu, Gilgit"
+                    placeholderTextColor={colors.muted}
+                    style={[styles.searchInput, { color: colors.dark }]}
+                    onSubmitEditing={runRestaurantSearch}
+                    returnKeyType="search"
+                  />
+                  <Pressable
+                    onPress={() => setDestinationMapOpen(true)}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel="Pin restaurant destination on map"
                   >
-                    <Ionicons name="close-circle" size={18} color={colors.muted} />
+                    <Ionicons name="map-outline" size={20} color={colors.primary} />
                   </Pressable>
+                  {restoCity.length > 0 ? (
+                    <Pressable
+                      onPress={() => {
+                        setRestoCity('');
+                        setSearchedCity('');
+                        onSearchRestaurants?.('');
+                      }}
+                      hitSlop={8}
+                      accessibilityLabel="Clear destination"
+                    >
+                      <Ionicons name="close-circle" size={18} color={colors.muted} />
+                    </Pressable>
+                  ) : null}
+                </View>
+                <Pressable
+                  onPress={runRestaurantSearch}
+                  style={[styles.searchBtnWide, { backgroundColor: colors.primary }]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Search restaurants by destination"
+                >
+                  <Ionicons name="search" size={18} color="#fff" />
+                  <Text style={styles.searchBtnText}>Search restaurants by destination</Text>
+                </Pressable>
+                {userLocation ? (
+                  <Text style={[styles.nearHint, { color: colors.muted }]}>
+                    Ranking deals nearest to your current location
+                  </Text>
                 ) : null}
               </View>
-              <Pressable
-                onPress={runRestaurantSearch}
-                style={[styles.searchBtnWide, { backgroundColor: colors.primary }]}
-                accessibilityRole="button"
-                accessibilityLabel="Search restaurants by destination"
-              >
-                <Ionicons name="search" size={18} color="#fff" />
-                <Text style={styles.searchBtnText}>Search restaurants by destination</Text>
-              </Pressable>
-              {userLocation ? (
-                <Text style={[styles.nearHint, { color: colors.muted }]}>
-                  Ranking deals nearest to your current location
-                </Text>
-              ) : null}
-            </View>
+            )}
           </HomeSection>
 
           <HomeSection
@@ -745,7 +837,11 @@ export function ExplorePanels({
 
           <HomeSection
             title="Most visited restaurants"
-            subtitle="Menu variety, ratings & nearest to you — 4 per row"
+            subtitle={
+              travel
+                ? 'Local flavors and traveler favorites'
+                : 'Menu variety, ratings & nearest to you — 4 per row'
+            }
           >
             {mostVisitedRestaurants.length ? (
               <ThumbnailGrid
@@ -799,7 +895,7 @@ export function ExplorePanels({
         </>
       ) : null}
 
-      {liveDestinations.length > 0 ? (
+      {liveDestinations.length > 0 && !(travel && (tab === 'hotels' || tab === 'transport')) ? (
         <HomeSection title="Popular destinations" subtitle="From live trips, stays and dining">
           <ScrollView
             horizontal
@@ -857,7 +953,7 @@ export function FloatingCrossSell({
   const guideItems = useMemo(() => guideThumbs(guides, 'male').slice(0, 8), [guides]);
   const restoItems = useMemo(
     () => restaurantThumbs(rankRestaurantsByOffers(restaurants).slice(0, 8), 'Eat'),
-    [restaurants]
+    [restaurants],
   );
 
   if (tab === 'transport') {
@@ -885,7 +981,7 @@ export function FloatingCrossSell({
     return (
       <HomeSection
         title="Need a ride there?"
-        subtitle="Vehicles & trips from transporters"
+        subtitle="Vehicles & trips from local drivers"
         actionLabel="Search rides"
         onAction={() => router.push('/(customer)/results')}
       >

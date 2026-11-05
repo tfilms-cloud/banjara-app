@@ -7,6 +7,8 @@ import {
   setMemoryAuthTokens,
 } from '@/services/authToken';
 import { getApiBaseUrl } from '@/services/apiUrl';
+import { backendAvailability } from '@/services/backendAvailability';
+import { isBackendOutage } from '@/utils/backendAvailability';
 
 const API_URL = getApiBaseUrl();
 const AUTH_STORAGE_KEY = 'banjara-auth';
@@ -137,6 +139,7 @@ async function refreshAccessToken(): Promise<string | null> {
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
+    if (isBackendOutage(error)) backendAvailability.reportFailure();
     const status = error.response?.status;
     const original = error.config as (AxiosRequestConfig & { _retry?: boolean }) | undefined;
 
@@ -164,7 +167,13 @@ type ApiSuccess<T> = {
 
 export async function apiRequest<T>(config: AxiosRequestConfig): Promise<T> {
   try {
+    if (backendAvailability.getSnapshot() === 'checking') await backendAvailability.check();
+    if (backendAvailability.getSnapshot() !== 'online') throw new Error('Live data is temporarily unavailable. Please try again.');
+    const epoch = backendAvailability.getEpoch();
     const response = await api.request<ApiSuccess<T>>(config);
+    if ((config.method ?? 'GET').toUpperCase() === 'GET' && epoch !== backendAvailability.getEpoch()) {
+      throw new Error('Connection changed. Please refresh this data.');
+    }
     return response.data.data;
   } catch (error) {
     throw normalizeApiError(error);

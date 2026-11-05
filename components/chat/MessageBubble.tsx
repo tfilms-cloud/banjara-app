@@ -8,6 +8,8 @@ import { Spacing } from '@/constants/spacing';
 import { Typography } from '@/constants/typography';
 import type { ChatMessage } from '@/types/chat';
 import { normalizeMediaUrl } from '@/utils/mediaUrl';
+import { useTravelPresentation } from '@/components/ui/TravelDesignProvider';
+import { TravelMessageBubble } from './TravelMessageBubble';
 
 type Props = {
   message: ChatMessage;
@@ -34,6 +36,11 @@ function Receipt({ status }: { status: ChatMessage['status'] }) {
 
 function MessageBubbleComponent({ message, mine, showTail, onRetry }: Props) {
   useIsDarkMode();
+  const travel = useTravelPresentation();
+  if (travel)
+    return (
+      <TravelMessageBubble message={message} mine={mine} showTail={showTail} onRetry={onRetry} />
+    );
   const failed = message.status === 'failed';
   const images = (message.attachments ?? []).filter(Boolean);
   const showText = Boolean(message.text && message.text !== 'Photo');
@@ -60,7 +67,9 @@ function MessageBubbleComponent({ message, mine, showTail, onRetry }: Props) {
       ))}
       {showText ? <Text style={[styles.text, mine && styles.mineText]}>{message.text}</Text> : null}
       <View style={styles.metaRow}>
-        <Text style={[styles.time, mine && styles.mineTime]}>{formatMessageTime(message.createdAt)}</Text>
+        <Text style={[styles.time, mine && styles.mineTime]}>
+          {formatMessageTime(message.createdAt)}
+        </Text>
         {mine ? <Receipt status={message.status} /> : null}
       </View>
     </View>
@@ -68,7 +77,11 @@ function MessageBubbleComponent({ message, mine, showTail, onRetry }: Props) {
 
   if (failed && onRetry) {
     return (
-      <Pressable onPress={onRetry} accessibilityRole="button" accessibilityLabel="Retry sending message">
+      <Pressable
+        onPress={onRetry}
+        accessibilityRole="button"
+        accessibilityLabel="Retry sending message"
+      >
         {content}
         <Text style={styles.retry}>Tap to retry</Text>
       </Pressable>

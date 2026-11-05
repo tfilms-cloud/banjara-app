@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
-import { useThemeColors } from '@/constants/colors';
+import { usePresentationColors as useThemeColors, useTravelPresentation } from '@/components/ui/TravelDesignProvider';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 
@@ -36,12 +36,14 @@ const STEPS: Array<{
  */
 export function HowPaymentWorksNote({ compact }: Props) {
   const colors = useThemeColors();
+  const travel = useTravelPresentation();
   const steps = compact ? STEPS.slice(0, 2) : STEPS;
 
   return (
     <View
       style={[
         styles.card,
+        travel && { borderRadius: 28 },
         {
           backgroundColor: colors.card,
           borderColor: colors.border,

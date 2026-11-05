@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { z } from 'zod';
+import { newPasswordSchema } from '@/utils/passwordRule';
 import { Button } from '@/components/ui/Button';
 import { Header } from '@/components/ui/Header';
 import { Input } from '@/components/ui/Input';
@@ -28,7 +29,7 @@ const schema = z
     name: z.string().min(2, 'Enter your full name'),
     email: z.string().email('Enter a valid email'),
     phone: z.string().min(10, 'Enter a valid phone number'),
-    password: z.string().min(6, 'Minimum 6 characters'),
+    password: newPasswordSchema,
     confirmPassword: z.string(),
     terms: z.boolean().refine((v) => v, 'Accept terms to continue'),
   })

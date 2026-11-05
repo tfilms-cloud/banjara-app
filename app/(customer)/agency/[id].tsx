@@ -1,9 +1,13 @@
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { createURL } from 'expo-linking';
 import { useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Linking,
+  Alert,
+  Share,
   Modal,
   Pressable,
   RefreshControl,
@@ -18,6 +22,7 @@ import { ExpandableText } from '@/components/agency/ExpandableText';
 import { ServiceArea } from '@/components/agency/ServiceArea';
 import { DriverCard } from '@/components/agency/DriverCard';
 import { ContactCard } from '@/components/agency/ContactCard';
+import { AgencyProfileFrame, TransportAgencyProfile } from '@/components/agency/TransportAgencyProfile';
 import { FleetPricingCard } from '@/components/agency/FleetPricingCard';
 import { withoutDriverPhoto } from '@/utils/agencyGallery';
 import { HotelImageGallery } from '@/components/hotels/HotelImageGallery';
@@ -85,7 +90,12 @@ function isCityLabel(value: string) {
 function agencyFromProvider(provider: Provider): Agency {
   return {
     id: provider.id,
-    name: provider.businessName || 'Provider',
+    // Transport is offered by individual local drivers: show the driver's own name.
+    name:
+      (provider.transport &&
+        (provider.transport.driverName?.trim() || provider.ownerName?.trim())) ||
+      provider.businessName ||
+      'Provider',
     logo: provider.logo ?? '',
     rating: provider.rating,
     reviewCount: provider.reviewCount,
@@ -277,11 +287,11 @@ export default function AgencyProfileScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const tripsOffset = useRef(0);
 
-  const [agency, setAgency] = useState<Agency | null>(null);
-  const [provider, setProvider] = useState<Provider | null>(null);
-  const [trips, setTrips] = useState<TripWithDetails[]>([]);
-  const [itineraries, setItineraries] = useState<TourItinerary[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [agency, setAgency] = useBackendState<Agency | null>(null);
+  const [provider, setProvider] = useBackendState<Provider | null>(null);
+  const [trips, setTrips] = useBackendState<TripWithDetails[]>([]);
+  const [itineraries, setItineraries] = useBackendState<TourItinerary[]>([]);
+  const [reviews, setReviews] = useBackendState<Review[]>([]);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -463,6 +473,62 @@ export default function AgencyProfileScreen() {
 
   const contentBottom = showStickyCta ? insets.bottom + 108 : insets.bottom + Spacing['3xl'];
 
+  if (loading && !agency && trips.length === 0) {
+    return (
+      <AgencyProfileFrame
+        onBack={() => safeBack('/(customer)/(tabs)')}
+        onProfile={() => pushPath('/(customer)/(tabs)/profile')}
+      >
+        <AgencyProfileSkeleton />
+      </AgencyProfileFrame>
+    );
+  }
+
+  if (
+    agency && !isGuide && !isTourOperator &&
+    (transport || trips.length > 0 ||
+      agency.services?.some((service) => ['transport', 'vanOperator', 'carRental'].includes(service)))
+  ) {
+    return (
+      <TransportAgencyProfile
+        agency={agency}
+        provider={provider}
+        trips={trips}
+        reviews={reviews}
+        galleryImages={galleryImages}
+        loading={loading}
+        onRefresh={() => void refresh()}
+        onBack={() => safeBack('/(customer)/(tabs)')}
+        onProfile={() => pushPath('/(customer)/(tabs)/profile')}
+        onShare={() => {
+          void Share.share({ message: `${agency.name}\n${createURL(`/agency/${agency.id}`)}` })
+            .catch((error) => Alert.alert('Could not share profile', getApiErrorMessage(error)));
+        }}
+        onCall={canCall ? () => {
+          void Linking.openURL(`tel:${agency.phone.replace(/[^\d+]/g, '')}`)
+            .catch((error) => Alert.alert('Could not open phone', getApiErrorMessage(error)));
+        } : undefined}
+        onMessage={canMessage ? () => pushPath(`/(customer)/messages/${agency.userId}`) : undefined}
+        onTrip={openTrip}
+      />
+    );
+  }
+
+  if (!loading && !agency && trips.length === 0) {
+    return (
+      <AgencyProfileFrame
+        onBack={() => safeBack('/(customer)/(tabs)')}
+        onProfile={() => pushPath('/(customer)/(tabs)/profile')}
+      >
+        <ErrorState
+          title="Profile unavailable"
+          message={error || 'This provider could not be found. Please try again.'}
+          onRetry={() => void refresh()}
+        />
+      </AgencyProfileFrame>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
@@ -638,24 +704,6 @@ export default function AgencyProfileScreen() {
 
               <FleetPricingCard transport={transport} trips={trips} onSeeTrips={scrollToTrips} />
 
-              {transport?.ownerName && (
-                <>
-                  <Text style={[styles.sectionTitle, { color: colors.dark }]}>Business owner</Text>
-                  <View
-                    style={[
-                      styles.cardBlock,
-                      {
-                        backgroundColor: colors.card,
-                        borderColor: colors.border,
-                      },
-                    ]}
-                  >
-                    {transport?.ownerName ? (
-                      <InfoRow icon="person-outline" label="Owner" value={transport.ownerName} />
-                    ) : null}
-                  </View>
-                </>
-              )}
 
               <ServiceArea
                 cities={operatingCities}

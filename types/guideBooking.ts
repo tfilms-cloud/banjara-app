@@ -27,6 +27,7 @@ export type GuideBooking = {
   id: string;
   bookingCode: string;
   providerId: string;
+  providerUserId?: string;
   providerName: string;
   serviceName: string;
   date: string;

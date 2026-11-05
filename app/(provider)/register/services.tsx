@@ -1,5 +1,6 @@
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
 import { router, useNavigation } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { BackHandler, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
@@ -31,7 +32,7 @@ export default function ProviderSelectServicesScreen() {
   const loadProvider = useProviderStore((state) => state.loadProvider);
   const loadProviderByUser = useProviderStore((state) => state.loadProviderByUser);
 
-  const [catalog, setCatalog] = useState<CatalogService[]>([]);
+  const [catalog, setCatalog] = useBackendState<CatalogService[]>([]);
   const [loadingCatalog, setLoadingCatalog] = useState(true);
 
   const inOnboarding = needsProviderOnboarding(user) || (provider?.services.includes('transport') && !provider.onboardingProgress?.completed);

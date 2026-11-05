@@ -119,7 +119,7 @@ export default function ProviderTransportScreen() {
   };
 
   const tabs: { key: Tab; label: string; count: number }[] = [
-    { key: 'vehicles', label: 'Vehicles', count: vehicles.length },
+    { key: 'vehicles', label: 'My vehicle', count: vehicles.length },
     { key: 'trips', label: 'Trips', count: trips.length },
     { key: 'routes', label: 'Routes', count: displayedRoutes.length },
     { key: 'pickups', label: 'Pickups', count: pickups.length + dropoffs.length },
@@ -162,7 +162,10 @@ export default function ProviderTransportScreen() {
 
   const cta =
     tab === 'vehicles'
-      ? { title: 'Add vehicle', onPress: () => router.push('/(provider)/vehicles/add') }
+      ? // Drivers register one vehicle: offer to add only when there is none.
+        vehicles.length
+        ? undefined
+        : { title: 'Register your vehicle', onPress: () => router.push('/(provider)/vehicles/add') }
       : tab === 'trips' && canCreateTrips
         ? { title: 'Create trip', onPress: () => router.push('/(provider)/transport/trips/create') }
         : tab === 'routes'
@@ -219,7 +222,7 @@ export default function ProviderTransportScreen() {
       </View>
       <Text style={styles.intro}>
         {tab === 'vehicles'
-          ? 'Tap a vehicle to edit photos, seats, or details.'
+          ? 'The one vehicle you drive. Tap it to edit photos, seats, or details.'
           : tab === 'trips'
             ? 'Dated departures travelers can book. Tap a trip to edit, or cancel if a run will not go.'
             : tab === 'routes'
@@ -234,10 +237,10 @@ export default function ProviderTransportScreen() {
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <EmptyState
-              title="No vehicles yet"
-              message="Add a van, car, minibus, or bus. Admin approves it before it can run trips."
+              title="No vehicle yet"
+              message="Register the car, jeep, van or bus you drive. Admin approves it before you can offer rides."
               icon="bus-outline"
-              actionLabel="Add vehicle"
+              actionLabel="Register your vehicle"
               onAction={() => router.push('/(provider)/vehicles/add')}
             />
           }

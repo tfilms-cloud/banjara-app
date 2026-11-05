@@ -2,7 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { AuthFonts } from '@/constants/authFonts';
-import { Colors, useThemeColors } from '@/constants/colors';
+import { Colors } from '@/constants/colors';
+import { usePresentationColors, useTravelPresentation } from './TravelDesignProvider';
+import { useHomeDesign } from '@/constants/homeDesign';
 import { Radius, Spacing } from '@/constants/spacing';
 
 type ListRowProps = {
@@ -34,7 +36,9 @@ export function ListRow({
   style,
   divider,
 }: ListRowProps) {
-  const colors = useThemeColors();
+  const colors = usePresentationColors();
+  const travel = useTravelPresentation();
+  const theme = useHomeDesign();
   const iconTones = {
     blue: { bg: colors.primarySoft, fg: colors.primary },
     amber: { bg: colors.softAmber, fg: colors.accent },
@@ -47,17 +51,33 @@ export function ListRow({
   const content = (
     <View style={[styles.row, divider && styles.divider, style]}>
       {icon ? (
-        <View style={[styles.icon, { backgroundColor: tone.bg }]}>
-          <Ionicons name={icon} size={20} color={tone.fg} />
+        <View
+          style={[
+            styles.icon,
+            { backgroundColor: travel ? (danger ? theme.coralSoft : theme.soft) : tone.bg },
+          ]}
+        >
+          <Ionicons
+            name={icon}
+            size={20}
+            color={travel ? (danger ? theme.coral : theme.primary) : tone.fg}
+          />
         </View>
       ) : null}
 
       <View style={styles.copy}>
-        <Text style={[styles.label, danger && styles.labelDanger]} numberOfLines={1}>
+        <Text
+          style={[
+            styles.label,
+            danger && styles.labelDanger,
+            travel && { fontFamily: AuthFonts.body, color: danger ? theme.coral : theme.text },
+          ]}
+          numberOfLines={travel ? 2 : 1}
+        >
           {label}
         </Text>
         {subtitle ? (
-          <Text style={styles.subtitle} numberOfLines={2}>
+          <Text style={[styles.subtitle, travel && { color: theme.muted }]} numberOfLines={2}>
             {subtitle}
           </Text>
         ) : null}
@@ -70,7 +90,9 @@ export function ListRow({
           <Ionicons
             name="chevron-forward"
             size={18}
-            color={danger ? Colors.danger : Colors.muted}
+            color={
+              travel ? (danger ? theme.coral : theme.muted) : danger ? Colors.danger : Colors.muted
+            }
           />
         </View>
       ) : null}

@@ -16,7 +16,7 @@ module.exports = {
         info: '#19C3BC',
         warning: '#F5B83D',
         error: '#EF4444',
-        background: '#F8FAFC',
+        background: '#FFFFFF',
         'background-dark': '#0B1424',
         card: '#FFFFFF',
         'card-dark': '#18263A',

@@ -4,10 +4,10 @@ export function createLocationMapHtml(latitude: number, longitude: number, inter
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-html,body,#map{margin:0;width:100%;height:100%;background:#e6f2f0;overflow:hidden}
+html,body,#map{margin:0;width:100%;height:100%;background:#ccfbf1;overflow:hidden}
 .leaflet-container{font-family:system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
-.leaflet-control-zoom{border:1px solid #dbe4e2!important;border-radius:12px!important;overflow:hidden;box-shadow:0 2px 8px #163c3420!important;margin:12px!important;margin-top:${12 + topInset}px!important}
-.leaflet-control-zoom a{width:36px!important;height:36px!important;line-height:36px!important;color:#134e4a!important;font-size:23px!important}
+.leaflet-control-zoom{border:1px solid #d5deea!important;border-radius:12px!important;overflow:hidden;box-shadow:0 2px 8px #163c3420!important;margin:12px!important;margin-top:${12 + topInset}px!important}
+.leaflet-control-zoom a{width:36px!important;height:36px!important;line-height:36px!important;color:#0f9b98!important;font-size:23px!important}
 .leaflet-control-attribution{font:10px/16px system-ui,sans-serif!important;padding:1px 5px!important;background:#ffffffe6!important;margin-bottom:${bottomInset}px!important}
 </style></head><body><div id="map"></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script>

@@ -427,7 +427,7 @@ export default function ProviderDashboardScreen() {
             {greeting()},{' '}
             {provider?.ownerName?.split(' ')[0] ?? user?.name?.split(' ')[0] ?? 'Driver'}
           </Text>
-          <Text style={styles.business}>{provider?.businessName ?? 'Transporter'}</Text>
+          <Text style={styles.business}>Local driver · {provider?.city || 'BANJARA'}</Text>
         </View>
         <MessagesHeaderActions
             messagesHref="/(provider)/messages"

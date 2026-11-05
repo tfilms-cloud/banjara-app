@@ -1,6 +1,7 @@
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -33,8 +34,8 @@ export default function RateBookingScreen() {
   const { bookingId } = useLocalSearchParams<{ bookingId: string }>();
   const insets = useSafeAreaInsets();
   const { booking, loading, error } = useBooking(bookingId);
-  const [trip, setTrip] = useState<TripWithDetails | null>(null);
-  const [existing, setExisting] = useState<reviewService.BookingReview | null | undefined>(
+  const [trip, setTrip] = useBackendState<TripWithDetails | null>(null);
+  const [existing, setExisting] = useBackendState<reviewService.BookingReview | null | undefined>(
     undefined
   );
   const [paymentRating, setPaymentRating] = useState(0);

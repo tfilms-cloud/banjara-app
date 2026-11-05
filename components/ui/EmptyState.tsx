@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useThemeColors } from '@/constants/colors';
+import { usePresentationColors as useThemeColors } from './TravelDesignProvider';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Typography } from '@/constants/typography';
 import { Button } from './Button';

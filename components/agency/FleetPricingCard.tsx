@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import { TouchableOpacity, StyleSheet, Text, View } from 'react-native';
-import { useThemeColors } from '@/constants/colors';
+import { usePresentationColors as useThemeColors } from '@/components/ui/TravelDesignProvider';
 import { Radius, Shadows, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 import type { ProviderTransportSetup } from '@/types/provider';
@@ -65,7 +65,7 @@ export function FleetPricingCard({
                 source={{ uri: photo }}
                 style={styles.vehiclePhoto}
                 contentFit="cover"
-                accessibilityLabel="Provider vehicle"
+                accessibilityLabel="Driver's vehicle"
                 onError={() => setFailedPhoto(photo)}
               />
             ) : (
@@ -84,22 +84,11 @@ export function FleetPricingCard({
             )}
             <View style={styles.flex}>
               <Text style={[styles.eyebrow, { color: colors.muted }]}>
-                {fleet.hasPrimary
-                  ? 'PRIMARY VEHICLE'
-                  : hasVehicle
-                    ? 'VEHICLE ON LISTED TRIP'
-                    : 'PROVIDER FLEET'}
+                {hasVehicle || fleet.hasPrimary ? 'DRIVER’S VEHICLE' : 'VEHICLE'}
               </Text>
               <Text style={[styles.vehicleTitle, { color: colors.dark }]}>
                 {fleet.kind || fleet.types.join(' · ') || 'Vehicle information'}
               </Text>
-              {fleet.fleetCount ? (
-                <Text style={[styles.caption, { color: colors.muted }]}>
-                  {fleet.fleetCount}{' '}
-                  {fleet.fleetCount === 1 ? 'vehicle' : 'vehicles'} reported by
-                  the provider
-                </Text>
-              ) : null}
             </View>
           </View>
           {fleet.facts.length ? (
@@ -160,9 +149,9 @@ export function FleetPricingCard({
                 <Text style={[styles.caption, { color: colors.muted }]}>
                   {insurance === 'yes'
                     ? (transport?.insuranceCompany?.trim() ||
-                        'Declared by the provider') +
-                      '. Ask the provider about coverage.'
-                    : 'Confirm coverage with the provider before travelling.'}
+                        'Declared by the driver') +
+                      '. Ask the driver about coverage.'
+                    : 'Confirm coverage with the driver before travelling.'}
                 </Text>
               </View>
             </View>
@@ -215,7 +204,7 @@ export function FleetPricingCard({
                 </View>
                 <Text style={[styles.explanation, { color: colors.muted }]}>
                   {method === 'negotiable'
-                    ? 'Discuss your route and requirements with the provider to agree on a fare.'
+                    ? 'Discuss your route and requirements with the driver to agree on a fare.'
                     : method === 'per_vehicle'
                       ? 'The listed rate is for hiring the whole vehicle, rather than paying separately for each seat.'
                       : 'The listed rate is for one passenger seat. Your fare depends on the trip and the number of seats you book.'}

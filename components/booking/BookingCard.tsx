@@ -16,6 +16,8 @@ import {
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatDate';
 import { formatTime } from '@/utils/formatTime';
+import { useTravelPresentation } from '@/components/ui/TravelDesignProvider';
+import { TravelTransportBookingCard } from './TravelBookingCards';
 
 interface BookingCardProps {
   booking: Booking;
@@ -26,6 +28,16 @@ interface BookingCardProps {
 
 export function BookingCard({ booking, trip, onPress, onViewTicket }: BookingCardProps) {
   const colors = useThemeColors();
+  const travel = useTravelPresentation();
+  if (travel)
+    return (
+      <TravelTransportBookingCard
+        booking={booking}
+        trip={trip}
+        onPress={onPress}
+        onViewTicket={onViewTicket}
+      />
+    );
   const needsPay = bookingNeedsPaymentAction(booking);
   const canOpenPay = canOpenBookingPayment(booking);
   const tone =
@@ -60,10 +72,7 @@ export function BookingCard({ booking, trip, onPress, onViewTicket }: BookingCar
         </View>
         <View style={styles.badges}>
           {journey ? (
-            <Badge
-              label={journey.label}
-              tone={journey.value === 'round_trip' ? 'blue' : 'gray'}
-            />
+            <Badge label={journey.label} tone={journey.value === 'round_trip' ? 'blue' : 'gray'} />
           ) : null}
           <Badge label={statusLabel} tone={tone} />
         </View>
@@ -104,7 +113,10 @@ export function BookingCard({ booking, trip, onPress, onViewTicket }: BookingCar
               </Text>
             </Pressable>
           ) : null}
-          {booking.status !== 'cancelled' && booking.status !== 'pending' && !needsPay && onViewTicket ? (
+          {booking.status !== 'cancelled' &&
+          booking.status !== 'pending' &&
+          !needsPay &&
+          onViewTicket ? (
             <Pressable onPress={onViewTicket} hitSlop={8}>
               <Text style={styles.link}>Ticket</Text>
             </Pressable>

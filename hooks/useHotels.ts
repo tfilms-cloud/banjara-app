@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
+import { useCallback, useRef, useState } from 'react';
 import * as hotelService from '@/services/hotelService';
 import { useHotelStore } from '@/store/hotelStore';
 import { useSearchStore } from '@/store/searchStore';
 import type { Hotel, HotelBooking, HotelRoom } from '@/types/hotel';
 
 export function useHotels() {
-  const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [hotels, setHotels] = useBackendState<Hotel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { getSearchParams, filters, sortBy } = useHotelStore();
@@ -18,7 +19,7 @@ export function useHotels() {
       const data = await hotelService.searchHotels(
         { ...getSearchParams(), query: query.trim() || undefined },
         filters,
-        sortBy
+        sortBy,
       );
       setHotels(data);
     } catch (err) {
@@ -36,41 +37,57 @@ export function useHotels() {
 }
 
 export function useHotel(id?: string) {
-  const [hotel, setHotel] = useState<Hotel | null>(null);
-  const [rooms, setRooms] = useState<HotelRoom[]>([]);
+  const [hotel, setHotel] = useBackendState<Hotel | null>(null);
+  const [rooms, setRooms] = useBackendState<HotelRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { checkIn, checkOut, adults, children, rooms: roomCount } = useHotelStore();
-
-  useEffect(() => {
-    if (!id) return;
-    let mounted = true;
-    (async () => {
+  const request = useRef(0);
+  const refresh = useCallback(
+    async (force = true) => {
+      const current = ++request.current;
       setLoading(true);
+      setError(null);
       try {
+        if (!id) throw new Error('Property not found');
         const [hotelData, roomData] = await Promise.all([
-          hotelService.getHotelById(id),
+          hotelService.getHotelById(id, { refresh: force }),
           hotelService.getHotelRooms(id, { checkIn, checkOut, adults, children, rooms: roomCount }),
         ]);
-        if (!mounted) return;
+        if (current !== request.current) return;
+        if (!hotelData) throw new Error('This property is unavailable. Please try again.');
         setHotel(hotelData);
         setRooms(roomData);
       } catch (err) {
-        if (mounted) setError(err instanceof Error ? err.message : 'Failed to load hotel');
+        if (current === request.current) {
+          setHotel(null);
+          setRooms([]);
+          setError(err instanceof Error ? err.message : 'Failed to load rooms');
+        }
       } finally {
-        if (mounted) setLoading(false);
+        if (current === request.current) setLoading(false);
       }
-    })();
+    },
+    [id, checkIn, checkOut, adults, children, roomCount],
+  );
+  useEffect(() => {
+    void refresh(false);
     return () => {
-      mounted = false;
+      request.current++;
     };
-  }, [id, checkIn, checkOut, adults, children, roomCount]);
+  }, [refresh]);
 
-  return { hotel, rooms, loading, error };
+  return {
+    hotel: hotel?.id === id ? hotel : null,
+    rooms: hotel?.id === id ? rooms : [],
+    loading,
+    error,
+    refresh,
+  };
 }
 
 export function useHotelBookings() {
-  const [bookings, setBookings] = useState<HotelBooking[]>([]);
+  const [bookings, setBookings] = useBackendState<HotelBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -95,7 +112,7 @@ export function useHotelBookings() {
 }
 
 export function useHotelBooking(id?: string) {
-  const [booking, setBooking] = useState<HotelBooking | null>(null);
+  const [booking, setBooking] = useBackendState<HotelBooking | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -118,7 +135,7 @@ export function useHotelBooking(id?: string) {
 }
 
 export function usePopularHotels() {
-  const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [hotels, setHotels] = useBackendState<Hotel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

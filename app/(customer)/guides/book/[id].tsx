@@ -1,5 +1,6 @@
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -23,11 +24,13 @@ import { useGuideBookingStore } from '@/store/guideBookingStore';
 import type { GuideOfferedService } from '@/types/guide';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { paramId } from '@/utils/navigation';
+import { guideServiceForBooking, guideServices } from '@/utils/guidePresentation';
 
 export default function GuideBookScreen() {
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ id: string | string[] }>();
+  const params = useLocalSearchParams<{ id: string | string[]; service?: string | string[] }>();
   const id = paramId(params.id);
+  const requestedService = paramId(params.service);
   const [loading, setLoading] = useState(true);
 
   const {
@@ -54,7 +57,7 @@ export default function GuideBookScreen() {
     setGuest,
   } = useGuideBookingStore();
 
-  const [serviceOptions, setServiceOptions] = useState<GuideOfferedService[]>([]);
+  const [serviceOptions, setServiceOptions] = useBackendState<GuideOfferedService[]>([]);
 
   useEffect(() => {
     let alive = true;
@@ -64,33 +67,7 @@ export default function GuideBookScreen() {
       .then((provider) => {
         if (!alive || !provider) return;
         const guide = provider.guideDetails;
-        const legacy = provider.tour;
-        const list = (guide?.services ?? []).filter((s) => s.active !== false);
-        let options = list;
-        if (!options.length) {
-          const rate = guide?.dailyHireRate ?? legacy?.dailyHireRate ?? legacy?.price ?? 0;
-          if (rate > 0) {
-            options = [
-              {
-                id: '',
-                name: 'Daily guide hire',
-                category: 'local',
-                description: '',
-                durationLabel: 'Full day',
-                durationHours: 8,
-                price: rate,
-                pricingType: 'per_day',
-                currency: 'PKR',
-                minGuests: 1,
-                maxGuests: 20,
-                included: [],
-                excluded: [],
-                availableLocations: guide?.areasCovered ?? legacy?.operatingAreas ?? [],
-                active: true,
-              },
-            ];
-          }
-        }
+        const options = guideServices(provider);
         setServiceOptions(options);
         initProvider({
           providerId: id,
@@ -100,6 +77,11 @@ export default function GuideBookScreen() {
           guide: guide ?? undefined,
           services: options,
         });
+        const requested = guideServiceForBooking(options, requestedService);
+        if (requested) {
+          setService(requested);
+          setGuests(Math.max(requested.minGuests, Math.min(2, requested.maxGuests)));
+        }
       })
       .catch((error) => {
         Alert.alert('Could not load guide', getApiErrorMessage(error));
@@ -110,7 +92,7 @@ export default function GuideBookScreen() {
     return () => {
       alive = false;
     };
-  }, [id, initProvider]);
+  }, [id, requestedService, initProvider, setService, setGuests]);
 
   const activeService = service ?? serviceOptions[0] ?? null;
   const max = activeService?.maxGuests ?? 20;

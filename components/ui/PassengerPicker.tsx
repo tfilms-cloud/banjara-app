@@ -2,6 +2,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Fonts, Typography } from '@/constants/typography';
+import { usePresentationColors, useTravelPresentation } from './TravelDesignProvider';
 
 type PassengerPickerProps = {
   visible: boolean;
@@ -20,22 +21,31 @@ export function PassengerPicker({
   onChange,
   onClose,
 }: PassengerPickerProps) {
+  const colors = usePresentationColors();
+  const travel = useTravelPresentation();
+  const selectedText = travel ? colors.action : colors.actionDark;
   const options = Array.from({ length: max - min + 1 }, (_, i) => min + i);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.root}>
         <Pressable style={styles.backdrop} onPress={onClose} />
-        <View style={styles.sheet}>
-          <Text style={styles.title}>Passengers</Text>
-          <Text style={styles.sub}>How many seats do you need?</Text>
+        <View style={[styles.sheet, { backgroundColor: colors.card }]}>
+          <Text style={[styles.title, { color: colors.primary }]}>Passengers</Text>
+          <Text style={[styles.sub, { color: colors.muted }]}>How many seats do you need?</Text>
           <View style={styles.grid}>
             {options.map((count) => {
               const active = count === value;
               return (
                 <Pressable
                   key={count}
-                  style={[styles.option, active && styles.optionActive]}
+                  style={[
+                    styles.option,
+                    {
+                      backgroundColor: active ? colors.actionSoft : colors.surfaceSecondary,
+                      borderColor: active ? colors.action : colors.border,
+                    },
+                  ]}
                   onPress={() => {
                     onChange(count);
                     onClose();
@@ -43,8 +53,12 @@ export function PassengerPicker({
                   accessibilityRole="button"
                   accessibilityState={{ selected: active }}
                 >
-                  <Text style={[styles.optionNum, active && styles.optionNumActive]}>{count}</Text>
-                  <Text style={[styles.optionLabel, active && styles.optionLabelActive]}>
+                  <Text style={[styles.optionNum, { color: active ? selectedText : colors.dark }]}>
+                    {count}
+                  </Text>
+                  <Text
+                    style={[styles.optionLabel, { color: active ? selectedText : colors.muted }]}
+                  >
                     {count === 1 ? 'seat' : 'seats'}
                   </Text>
                 </Pressable>
@@ -52,7 +66,7 @@ export function PassengerPicker({
             })}
           </View>
           <Pressable onPress={onClose} style={styles.cancel}>
-            <Text style={styles.cancelText}>Cancel</Text>
+            <Text style={[styles.cancelText, { color: colors.muted }]}>Cancel</Text>
           </Pressable>
         </View>
       </View>

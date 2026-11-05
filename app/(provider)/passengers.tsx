@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
+import { useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EmptyState, LoadingState } from '@/components/ui/EmptyState';
@@ -13,7 +14,7 @@ import { useProviderStore } from '@/store/providerStore';
 export default function ProviderPassengersScreen() {
   const insets = useSafeAreaInsets();
   const provider = useProviderStore((s) => s.provider);
-  const [passengers, setPassengers] = useState<ProviderPassenger[]>([]);
+  const [passengers, setPassengers] = useBackendState<ProviderPassenger[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

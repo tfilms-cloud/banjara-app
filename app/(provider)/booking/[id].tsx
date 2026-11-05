@@ -1,6 +1,7 @@
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import {
   Alert,
   Linking,
@@ -122,7 +123,7 @@ export default function ProviderBookingDetailsScreen() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const refreshBookings = useProviderStore((s) => s.refreshBookings);
-  const [booking, setBooking] = useState<ProviderBooking | null>(null);
+  const [booking, setBooking] = useBackendState<ProviderBooking | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);

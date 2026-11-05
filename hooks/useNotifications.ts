@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
+import { useCallback, useState } from 'react';
 import * as notificationService from '@/services/notification.service';
 import type { AppNotification } from '@/types/booking';
 
 export function useNotifications() {
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [notifications, setNotifications] = useBackendState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

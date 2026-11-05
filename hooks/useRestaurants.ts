@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
+import { useCallback, useRef, useState } from 'react';
 import * as restaurantService from '@/services/restaurantService';
 import type { Restaurant } from '@/types/restaurant';
 import type { Provider } from '@/types/provider';
@@ -6,7 +7,7 @@ import type { Provider } from '@/types/provider';
 export function useRestaurants(initialCity = '', options?: { autoLoad?: boolean }) {
   const autoLoad = options?.autoLoad !== false;
   const [city, setCity] = useState(initialCity);
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [restaurants, setRestaurants] = useBackendState<Restaurant[]>([]);
   const [loading, setLoading] = useState(autoLoad);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,34 +58,32 @@ export function useRestaurants(initialCity = '', options?: { autoLoad?: boolean 
 }
 
 export function useRestaurant(id?: string) {
-  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const [restaurant, setRestaurant] = useBackendState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!id) {
+  const request = useRef(0);
+  const refresh = useCallback(async () => {
+    const current = ++request.current;
+    setLoading(true);
+    const data = id ? await restaurantService.getRestaurantById(id) : null;
+    if (current === request.current) {
+      setRestaurant(data);
       setLoading(false);
-      return;
     }
-    let mounted = true;
-    (async () => {
-      setLoading(true);
-      const data = await restaurantService.getRestaurantById(id);
-      if (mounted) {
-        setRestaurant(data);
-        setLoading(false);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
   }, [id]);
+  useEffect(() => {
+    setRestaurant(null);
+    void refresh();
+    return () => {
+      request.current++;
+    };
+  }, [refresh]);
 
-  return { restaurant, loading };
+  return { restaurant: restaurant?.id === id ? restaurant : null, loading, refresh };
 }
 
 export function useGuides(city = '', options?: { autoLoad?: boolean }) {
   const autoLoad = options?.autoLoad !== false;
-  const [guides, setGuides] = useState<Provider[]>([]);
+  const [guides, setGuides] = useBackendState<Provider[]>([]);
   const [loading, setLoading] = useState(autoLoad);
 
   const refresh = useCallback(
@@ -111,7 +110,7 @@ export function useGuides(city = '', options?: { autoLoad?: boolean }) {
 
 export function useTourOperators(city = '', options?: { autoLoad?: boolean }) {
   const autoLoad = options?.autoLoad !== false;
-  const [tours, setTours] = useState<Provider[]>([]);
+  const [tours, setTours] = useBackendState<Provider[]>([]);
   const [loading, setLoading] = useState(autoLoad);
 
   const refresh = useCallback(

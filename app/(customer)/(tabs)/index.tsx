@@ -2,32 +2,39 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { HotelCard } from '@/components/hotels/HotelCard';
 import { HotelSearchCard } from '@/components/hotels/HotelSearchCard';
 import { LocationPinSheet, formatPickedCity } from '@/components/location/LocationPinSheet';
-import { DestinationCard } from '@/components/travel/DestinationCard';
-import { HomeHeroHeader } from '@/components/travel/HomeHeroHeader';
-import { TrustGrid } from '@/components/travel/TrustGrid';
-import { groupTripsByAgency } from '@/utils/groupTripsByAgency';
-import { HomeSection } from '@/components/travel/HomeSection';
-import { HomeSearchKindTabs, NameSearchCard, type HomeSearchKind } from '@/components/travel/NameSearchCard';
-import { TransportSearchCard } from '@/components/travel/SearchCard';
-import { ExplorePanels, FloatingCrossSell } from '@/components/explore/ExplorePanels';
-import { TripCard } from '@/components/trip/TripCard';
+import {
+  HomeTopBar,
+  HomeHighlights,
+  HomeServices,
+  HomeScenicHero,
+  HomeRouteSearch,
+  HomeRideCard,
+  HomeDestinationCards,
+  HomeHelp,
+} from '@/components/home/HomeDiscovery';
+import { useHomeDesign } from '@/constants/homeDesign';
+import {
+  TravelSegmentedControl,
+  TravelSection as HomeSection,
+} from '@/components/ui/TravelPrimitives';
+
+import type { HomeSearchKind } from '@/components/travel/NameSearchCard';
 import { DatePickerModal } from '@/components/ui/DatePickerModal';
 import { PassengerPicker } from '@/components/ui/PassengerPicker';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { HotelCardSkeleton, TripCardSkeleton } from '@/components/ui/Skeleton';
-import { Colors, useThemeColors } from '@/constants/colors';
+import { Colors } from '@/constants/colors';
+import {
+  TravelDesignProvider,
+  usePresentationColors as useThemeColors,
+} from '@/components/ui/TravelDesignProvider';
+import { TravelOptionRow } from '@/components/ui/TravelForm';
+import { HomeNameSearch } from '@/components/home/HomeSearchControls';
 import {
   POPULAR_DESTINATIONS,
   POPULAR_ROUTE_SUGGESTIONS,
@@ -43,7 +50,6 @@ import {
 import { Radius, Shadows, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 import { usePopularHotels } from '@/hooks/useHotels';
-import { useGuides, useRestaurants, useTourOperators } from '@/hooks/useRestaurants';
 import { useRecommendedTrips } from '@/hooks/useTrips';
 import { invalidatePopularHotelsCache } from '@/services/hotelService';
 import { invalidateRecommendedTripsCache } from '@/services/tripService';
@@ -71,33 +77,7 @@ function SegmentChips<T extends string>({
   value: T;
   onChange: (id: T) => void;
 }) {
-  const colors = useThemeColors();
-  return (
-    <View style={[styles.segmentTrack, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
-      {options.map((option) => {
-        const active = option.id === value;
-        return (
-          <Pressable
-            key={option.id}
-            onPress={() => onChange(option.id)}
-            style={[styles.segmentChip, active && { backgroundColor: colors.primary, ...Shadows.soft }]}
-            accessibilityRole="button"
-            accessibilityState={{ selected: active }}
-          >
-            <Text
-              style={[styles.segmentChipText, {
-                color: active ? colors.white : colors.muted,
-                fontFamily: active ? Fonts.bodySemiBold : Fonts.bodyMedium,
-              }]}
-              numberOfLines={1}
-            >
-              {option.label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
+  return <TravelSegmentedControl options={options} value={value} onChange={onChange} />;
 }
 
 function shortDate(iso: string) {
@@ -159,7 +139,8 @@ function RecentHotelRow({
           </View>
         </View>
         <Text style={[styles.recentDetails, { color: colors.muted }]} numberOfLines={1}>
-          {shortDate(item.checkIn)} → {shortDate(item.checkOut)} · {nights} night{nights === 1 ? '' : 's'}
+          {shortDate(item.checkIn)} → {shortDate(item.checkOut)} · {nights} night
+          {nights === 1 ? '' : 's'}
         </Text>
       </View>
       <Ionicons name="chevron-forward" size={17} color={colors.mutedLight} />
@@ -264,7 +245,9 @@ function PopularRouteCard({
             {route.from} → {route.to}
           </Text>
           <View style={[styles.routeDurationBadge, { backgroundColor: colors.inputBg }]}>
-            <Text style={[styles.routeDurationText, { color: colors.muted }]}>{route.duration}</Text>
+            <Text style={[styles.routeDurationText, { color: colors.muted }]}>
+              {route.duration}
+            </Text>
           </View>
         </View>
 
@@ -292,6 +275,18 @@ let lastHomeFocusRefreshAt = 0;
 
 export default function HomeScreen() {
   const user = useAuthStore((state) => state.user);
+  const homeTheme = useHomeDesign();
+  const profile = useUserStore((state) => state.profile);
+  const toggleSavedTrip = useUserStore((state) => state.toggleSavedTrip);
+  const savedIds = (profile?.id === user?.id ? profile?.savedTripIds : user?.savedTripIds) ?? [];
+  const onSaveTrip = (id: string) => {
+    if (!user) {
+      pushPath('/(customer)/(tabs)/profile');
+      return;
+    }
+    if (useUserStore.getState().profile?.id !== user.id) useUserStore.setState({ profile: user });
+    toggleSavedTrip(id);
+  };
   const from = useSearchStore((s) => s.from);
   const to = useSearchStore((s) => s.to);
   const date = useSearchStore((s) => s.date);
@@ -312,14 +307,16 @@ export default function HomeScreen() {
   const [transportPanel, setTransportPanel] = useState<TransportPanel>('available');
   const [bookingKind, setBookingKind] = useState<TransportBookingKind>('seat');
   const [journeyKind, setJourneyKind] = useState<'one_way' | 'round_trip'>(
-    productMode === 'trips' ? 'round_trip' : 'one_way'
+    productMode === 'trips' ? 'round_trip' : 'one_way',
   );
   const [searchKind, setSearchKind] = useState<HomeSearchKind>('route');
   const [showDate, setShowDate] = useState(false);
   const [showReturnDate, setShowReturnDate] = useState(false);
   const [showPassengers, setShowPassengers] = useState(false);
   const [locationField, setLocationField] = useState<'from' | 'to' | null>(null);
-  const [routePins, setRoutePins] = useState<Partial<Record<'from' | 'to', { name: string; value: LocationPickerValue }>>>({});
+  const [routePins, setRoutePins] = useState<
+    Partial<Record<'from' | 'to', { name: string; value: LocationPickerValue }>>
+  >({});
   const checkIn = useHotelStore((s) => s.checkIn);
   const checkOut = useHotelStore((s) => s.checkOut);
   const hotelDestination = useHotelStore((s) => s.destination);
@@ -328,15 +325,6 @@ export default function HomeScreen() {
   const hotelRecent = useHotelStore((s) => s.recentSearches);
   const { trips, loading, error, refresh: refreshTrips } = useRecommendedTrips();
   const { hotels, loading: hotelsLoading, refresh: refreshHotels } = usePopularHotels();
-  const {
-    restaurants,
-    refresh: refreshRestos,
-    searchByDestination,
-  } = useRestaurants('', { autoLoad: false });
-  const { guides, refresh: refreshGuides } = useGuides('', { autoLoad: false });
-  const { tours: tourProviders, refresh: refreshTours } = useTourOperators('', {
-    autoLoad: false,
-  });
   const setTrip = useBookingStore((state) => state.setTrip);
   const [refreshing, setRefreshing] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -354,12 +342,6 @@ export default function HomeScreen() {
     void loadNotifications();
   }, [loadNotifications]);
 
-  useEffect(() => {
-    if (mode === 'restaurants') void refreshRestos({ silent: true });
-    if (mode === 'guides') void refreshGuides({ silent: true });
-    if (mode === 'tours') void refreshTours({ silent: true });
-  }, [mode, refreshRestos, refreshGuides, refreshTours]);
-
   useFocusEffect(
     useCallback(() => {
       const now = Date.now();
@@ -368,10 +350,7 @@ export default function HomeScreen() {
       lastHomeFocusRefreshAt = now;
       void refreshTrips({ silent: true });
       void refreshHotels({ silent: true });
-      if (mode === 'restaurants') void refreshRestos({ silent: true });
-      if (mode === 'guides') void refreshGuides({ silent: true });
-      if (mode === 'tours') void refreshTours({ silent: true });
-    }, [mode, refreshTrips, refreshHotels, refreshRestos, refreshGuides, refreshTours])
+    }, [refreshTrips, refreshHotels]),
   );
 
   useEffect(() => {
@@ -380,11 +359,11 @@ export default function HomeScreen() {
 
   const oneWayTrips = useMemo(
     () => trips.filter((trip) => trip.journeyType !== 'round_trip'),
-    [trips]
+    [trips],
   );
   const roundTrips = useMemo(
     () => trips.filter((trip) => trip.journeyType === 'round_trip'),
-    [trips]
+    [trips],
   );
   const journeyTrips = journeyKind === 'round_trip' ? roundTrips : oneWayTrips;
 
@@ -409,8 +388,8 @@ export default function HomeScreen() {
       [...modeTrips]
         .filter((trip) => String(trip.date || '').slice(0, 10) === today)
         .sort((a, b) => `${a.date}${a.departureTime}`.localeCompare(`${b.date}${b.departureTime}`))
-        .slice(0, 6),
-    [modeTrips, today]
+        .slice(0, 3),
+    [modeTrips, today],
   );
 
   /** Continue searching — all trips transporters currently offer. */
@@ -418,13 +397,8 @@ export default function HomeScreen() {
     () =>
       [...modeTrips]
         .sort((a, b) => `${a.date}${a.departureTime}`.localeCompare(`${b.date}${b.departureTime}`))
-        .slice(0, 8),
-    [modeTrips]
-  );
-
-  const recommendedTrips = useMemo(
-    () => modeTrips.filter((trip) => trip.recommended).slice(0, 4),
-    [modeTrips]
+        .slice(0, 3),
+    [modeTrips],
   );
 
   const stayHotels = useMemo(() => {
@@ -438,40 +412,27 @@ export default function HomeScreen() {
     return (matched.length ? matched : hotels).slice(0, 8);
   }, [hotelDestination, hotels, to]);
 
-  const ridesToStay = useMemo(() => {
-    const dest = (hotelDestination || to || '').trim().toLowerCase();
-    const matchTo = (list: typeof trips) =>
-      dest ? list.filter((trip) => trip.to.toLowerCase().includes(dest)) : list;
-    const ones = matchTo(oneWayTrips);
-    const rounds = matchTo(roundTrips);
-    const combined = [...(ones.length ? ones : oneWayTrips).slice(0, 2), ...(rounds.length ? rounds : roundTrips).slice(0, 2)];
-    const seen = new Set<string>();
-    return combined.filter((trip) => {
-      if (seen.has(trip.id)) return false;
-      seen.add(trip.id);
-      return true;
-    }).slice(0, 4);
-  }, [hotelDestination, oneWayTrips, roundTrips, to]);
-
   const durationLabel = useMemo(() => {
     if (mode !== 'transport') return undefined;
     const matching = trips.filter(
       (trip) =>
         trip.from.toLowerCase().includes((from || '').toLowerCase()) &&
-        trip.to.toLowerCase().includes((to || '').toLowerCase())
+        trip.to.toLowerCase().includes((to || '').toLowerCase()),
     );
     if (matching.length) {
       const minutes = matching.map((trip) => trip.durationMinutes).filter((value) => value > 0);
       if (minutes.length) {
         const min = Math.min(...minutes);
         const max = Math.max(...minutes);
-        return min === max ? formatDuration(min) : `${formatDuration(min)} – ${formatDuration(max)}`;
+        return min === max
+          ? formatDuration(min)
+          : `${formatDuration(min)} – ${formatDuration(max)}`;
       }
     }
     const corridor = POPULAR_ROUTE_SUGGESTIONS.find(
       (route) =>
         route.from.toLowerCase() === (from || '').toLowerCase() &&
-        route.to.toLowerCase() === (to || '').toLowerCase()
+        route.to.toLowerCase() === (to || '').toLowerCase(),
     );
     return corridor?.duration;
   }, [from, mode, to, trips]);
@@ -479,18 +440,8 @@ export default function HomeScreen() {
   const liveCount = useMemo(() => {
     if (mode === 'hotels') return stayHotels.length;
     if (mode !== 'transport') return 0;
-    return liveTodayTrips.length;
-  }, [liveTodayTrips.length, mode, stayHotels.length]);
-
-  const tripLengthLabel = useMemo(() => {
-    if (journeyKind !== 'round_trip' || !date || !returnDate) return undefined;
-    const nights = Math.round(
-      (new Date(`${returnDate}T12:00:00`).getTime() - new Date(`${date}T12:00:00`).getTime()) /
-        (1000 * 60 * 60 * 24)
-    );
-    if (nights < 1) return undefined;
-    return `${nights}-night return`;
-  }, [date, journeyKind, returnDate]);
+    return modeTrips.filter((trip) => trip.date === today).length;
+  }, [modeTrips, today, mode, stayHotels.length]);
 
   const liveRoutes = useMemo(
     () =>
@@ -498,7 +449,7 @@ export default function HomeScreen() {
         const matches = trips.filter(
           (trip) =>
             trip.from.toLowerCase().includes(route.from.toLowerCase()) &&
-            trip.to.toLowerCase().includes(route.to.toLowerCase())
+            trip.to.toLowerCase().includes(route.to.toLowerCase()),
         );
         const fromPrice = matches.length ? Math.min(...matches.map((trip) => trip.price)) : null;
         return {
@@ -508,7 +459,7 @@ export default function HomeScreen() {
           currency: matches[0]?.currency ?? 'PKR',
         };
       }).sort((a, b) => b.tripCount - a.tripCount),
-    [trips]
+    [trips],
   );
 
   const onSearchTransport = () => {
@@ -581,167 +532,181 @@ export default function HomeScreen() {
           ? 'Search vehicles'
           : 'Search rides';
 
+  /** Home only starts the journey; full catalogs live in Explore. */
+  const openExplore = (service: HomeMode) =>
+    router.push({ pathname: '/(customer)/(tabs)/search', params: { service } });
+
+  const SERVICE_LABEL: Partial<Record<HomeMode, string>> = {
+    tours: 'tours',
+    guides: 'guides',
+    restaurants: 'restaurants',
+  };
   const serviceExploreBlock =
     mode === 'tours' || mode === 'guides' || mode === 'restaurants' ? (
-      <>
-        <ExplorePanels
-          tab={mode}
-          trips={trips}
-          hotels={hotels}
-          restaurants={restaurants}
-          guides={guides}
-          tourProviders={tourProviders}
-          compact
-          onOpenDestination={openDestination}
-          onSearchRestaurants={(city) => void searchByDestination(city)}
+      <HomeSection title={`Find ${SERVICE_LABEL[mode]}`}>
+        <EmptyState
+          title={`Browse ${SERVICE_LABEL[mode]} on Explore`}
+          message="Search, filter and compare everything available in one place."
+          actionLabel={`Explore ${SERVICE_LABEL[mode]}`}
+          onAction={() => openExplore(mode)}
         />
-        <FloatingCrossSell
-          tab={mode}
-          trips={trips}
-          hotels={hotels}
-          restaurants={restaurants}
-          guides={guides}
+      </HomeSection>
+    ) : null;
+
+  const searchMethod = (
+    <TravelOptionRow
+      label="Search by"
+      value={searchKind}
+      onChange={setSearchKind}
+      options={[
+        {
+          id: 'route' as const,
+          label: mode === 'hotels' ? 'Destination' : 'Route',
+          accessibilityLabel: 'Search by route',
+        },
+        { id: 'name' as const, label: 'Name', accessibilityLabel: 'Search by name' },
+      ]}
+    />
+  );
+  const transportPreferences =
+    transportPanel === 'customise' ? (
+      <View style={{ gap: 6, borderTopWidth: 1, borderTopColor: homeTheme.border, paddingTop: 10 }}>
+        <TravelOptionRow
+          label="Journey"
+          value={journeyKind}
+          onChange={onChangeJourney}
+          options={[
+            { id: 'one_way' as const, label: 'One way' },
+            { id: 'round_trip' as const, label: 'Return', accessibilityLabel: 'Two way' },
+          ]}
         />
-      </>
+        <TravelOptionRow
+          label="Booking"
+          value={bookingKind}
+          onChange={setBookingKind}
+          options={[
+            { id: 'seat' as const, label: 'Seat', accessibilityLabel: 'Seat booking' },
+            { id: 'vehicle' as const, label: 'Vehicle', accessibilityLabel: 'Vehicle booking' },
+          ]}
+        />
+        {searchMethod}
+      </View>
     ) : null;
 
   const searchBlock =
     mode === 'tours' || mode === 'guides' || mode === 'restaurants' ? null : (
-    <View style={styles.searchFloat}>
-      {mode === 'transport' ? (
-        <View
-          style={[
-            styles.transportControls,
-            { backgroundColor: colors.card, borderColor: colors.border },
-          ]}
-        >
-          <SegmentChips
-            value={transportPanel}
-            onChange={setTransportPanel}
-            options={[
-              { id: 'available' as const, label: 'Available rides' },
-              { id: 'customise' as const, label: 'Customise route' },
-            ]}
-          />
-          {transportPanel === 'customise' ? (
-            <>
-              <SegmentChips
-                value={journeyKind}
-                onChange={onChangeJourney}
-                options={[
-                  { id: 'one_way' as const, label: 'One way' },
-                  { id: 'round_trip' as const, label: 'Two way' },
-                ]}
-              />
-              <SegmentChips
-                value={bookingKind}
-                onChange={setBookingKind}
-                options={[
-                  { id: 'seat' as const, label: 'Seat booking' },
-                  { id: 'vehicle' as const, label: 'Vehicle booking' },
-                ]}
-              />
-            </>
-          ) : null}
-        </View>
-      ) : null}
-
-      {mode === 'transport' && transportPanel === 'available' ? null : (
-        <>
-          <HomeSearchKindTabs value={searchKind} onChange={setSearchKind} />
-          {searchKind === 'name' ? (
-            <NameSearchCard
+      <View style={[styles.searchFloat, { marginTop: -30, gap: 20 }]}>
+        {mode === 'hotels' ? (
+          searchKind === 'name' ? (
+            <HomeNameSearch
               value={query}
               onChangeText={setQuery}
               onSearch={onSearchByName}
-              ctaLabel={searchCta}
+              cta={searchCta}
+              preferences={searchMethod}
+              hotel
             />
-          ) : mode === 'hotels' ? (
-            <HotelSearchCard onSearch={onSearchHotels} showGuestControls={false} showCta />
           ) : (
-            <>
-              <TransportSearchCard
-                intent={journeyKind === 'round_trip' ? 'trips' : 'transport'}
+            <HotelSearchCard onSearch={onSearchHotels} showCta footer={searchMethod} />
+          )
+        ) : (
+          <>
+            {searchKind === 'name' && transportPanel === 'customise' ? (
+              <HomeNameSearch
+                value={query}
+                onChangeText={setQuery}
+                onSearch={onSearchByName}
+                cta={searchCta}
+                preferences={transportPreferences}
+              />
+            ) : (
+              <HomeRouteSearch
                 from={from}
                 to={to}
-                dateLabel={date ? shortDate(date) : 'Pick date'}
-                returnDateLabel={returnDate ? shortDate(returnDate) : 'Pick return'}
-                passengersLabel={
+                date={date ? shortDate(date) : 'Pick date'}
+                passengers={
                   bookingKind === 'vehicle'
-                    ? `${passengers} traveler${passengers === 1 ? '' : 's'}`
-                    : `${passengers} passenger${passengers === 1 ? '' : 's'}`
+                    ? passengers + ' travelers'
+                    : passengers + (passengers === 1 ? ' Seat' : ' Seats')
+                }
+                returnDate={
+                  journeyKind === 'round_trip'
+                    ? returnDate
+                      ? shortDate(returnDate)
+                      : 'Pick return date'
+                    : undefined
                 }
                 onFrom={() => setLocationField('from')}
                 onTo={() => setLocationField('to')}
-                onDate={() => {
-                  setShowReturnDate(false);
-                  setShowDate(true);
-                }}
-                onReturnDate={() => {
-                  setShowDate(false);
-                  setShowReturnDate(true);
-                }}
+                onDate={() => setShowDate(true)}
+                onReturnDate={() => setShowReturnDate(true)}
                 onPassengers={() => setShowPassengers(true)}
                 onSwap={swapLocations}
                 onSearch={onSearchTransport}
-                selectedDate={date}
-                onSelectDate={setDate}
-                tripLengthLabel={tripLengthLabel}
-                hint={
-                  bookingKind === 'vehicle'
-                    ? 'Book a full vehicle for your route'
-                    : undefined
-                }
-                showCta
+                cta={searchCta}
+                preferences={transportPreferences}
               />
-              <LocationPinSheet
-                visible={locationField !== null}
-                title={locationField === 'from' ? 'Departure location' : 'Destination'}
-                confirmLabel={locationField === 'from' ? 'Use departure location' : 'Use destination'}
-                initial={locationField && routePins[locationField]?.name === (locationField === 'from' ? from : to) ? routePins[locationField]?.value : undefined}
-                onClose={() => setLocationField(null)}
-                onConfirm={picked => {
-                  const name = formatPickedCity(picked);
-                  if (locationField) setRoutePins(pins => ({ ...pins, [locationField]: { name, value: picked } }));
-                  if (locationField === 'from') setFrom(name);
-                  else if (locationField === 'to') setTo(name);
-                  setLocationField(null);
-                }}
-              />
-              <PassengerPicker
-                visible={showPassengers}
-                value={passengers}
-                onChange={setPassengers}
-                onClose={() => setShowPassengers(false)}
-              />
-              <DatePickerModal
-                visible={showDate}
-                title="Travel date"
-                value={date}
-                minimumDate={new Date()}
-                onChange={setDate}
-                onClose={() => setShowDate(false)}
-              />
-              <DatePickerModal
-                visible={showReturnDate}
-                title="Return home"
-                value={returnDate}
-                minimumDate={date ? new Date(date) : new Date()}
-                onChange={setReturnDate}
-                onClose={() => setShowReturnDate(false)}
-              />
-            </>
-          )}
-        </>
-      )}
-    </View>
-  );
+            )}
+            <SegmentChips
+              value={transportPanel}
+              onChange={setTransportPanel}
+              options={[
+                { id: 'available' as const, label: 'Available rides' },
+                { id: 'customise' as const, label: 'Customise route' },
+              ]}
+            />
+            <LocationPinSheet
+              visible={locationField !== null}
+              title={locationField === 'from' ? 'Departure location' : 'Destination'}
+              confirmLabel={locationField === 'from' ? 'Use departure location' : 'Use destination'}
+              initial={
+                locationField &&
+                routePins[locationField]?.name === (locationField === 'from' ? from : to)
+                  ? routePins[locationField]?.value
+                  : undefined
+              }
+              onClose={() => setLocationField(null)}
+              onConfirm={(picked) => {
+                const name = formatPickedCity(picked);
+                if (locationField)
+                  setRoutePins((pins) => ({ ...pins, [locationField]: { name, value: picked } }));
+                if (locationField === 'from') setFrom(name);
+                else if (locationField === 'to') setTo(name);
+                setLocationField(null);
+              }}
+            />
+            <PassengerPicker
+              visible={showPassengers}
+              value={passengers}
+              onChange={setPassengers}
+              onClose={() => setShowPassengers(false)}
+            />
+            <DatePickerModal
+              visible={showDate}
+              title="Travel date"
+              value={date}
+              minimumDate={new Date()}
+              onChange={setDate}
+              onClose={() => setShowDate(false)}
+            />
+            <DatePickerModal
+              visible={showReturnDate}
+              title="Return home"
+              value={returnDate}
+              minimumDate={date ? new Date(date) : new Date()}
+              onChange={setReturnDate}
+              onClose={() => setShowReturnDate(false)}
+            />
+          </>
+        )}
+      </View>
+    );
 
   const recentSection =
     mode === 'transport' ? (
       <HomeSection
         title="Continue searching"
-        subtitle="All trips currently offered by transporters"
+        subtitle="All trips currently offered by local drivers"
         actionLabel="View all"
         onAction={() => router.push('/(customer)/results')}
       >
@@ -753,14 +718,20 @@ export default function HomeScreen() {
         ) : allTransporterTrips.length === 0 ? (
           <EmptyState
             title="No trips listed yet"
-            message="When transporters publish rides, they will appear here."
+            message="When local drivers publish rides, they will appear here."
             actionLabel={searchCta}
             onAction={onSearchTransport}
           />
         ) : (
           <View style={styles.stack}>
             {allTransporterTrips.map((trip) => (
-              <TripCard key={trip.id} trip={trip} onPress={() => openTrip(trip.id)} />
+              <HomeRideCard
+                key={trip.id}
+                trip={trip}
+                saved={savedIds.includes(trip.id)}
+                onSave={() => onSaveTrip(trip.id)}
+                onPress={() => openTrip(trip.id)}
+              />
             ))}
           </View>
         )}
@@ -768,14 +739,14 @@ export default function HomeScreen() {
     ) : mode === 'hotels' && hotelRecent.length > 0 ? (
       <HomeSection title="Continue searching">
         <View style={styles.recentStack}>
-          {hotelRecent.slice(0, 4).map((item) => {
+          {hotelRecent.slice(0, 3).map((item) => {
             const meta = destinationMetaFor(item.destination);
             const nights = Math.max(
               1,
               Math.round(
                 (new Date(item.checkOut).getTime() - new Date(item.checkIn).getTime()) /
-                  (1000 * 60 * 60 * 24)
-              )
+                  (1000 * 60 * 60 * 24),
+              ),
             );
             return (
               <RecentHotelRow
@@ -795,63 +766,13 @@ export default function HomeScreen() {
       </HomeSection>
     ) : null;
 
-  const destinationsSection = useMemo(() => {
-    const placeNames = new Set<string>();
-    for (const trip of trips) {
-      if (trip.from) placeNames.add(String(trip.from).trim());
-      if (trip.to) placeNames.add(String(trip.to).trim());
-    }
-    for (const hotel of hotels) {
-      if (hotel.location?.city) placeNames.add(hotel.location.city.trim());
-    }
-    const liveDestinations = POPULAR_DESTINATIONS.filter((d) =>
-      [...placeNames].some(
-        (n) =>
-          n.toLowerCase().includes(d.name.toLowerCase()) ||
-          d.name.toLowerCase().includes(n.toLowerCase())
-      )
-    );
-    if (!liveDestinations.length) return null;
-    return (
-      <HomeSection
-        title="Popular destinations"
-        subtitle="Places with live trips or stays on BANJARA"
-        actionLabel="Explore"
-        onAction={() => router.push('/(customer)/(tabs)/search')}
-      >
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.hRow}
-        >
-          {liveDestinations.map((item, index) => (
-            <DestinationCard
-              key={item.id}
-              name={item.name}
-              subtitle={item.subtitle}
-              image={item.image}
-              tag={item.tag}
-              featured={index === 0}
-              onPress={() => openDestination(item.name)}
-            />
-          ))}
-        </ScrollView>
-      </HomeSection>
-    );
-  }, [hotels, mode, trips]);
-
-  const inspirationFromProviders = useMemo(() => {
-    return groupTripsByAgency(trips)
-      .slice(0, 8)
-      .map((g) => ({
-        id: g.agencyId,
-        name: g.agency.name,
-        route: g.routes[0] || `${g.tripCount} trips`,
-        image: g.agency.logo || g.trips[0]?.image || g.trips[0]?.vehicleImages?.[0],
-        rating: g.agency.rating || 0,
-        quote: `Live on BANJARA · ${g.tripCount} trip${g.tripCount === 1 ? '' : 's'} from this transporter. Book seats on published schedules.`,
-      }));
-  }, [trips]);
+  const destinationsSection = (
+    <HomeDestinationCards
+      trips={trips}
+      onOpen={openDestination}
+      onExplore={() => openExplore(mode)}
+    />
+  );
 
   const ridesSection = (
     <HomeSection
@@ -882,23 +803,18 @@ export default function HomeScreen() {
       ) : (
         <View style={styles.stack}>
           {liveTodayTrips.map((trip) => (
-            <TripCard key={trip.id} trip={trip} onPress={() => openTrip(trip.id)} />
+            <HomeRideCard
+              key={trip.id}
+              trip={trip}
+              saved={savedIds.includes(trip.id)}
+              onSave={() => onSaveTrip(trip.id)}
+              onPress={() => openTrip(trip.id)}
+            />
           ))}
         </View>
       )}
     </HomeSection>
   );
-
-  const recommendedSection =
-    recommendedTrips.length > 0 ? (
-      <HomeSection title="Recommended for you" subtitle="Marked by providers on BANJARA">
-        <View style={styles.stack}>
-          {recommendedTrips.map((trip) => (
-            <TripCard key={trip.id} trip={trip} onPress={() => openTrip(trip.id)} />
-          ))}
-        </View>
-      </HomeSection>
-    ) : null;
 
   const renderStays = (layout: 'detail' | 'rail') => (
     <HomeSection
@@ -914,7 +830,11 @@ export default function HomeScreen() {
             <HotelCardSkeleton />
           </View>
         ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hRow}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.hRow}
+          >
             <HotelCardSkeleton />
           </ScrollView>
         )
@@ -963,9 +883,11 @@ export default function HomeScreen() {
     <HomeSection
       title="Popular routes"
       subtitle="Most travelled corridors on BANJARA"
+      actionLabel="See all"
+      onAction={() => openExplore('transport')}
     >
       <View style={styles.stack}>
-        {liveRoutes.map((route) => (
+        {liveRoutes.slice(0, 3).map((route) => (
           <PopularRouteCard
             key={route.id}
             route={route}
@@ -981,218 +903,130 @@ export default function HomeScreen() {
     </HomeSection>
   );
 
-  const connectingRidesSection =
-    ridesToStay.length > 0 ? (
-      <HomeSection
-        title={hotelDestination ? `Rides to ${hotelDestination}` : 'Rides to get there'}
-        subtitle="Transport and return trips for this stay"
-        actionLabel="View all"
-        onAction={() => router.push('/(customer)/results')}
-      >
-        <View style={styles.stack}>
-          {ridesToStay.map((trip) => (
-            <TripCard key={trip.id} trip={trip} onPress={() => openTrip(trip.id)} />
-          ))}
-        </View>
-      </HomeSection>
-    ) : null;
-
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <ScrollView
-        ref={scrollRef}
-        style={styles.container}
-        contentContainerStyle={styles.feed}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={async () => {
-              setRefreshing(true);
-              lastHomeFocusRefreshAt = Date.now();
-              invalidateRecommendedTripsCache();
-              invalidatePopularHotelsCache();
-              await Promise.all([
-                refreshTrips(),
-                refreshHotels(),
-                mode === 'restaurants' ? refreshRestos() : Promise.resolve(),
-                mode === 'guides' ? refreshGuides() : Promise.resolve(),
-                mode === 'tours' ? refreshTours() : Promise.resolve(),
-              ]);
-              setRefreshing(false);
-            }}
-            tintColor={colors.primary}
-          />
-        }
-      >
-        <HomeHeroHeader
-          mode={mode}
-          onChangeMode={onChangeMode}
-          from={from}
-          to={to}
-          hotelDestination={hotelDestination}
-          userName={user?.name}
-          userAvatar={user?.avatar}
-          durationLabel={durationLabel}
-          liveCount={liveCount}
-          hasUnread={hasUnread}
-          onOpenSearch={() => router.push('/(customer)/(tabs)/search')}
+    <TravelDesignProvider>
+      <View style={[styles.root, { backgroundColor: homeTheme.background }]}>
+        <HomeTopBar
+          name={user?.name}
+          avatar={user?.avatar}
+          unread={hasUnread}
+          onSearch={() => router.push('/(customer)/(tabs)/search')}
           onNotifications={() => pushPath('/(customer)/(tabs)/notifications')}
           onProfile={() => pushPath('/(customer)/(tabs)/profile')}
         />
-
-        {searchBlock}
-
-        {mode === 'tours' || mode === 'guides' || mode === 'restaurants' ? (
-          serviceExploreBlock
-        ) : mode === 'hotels' ? (
-          <>
-            {recentSection}
-            <ExplorePanels
-              tab="hotels"
-              trips={trips}
-              hotels={hotels}
-              restaurants={restaurants}
-              guides={guides}
-              tourProviders={tourProviders}
-              compact
-              onOpenDestination={openDestination}
+        <ScrollView
+          ref={scrollRef}
+          style={styles.container}
+          contentContainerStyle={styles.feed}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={async () => {
+                setRefreshing(true);
+                lastHomeFocusRefreshAt = Date.now();
+                invalidateRecommendedTripsCache();
+                invalidatePopularHotelsCache();
+                await Promise.all([
+                  refreshTrips(),
+                  refreshHotels(),
+                ]);
+                setRefreshing(false);
+              }}
+              tintColor={colors.primary}
             />
-            {connectingRidesSection}
-            <FloatingCrossSell
-              tab="hotels"
-              trips={trips}
-              hotels={hotels}
-              restaurants={restaurants}
-              guides={guides}
-            />
-            {destinationsSection}
-          </>
-        ) : (
-          <>
-            {transportPanel === 'available' ? (
-              <HomeSection
-                title="Available rides"
-                subtitle="Trips published by transporters"
-                actionLabel="View all"
-                onAction={() => router.push('/(customer)/results')}
-              >
-                {loading && modeTrips.length === 0 ? (
-                  <View style={styles.stack}>
-                    <TripCardSkeleton />
-                    <TripCardSkeleton />
-                  </View>
-                ) : modeTrips.length === 0 ? (
-                  <EmptyState
-                    title="No rides available"
-                    message="Try Customise your route or another date."
-                    actionLabel="Customise route"
-                    onAction={() => setTransportPanel('customise')}
-                  />
-                ) : (
-                  <View style={styles.stack}>
-                    {modeTrips.slice(0, 8).map((trip) => (
-                      <TripCard key={trip.id} trip={trip} onPress={() => openTrip(trip.id)} />
-                    ))}
-                  </View>
-                )}
-              </HomeSection>
-            ) : (
-              <>
-                {recentSection}
-                {ridesSection}
-                {recommendedSection}
-                <ExplorePanels
-                  tab="transport"
-                  trips={trips}
-                  hotels={hotels}
-                  restaurants={restaurants}
-                  guides={guides}
-                  tourProviders={tourProviders}
-                  compact
-                  onOpenDestination={openDestination}
-                />
-                {routesSection}
-                {stayHotels.length > 0 ? renderStays('rail') : null}
-                <FloatingCrossSell
-                  tab="transport"
-                  trips={trips}
-                  hotels={hotels}
-                  restaurants={restaurants}
-                  guides={guides}
-                />
-              </>
-            )}
-            {destinationsSection}
-          </>
-        )}
-
-        {inspirationFromProviders.length > 0 ? (
-        <HomeSection
-          title="Travel inspiration"
-          subtitle="Transporters live on BANJARA — added by service providers"
+          }
         >
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.hRow}
-          >
-            {inspirationFromProviders.map((item) => (
-              <Pressable
-                key={item.id}
-                onPress={() => pushPath(`/(customer)/agency/${item.id}`)}
-                style={[
-                  styles.testimonialCard,
-                  { backgroundColor: colors.card, borderColor: colors.border },
-                ]}
-              >
-                <View style={styles.testimonialHead}>
-                  <Image
-                    source={{
-                      uri:
-                        item.image ||
-                        'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=200&q=80&auto=format&fit=crop',
-                    }}
-                    style={styles.testimonialAvatar}
-                    contentFit="cover"
-                  />
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={[styles.testimonialName, { color: colors.dark }]}>{item.name}</Text>
-                    <Text style={[styles.testimonialMeta, { color: colors.muted }]} numberOfLines={1}>
-                      {item.route}
-                    </Text>
-                  </View>
-                  {item.rating > 0 ? (
-                    <View style={[styles.ratingPill, { backgroundColor: colors.softGreen }]}>
-                      <Ionicons name="star" size={12} color={colors.action} />
-                      <Text style={[styles.ratingText, { color: colors.action }]}>
-                        {item.rating.toFixed(1)}
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-                <Text style={[styles.testimonialQuote, { color: colors.dark }]} numberOfLines={5}>
-                  {item.quote}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </HomeSection>
-        ) : null}
+          <HomeHighlights
+            onExplore={() => router.push('/(customer)/(tabs)/search')}
+            onGuides={() => onChangeMode('guides')}
+            onNotifications={() => pushPath('/(customer)/(tabs)/notifications')}
+          />
+          <HomeServices mode={mode} onChange={onChangeMode} />
+          <HomeScenicHero
+            mode={mode}
+            from={from}
+            to={mode === 'hotels' ? hotelDestination : to}
+            name={user?.name}
+            duration={durationLabel}
+            liveCount={liveCount}
+            onPress={() => router.push('/(customer)/(tabs)/search')}
+          />
 
-        <HomeSection title="Why travelers choose BANJARA">
-          <TrustGrid />
-        </HomeSection>
-      </ScrollView>
-    </View>
+          {searchBlock}
+
+          {mode === 'tours' || mode === 'guides' || mode === 'restaurants' ? (
+            serviceExploreBlock
+          ) : mode === 'hotels' ? (
+            <>
+              {recentSection}
+              {renderStays('rail')}
+              {destinationsSection}
+            </>
+          ) : (
+            <>
+              {transportPanel === 'available' ? (
+                <HomeSection
+                  title="Available rides"
+
+                  actionLabel="View all"
+                  onAction={() => router.push('/(customer)/results')}
+                >
+                  {loading && modeTrips.length === 0 ? (
+                    <View style={styles.stack}>
+                      <TripCardSkeleton />
+                      <TripCardSkeleton />
+                    </View>
+                  ) : error && modeTrips.length === 0 ? (
+                    <EmptyState
+                      title="Could not load rides"
+                      message="Check your connection and try again."
+                      actionLabel="Try again"
+                      onAction={() => void refreshTrips()}
+                    />
+                  ) : modeTrips.length === 0 ? (
+                    <EmptyState
+                      title="No rides available"
+                      message="Try Customise your route or another date."
+                      actionLabel="Customise route"
+                      onAction={() => setTransportPanel('customise')}
+                    />
+                  ) : (
+                    <View style={styles.stack}>
+                      {modeTrips.slice(0, 2).map((trip) => (
+                        <HomeRideCard
+                          key={trip.id}
+                          trip={trip}
+                          saved={savedIds.includes(trip.id)}
+                          onSave={() => onSaveTrip(trip.id)}
+                          onPress={() => openTrip(trip.id)}
+                        />
+                      ))}
+                    </View>
+                  )}
+                </HomeSection>
+              ) : (
+                <>
+                  {ridesSection}
+                  {routesSection}
+                </>
+              )}
+              {destinationsSection}
+            </>
+          )}
+
+          <HomeHelp onPress={() => router.push('/(customer)/(tabs)/inbox')} />
+        </ScrollView>
+      </View>
+    </TravelDesignProvider>
   );
 }
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
   container: { flex: 1 },
   feed: {
-    paddingBottom: Spacing['4xl'],
+    paddingBottom: 24,
   },
   searchFloat: {
     marginTop: Spacing.sm,

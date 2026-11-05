@@ -22,7 +22,6 @@ import { SearchSelect } from '@/components/ui/SearchSelect';
 import { Colors } from '@/constants/colors';
 import {
   INSURANCE_COMPANY_OPTIONS,
-  OWNERSHIP_TYPE_OPTIONS,
   PRICING_METHOD_OPTIONS,
   VEHICLE_TYPE_OPTIONS,
   YES_NO_OPTIONS,
@@ -87,7 +86,6 @@ export default function ProviderTransportSetupScreen() {
   const transport = draft.transport ?? provider?.transport;
 
   const [form, setForm] = useProviderFormDraft('transport.form', {
-    businessName: transport?.businessName ?? draft.business.businessName ?? '',
     vehicleClass:
       transport?.vehicleClass ?? transport?.vehicleTypes?.[0] ?? 'van',
     ownerName:
@@ -99,9 +97,14 @@ export default function ProviderTransportSetupScreen() {
     vehicleMakeYear: transport?.vehicleMakeYear ?? '',
     engineNumber: transport?.engineNumber ?? '',
     registrationNumber: transport?.registrationNumber ?? '',
-    driverName: transport?.driverName ?? '',
-    driverPhone: transport?.driverPhone ?? '',
-    driverEmail: transport?.driverEmail ?? '',
+    driverName:
+      transport?.driverName ??
+      draft.business.ownerName ??
+      provider?.ownerName ??
+      draft.personal.name ??
+      '',
+    driverPhone: transport?.driverPhone ?? draft.business.phone ?? '',
+    driverEmail: transport?.driverEmail ?? draft.business.email ?? '',
     driverPermanentAddress: transport?.driverPermanentAddress ?? '',
     driverCnic: transport?.driverCnic ?? '',
     hasInsurance: (transport?.hasInsurance ?? '') as string,
@@ -111,8 +114,6 @@ export default function ProviderTransportSetupScreen() {
     driverExperienceYears: transport?.driverExperienceYears ?? '',
     driverLicenseNumber: transport?.driverLicenseNumber ?? '',
     driverEmergencyContact: transport?.driverEmergencyContact ?? '',
-    vehicleCount: String(transport?.vehicleCount ?? '1'),
-    ownershipType: (transport?.ownershipType ?? 'owned') as string,
     operatingCities: transport?.operatingCities?.join(', ') ?? '',
     description: transport?.description ?? '',
     pricingMethod: (transport?.pricingMethod ?? 'per_seat') as string,
@@ -239,17 +240,17 @@ export default function ProviderTransportSetupScreen() {
   const onContinue = async () => {
     if (removingImage || saving || advancing || Boolean(uploading)) return;
     if (!required(form.vehicleClass, 'Vehicle class')) return;
-    if (!required(form.ownerName, 'Owner name')) return;
+    if (!required(form.ownerName, 'Vehicle registered in the name of')) return;
     if (!required(form.vehicleModel, 'Vehicle model')) return;
     if (!required(form.vehicleMakeYear, "Vehicle's make year")) return;
     if (!required(form.engineNumber, "Vehicle's engine number")) return;
     if (!required(form.registrationNumber, "Vehicle's registration number"))
       return;
-    if (!required(form.driverName, 'Driver name')) return;
-    if (!required(form.driverPhone, "Driver's phone number")) return;
-    if (!required(form.driverPermanentAddress, "Driver's permanent address"))
+    if (!required(form.driverName, 'Your name')) return;
+    if (!required(form.driverPhone, 'Your phone number')) return;
+    if (!required(form.driverPermanentAddress, 'Your permanent address'))
       return;
-    if (!required(form.driverCnic, "Driver's CNIC")) return;
+    if (!required(form.driverCnic, 'Your CNIC')) return;
     if (!form.hasInsurance) {
       Alert.alert(
         'Car insurance',
@@ -260,15 +261,15 @@ export default function ProviderTransportSetupScreen() {
     if (form.hasInsurance === 'no') {
       Alert.alert(
         'Insurance required',
-        'Valid car insurance is mandatory. Transporters without insurance cannot be approved on BANJARA.',
+        'Valid car insurance is mandatory. Drivers without insurance cannot be approved on BANJARA.',
       );
       return;
     }
     if (!required(form.insuranceCompany, 'Insurance company')) return;
     if (!required(form.insuranceNumber, 'Insurance number')) return;
     if (!required(form.insuranceYear, 'Insurance year')) return;
-    if (!required(form.driverExperienceYears, "Driver's experience")) return;
-    if (!required(form.driverLicenseNumber, "Driver's license number")) return;
+    if (!required(form.driverExperienceYears, 'Your driving experience')) return;
+    if (!required(form.driverLicenseNumber, 'Your driving licence number')) return;
     if (!vehicleFront[0] || !vehicleBack[0]) {
       Alert.alert(
         'Vehicle photos',
@@ -279,7 +280,7 @@ export default function ProviderTransportSetupScreen() {
     if (
       !required(
         form.driverEmergencyContact,
-        "Driver's emergency contact number",
+        'Emergency contact number',
       )
     )
       return;
@@ -288,8 +289,8 @@ export default function ProviderTransportSetupScreen() {
       ...form,
       vehicleClass: form.vehicleClass as never,
       hasInsurance: form.hasInsurance as never,
-      ownershipType: form.ownershipType as never,
-      vehicleCount: Number(form.vehicleCount),
+      ownershipType: 'owned',
+      vehicleCount: 1,
       operatingCities: [],
       pricingMethod: form.pricingMethod as never,
       priceAmount: undefined,
@@ -299,10 +300,6 @@ export default function ProviderTransportSetupScreen() {
     });
     if (verificationError) {
       Alert.alert('Check vehicle details', verificationError);
-      return;
-    }
-    if (!/^\d+$/.test(form.vehicleCount) || Number(form.vehicleCount) < 1) {
-      Alert.alert('Vehicle count', 'Enter a positive whole number.');
       return;
     }
 
@@ -343,7 +340,8 @@ export default function ProviderTransportSetupScreen() {
     ];
 
     setTransport({
-      businessName: form.businessName.trim() || form.ownerName.trim(),
+      // One local driver with their own vehicle: the driver's name is the listing name.
+      businessName: form.driverName.trim(),
       vehicleTypes: [form.vehicleClass],
       vehicleClass: form.vehicleClass as
         | 'car'
@@ -352,9 +350,8 @@ export default function ProviderTransportSetupScreen() {
         | 'van'
         | 'mini_bus'
         | 'bus',
-      vehicleCount: Number(form.vehicleCount) || 1,
-      ownershipType:
-        (form.ownershipType as 'owned' | 'leased' | 'mixed') || 'owned',
+      vehicleCount: 1,
+      ownershipType: 'owned',
       operatingCities,
       operatingRoutes: routeStops.operatingRoutes,
       pickupLocations: routeStops.pickupLocations,
@@ -419,7 +416,7 @@ export default function ProviderTransportSetupScreen() {
   return (
     <View style={styles.container}>
       <Header
-        title="Transporter registration"
+        title="Driver registration"
         showBack
         fallbackHref={
           isEditing ? PROVIDER_SERVICE_TAB : (ONBOARDING_LOCATION as never)
@@ -434,13 +431,14 @@ export default function ProviderTransportSetupScreen() {
         }}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.heading}>Vehicle & driver verification</Text>
+        <Text style={styles.heading}>You and your vehicle</Text>
         <Text style={styles.sub}>
-          Fields marked mandatory are required for BANJARA verification.
+          You drive your own vehicle on every ride, so register the one vehicle you drive.
+          Fields marked * are required for BANJARA verification.
           Applications without car insurance are rejected.
         </Text>
 
-        <Text style={styles.section}>Vehicle</Text>
+        <Text style={styles.section}>Your vehicle</Text>
         <SearchSelect
           label="Vehicle class"
           placeholder="Car, jeep, SUV, van, mini bus, bus"
@@ -451,7 +449,7 @@ export default function ProviderTransportSetupScreen() {
           onChange={(vehicleClass) => patch('vehicleClass', vehicleClass)}
         />
         <Input
-          label="Owner name (registered in name of)"
+          label="Vehicle registered in the name of"
           value={form.ownerName}
           onChangeText={(v) => patch('ownerName', v)}
         />
@@ -480,52 +478,52 @@ export default function ProviderTransportSetupScreen() {
           autoCapitalize="characters"
         />
 
-        <Text style={styles.section}>Driver</Text>
+        <Text style={styles.section}>About you</Text>
         <Input
-          label="Driver name"
+          label="Your name *"
           value={form.driverName}
           onChangeText={(v) => patch('driverName', v)}
         />
         <Input
-          label="Driver's phone number *"
+          label="Your phone number *"
           keyboardType="phone-pad"
           value={form.driverPhone}
           onChangeText={(v) => patch('driverPhone', v)}
         />
         <Input
-          label="Driver's email address (optional)"
+          label="Your email address (optional)"
           keyboardType="email-address"
           autoCapitalize="none"
           value={form.driverEmail}
           onChangeText={(v) => patch('driverEmail', v)}
         />
         <Input
-          label="Driver's permanent address *"
+          label="Your permanent address *"
           value={form.driverPermanentAddress}
           onChangeText={(v) => patch('driverPermanentAddress', v)}
           multiline
         />
         <Input
-          label="Driver's CNIC *"
+          label="Your CNIC *"
           value={form.driverCnic}
           onChangeText={(v) => patch('driverCnic', v)}
           keyboardType="number-pad"
           placeholder="xxxxx-xxxxxxx-x"
         />
         <Input
-          label="Driver's experience (years) *"
+          label="Driving experience (years) *"
           keyboardType="number-pad"
           value={form.driverExperienceYears}
           onChangeText={(v) => patch('driverExperienceYears', v)}
         />
         <Input
-          label="Driver's license number *"
+          label="Driving licence number *"
           value={form.driverLicenseNumber}
           onChangeText={(v) => patch('driverLicenseNumber', v)}
           autoCapitalize="characters"
         />
         <Input
-          label="Driver's emergency contact number *"
+          label="Emergency contact number *"
           keyboardType="phone-pad"
           value={form.driverEmergencyContact}
           onChangeText={(v) => patch('driverEmergencyContact', v)}
@@ -543,7 +541,7 @@ export default function ProviderTransportSetupScreen() {
             if (hasInsurance === 'no') {
               Alert.alert(
                 'Insurance required',
-                'If you select No, this transporter application will be rejected.',
+                'If you select No, this driver application will be rejected.',
               );
             }
             patch('hasInsurance', hasInsurance);
@@ -601,7 +599,7 @@ export default function ProviderTransportSetupScreen() {
         <ImagePickerField
           disabled={saving || Boolean(uploading) || removingImage}
           onRemovingChange={setRemovingImage}
-          label="Driver's photo"
+          label="Your photo"
           urls={driverPhoto}
           max={1}
           uploading={uploading === 'driver'}
@@ -609,27 +607,7 @@ export default function ProviderTransportSetupScreen() {
           onRemove={() => setDriverPhoto([])}
         />
 
-        <Text style={styles.section}>Service coverage (optional now)</Text>
-        <Input
-          label="Transport business name"
-          value={form.businessName}
-          onChangeText={(v) => patch('businessName', v)}
-        />
-        <Input
-          label="Number of vehicles"
-          keyboardType="number-pad"
-          value={form.vehicleCount}
-          onChangeText={(v) => patch('vehicleCount', v)}
-        />
-        <SearchSelect
-          label="Ownership type"
-          placeholder="Choose ownership"
-          value={form.ownershipType}
-          options={OWNERSHIP_TYPE_OPTIONS}
-          searchable={false}
-          leftIcon="key-outline"
-          onChange={(ownershipType) => patch('ownershipType', ownershipType)}
-        />
+        <Text style={styles.section}>Where you drive (optional now)</Text>
         <LocationPinField
           label="Operating cities"
           value={form.operatingCities}

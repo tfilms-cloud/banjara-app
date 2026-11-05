@@ -1,6 +1,7 @@
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -10,7 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Colors } from '@/constants/colors';
+import { usePresentationColors as useBookingColors } from '@/components/ui/TravelDesignProvider';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Fonts, Typography } from '@/constants/typography';
 import { getApiErrorMessage } from '@/services/apiError';
@@ -27,7 +28,9 @@ type Props = {
 };
 
 export function PaymentChat({ paymentId, myRole, compact, onComposerFocus }: Props) {
-  const [messages, setMessages] = useState<p2p.PaymentChatMessage[]>([]);
+  const Colors = useBookingColors();
+  const styles = makeStyles(Colors);
+  const [messages, setMessages] = useBackendState<p2p.PaymentChatMessage[]>([]);
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -173,7 +176,7 @@ export function PaymentChat({ paymentId, myRole, compact, onComposerFocus }: Pro
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(Colors: ReturnType<typeof useBookingColors>) { return StyleSheet.create({
   wrap: {
     backgroundColor: Colors.card,
     borderRadius: Radius.xl,
@@ -240,4 +243,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: Colors.primary,
   },
-});
+}); }

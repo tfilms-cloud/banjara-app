@@ -1,3 +1,5 @@
+import { useBackendFocusEffect as useFocusEffect } from '@/hooks/useBackendFocusEffect';
+import { useBackendState } from '@/hooks/useBackendData';
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useMemo, useState } from 'react';
 import {
@@ -10,7 +12,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PayoutChannelIcon } from '@/components/payments/PayoutChannelIcon';
 import { Badge } from '@/components/ui/Badge';
@@ -37,7 +39,7 @@ const PROVIDER_CHANNELS = PAYOUT_CHANNEL_OPTIONS.filter((c) => c.id !== 'other')
 
 export default function ProviderPaymentAccountsScreen() {
   const insets = useSafeAreaInsets();
-  const [accounts, setAccounts] = useState<p2p.ProviderPaymentAccount[]>([]);
+  const [accounts, setAccounts] = useBackendState<p2p.ProviderPaymentAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);

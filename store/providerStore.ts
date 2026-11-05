@@ -115,6 +115,12 @@ function emptyLists() {
   };
 }
 
+export function clearProviderBackendData() {
+  ++profileRequestVersion;
+  dashboardRefreshInFlight = null;
+  useProviderStore.setState({ provider: null, profileLoadedFor: null, ...emptyLists(), loading: false });
+}
+
 export const useProviderStore = create<ProviderState>()(
   persist(
     (set, get) => ({

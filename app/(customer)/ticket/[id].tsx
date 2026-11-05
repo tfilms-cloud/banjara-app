@@ -1,5 +1,6 @@
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DigitalTicket } from '@/components/ticket/DigitalTicket';
@@ -27,9 +28,9 @@ export default function TicketScreen() {
   const lastBooking = useBookingStore((state) => state.lastBooking);
   const selectedTrip = useBookingStore((state) => state.selectedTrip);
   const selectedPickup = useBookingStore((state) => state.selectedPickup);
-  const [trip, setTrip] = useState<TripWithDetails | null>(selectedTrip);
-  const [pickup, setPickup] = useState<PickupPoint | null>(selectedPickup);
-  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [trip, setTrip] = useBackendState<TripWithDetails | null>(selectedTrip, null);
+  const [pickup, setPickup] = useBackendState<PickupPoint | null>(selectedPickup, null);
+  const [qrCode, setQrCode] = useBackendState<string | null>(null);
   const [offlineSaved, setOfflineSaved] = useState(false);
   const [offlineLoading, setOfflineLoading] = useState(false);
 

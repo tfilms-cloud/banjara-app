@@ -64,6 +64,7 @@ export interface HotelRoom {
   amenities: HotelAmenity[];
   breakfastIncluded: boolean;
   freeCancellation: boolean;
+  cancellationPolicy?: string;
   pricePerNight: number;
   availableRooms: number;
   description: string;

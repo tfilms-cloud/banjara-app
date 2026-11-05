@@ -1,5 +1,7 @@
+import { useBackendFocusEffect as useFocusEffect } from '@/hooks/useBackendFocusEffect';
+import { useBackendState } from '@/hooks/useBackendData';
 import { Image } from 'expo-image';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,7 +26,7 @@ export default function ProviderHotelScreen() {
   const provider = useProviderStore((s) => s.provider);
   const isGuestStay = (provider?.services ?? []).some(isGuestHouseService);
   const stayNoun = isGuestStay ? 'guest house' : 'hotel';
-  const [hotel, setHotel] = useState<Hotel | null>(null);
+  const [hotel, setHotel] = useBackendState<Hotel | null>(null);
   const [loadingHotel, setLoadingHotel] = useState(true);
 
   useFocusEffect(

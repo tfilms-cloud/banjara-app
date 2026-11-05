@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { backendAvailability } from '@/services/backendAvailability';
 import * as messageService from '@/services/message.service';
 import { mapMessage } from '@/services/message.service';
 import type { AnyRecord } from '@/services/mappers';
@@ -167,6 +168,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   listenersBound: false,
 
   connect: async () => {
+    if (backendAvailability.getSnapshot() !== 'online') return;
     set({ connectionStatus: 'connecting' });
     const socket = await socketService.connectSocket();
     if (!socket) {
@@ -457,6 +459,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   send: async (text, opts) => {
+    if (backendAvailability.getSnapshot() !== 'online') throw new Error('Messaging is temporarily unavailable.');
     const trimmed = text.trim();
     const attachments = opts?.attachments ?? [];
     const type = opts?.type ?? (attachments.length ? 'image' : 'text');

@@ -5,6 +5,9 @@ import { Radius, Spacing } from '@/constants/spacing';
 import { Typography } from '@/constants/typography';
 import type { PickupPoint } from '@/types/route';
 import { formatTime } from '@/utils/formatTime';
+import { useHomeDesign } from '@/constants/homeDesign';
+import { useTravelPresentation } from '@/components/ui/TravelDesignProvider';
+import { Fonts } from '@/constants/typography';
 
 interface PickupCardProps {
   pickup: PickupPoint;
@@ -14,6 +17,92 @@ interface PickupCardProps {
 }
 
 export function PickupCard({ pickup, selected, onPress, index }: PickupCardProps) {
+  const travel = useTravelPresentation();
+  const theme = useHomeDesign();
+  if (travel)
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="radio"
+        accessibilityLabel={`${pickup.name}${pickup.time ? `, ${formatTime(pickup.time)}` : ''}`}
+        accessibilityState={{ checked: Boolean(selected), selected: Boolean(selected) }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          gap: 10,
+          borderRadius: 18,
+          borderWidth: 1,
+          borderColor: selected ? theme.primary : theme.border,
+          backgroundColor: selected ? theme.soft : theme.surface,
+          padding: 14,
+        }}
+      >
+        <View
+          style={{
+            width: 16,
+            height: 16,
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: selected ? theme.primary : theme.muted,
+            marginTop: 2,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {selected ? (
+            <View
+              style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: theme.action }}
+            />
+          ) : null}
+        </View>
+        <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+            <Text
+              style={{
+                flex: 1,
+                fontFamily: Fonts.bodySemiBold,
+                fontSize: 12,
+                lineHeight: 18,
+                color: theme.text,
+              }}
+            >
+              {pickup.name}
+            </Text>
+            {pickup.time ? (
+              <Text
+                style={{
+                  fontFamily: Fonts.bodyMedium,
+                  fontSize: 10,
+                  lineHeight: 18,
+                  color: selected ? theme.primary : theme.muted,
+                }}
+              >
+                {formatTime(pickup.time)}
+              </Text>
+            ) : null}
+          </View>
+          <Text
+            style={{ fontFamily: Fonts.body, fontSize: 11, lineHeight: 17, color: theme.muted }}
+          >
+            {pickup.address || 'Pickup location'}
+          </Text>
+          <Text
+            style={{
+              alignSelf: 'flex-start',
+              borderRadius: 5,
+              paddingHorizontal: 6,
+              paddingVertical: 2,
+              fontFamily: Fonts.bodyMedium,
+              fontSize: 10,
+              color: theme.primary,
+              backgroundColor: selected ? theme.surface : theme.field,
+            }}
+          >
+            {pickup.distanceKm > 0 ? `${pickup.distanceKm.toFixed(1)} km away` : 'Boarding point'}
+          </Text>
+        </View>
+      </Pressable>
+    );
   return (
     <Pressable
       onPress={onPress}
@@ -25,11 +114,7 @@ export function PickupCard({ pickup, selected, onPress, index }: PickupCardProps
         {index != null ? (
           <Text style={[styles.index, selected && styles.indexSelected]}>{index}</Text>
         ) : (
-          <Ionicons
-            name="location"
-            size={18}
-            color={selected ? Colors.white : Colors.action}
-          />
+          <Ionicons name="location" size={18} color={selected ? Colors.white : Colors.action} />
         )}
       </View>
       <View style={{ flex: 1 }}>

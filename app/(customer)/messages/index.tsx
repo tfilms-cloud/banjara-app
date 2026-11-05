@@ -1,10 +1,13 @@
 import { ConversationListScreen } from '@/components/chat/ConversationListScreen';
+import { TravelDesignProvider } from '@/components/ui/TravelDesignProvider';
 
 export default function CustomerMessagesScreen() {
   return (
-    <ConversationListScreen
-      threadBasePath="/(customer)/messages"
-      backHref="/(customer)/(tabs)/profile"
-    />
+    <TravelDesignProvider>
+      <ConversationListScreen
+        threadBasePath="/(customer)/messages"
+        backHref="/(customer)/(tabs)/profile"
+      />
+    </TravelDesignProvider>
   );
 }

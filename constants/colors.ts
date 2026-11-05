@@ -105,7 +105,7 @@ export const LightColors: ColorTokens = {
   muted: '#57534E',
   mutedLight: '#78716C',
 
-  background: '#F8FAFC',
+  background: '#FFFFFF',
   surfaceSecondary: '#F1F5F9',
   elevated: '#FFFFFF',
   card: '#FFFFFF',

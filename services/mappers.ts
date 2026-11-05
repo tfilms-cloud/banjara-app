@@ -1,4 +1,4 @@
-import { serviceLabel, normalizeServiceKey } from '@/constants/providerOptions';
+import { isTransportService, serviceLabel, normalizeServiceKey } from '@/constants/providerOptions';
 import type { AppNotification, Booking, BookingStatus, PaymentMethod, PaymentStatus } from '@/types/booking';
 import type {
   Hotel,
@@ -536,10 +536,14 @@ function mapAgency(provider: AnyRecord | undefined, fallbackId = ''): Agency {
   const description =
     String(p.description ?? '').trim() ||
     String(transport?.description ?? '').trim();
+  // Rides are offered by individual local drivers: show the driver, not a business name.
+  const isDriver = services.some(isTransportService) || Boolean(transport?.driverName);
+  const driverName =
+    String(transport?.driverName ?? '').trim() || String(p.ownerName ?? '').trim();
 
   return {
     id: idOf(p) || fallbackId,
-    name: String(p.businessName ?? p.name ?? 'Provider'),
+    name: (isDriver && driverName) || String(p.businessName ?? p.name ?? 'Provider'),
     logo: mediaUrl(p.logo) ?? '',
     rating: Number(p.rating ?? 0),
     reviewCount: Number(p.totalReviews ?? p.reviewCount ?? 0),
@@ -699,6 +703,10 @@ export function mapTrip(raw: AnyRecord): TripWithDetails {
     ...trip,
     agency: mapAgency(provider, trip.agencyId),
     vehicleType: mapVehicleType(vehicle?.type),
+    vehicleCategory:
+      String(
+        asRecord(vehicle?.verificationDetails)?.vehicleClass || vehicle?.type || '',
+      ).trim() || undefined,
     vehicleName: String(vehicle?.name ?? 'Vehicle'),
     vehicleBrand: String(vehicle?.brand ?? '').trim() || undefined,
     vehicleModel: String(vehicle?.vehicleModel ?? '').trim() || undefined,
@@ -879,6 +887,7 @@ export function mapHotelRoom(raw: AnyRecord): HotelRoom {
     freeCancellation: String(raw.cancellationPolicy ?? '')
       .toLowerCase()
       .includes('free cancellation'),
+    cancellationPolicy: String(raw.cancellationPolicy ?? '').trim() || undefined,
     pricePerNight: Number(raw.pricePerNight ?? 0),
     availableRooms: Number(raw.availableRooms ?? raw.totalRooms ?? 0),
     description: String(raw.description ?? ''),

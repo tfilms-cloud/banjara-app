@@ -1,12 +1,17 @@
 import { Calendar, ChevronRight, MapPin, Moon, Search, Users } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
 import { DatePickerModal } from '@/components/ui/DatePickerModal';
 import { PlaceAutocompleteSelect } from '@/components/ui/PlaceAutocompleteSelect';
-import { Colors, useThemeColors } from '@/constants/colors';
+import { Colors } from '@/constants/colors';
+import {
+  usePresentationColors as useThemeColors,
+  useTravelPresentation,
+} from '@/components/ui/TravelDesignProvider';
+import { TravelSelectField, TravelSearchButton } from '@/components/ui/TravelForm';
 import { POPULAR_DESTINATIONS } from '@/constants/destinations';
 import { Radius, Shadows, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
@@ -22,6 +27,7 @@ interface HotelSearchCardProps {
   showGuestControls?: boolean;
   embedded?: boolean;
   showCta?: boolean;
+  footer?: ReactNode;
 }
 
 function Field({
@@ -38,11 +44,23 @@ function Field({
   compact?: boolean;
 }) {
   const colors = useThemeColors();
+  const travel = useTravelPresentation();
   const scale = useSharedValue(1);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
+
+  if (travel)
+    return (
+      <TravelSelectField
+        icon={icon}
+        label={label}
+        value={value || 'Select'}
+        onPress={onPress}
+        compact={compact}
+      />
+    );
 
   return (
     <AnimatedPressable
@@ -62,7 +80,9 @@ function Field({
       accessibilityRole="button"
       accessibilityLabel={`${label}: ${value}`}
     >
-      <View style={[styles.fieldIcon, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View
+        style={[styles.fieldIcon, { backgroundColor: colors.card, borderColor: colors.border }]}
+      >
         {icon}
       </View>
       <View style={styles.fieldCopy}>
@@ -76,9 +96,15 @@ function Field({
   );
 }
 
-export function HotelSearchCard({ onSearch, embedded = false, showCta = true }: HotelSearchCardProps) {
+export function HotelSearchCard({
+  onSearch,
+  embedded = false,
+  showCta = true,
+  footer,
+}: HotelSearchCardProps) {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
+  const travel = useTravelPresentation();
   const {
     destination,
     checkIn,
@@ -98,10 +124,7 @@ export function HotelSearchCard({ onSearch, embedded = false, showCta = true }: 
   const [showGuests, setShowGuests] = useState(false);
   const [dateMode, setDateMode] = useState<'in' | 'out' | null>(null);
 
-  const citySuggestions = useMemo(
-    () => POPULAR_DESTINATIONS.map((dest) => dest.name),
-    []
-  );
+  const citySuggestions = useMemo(() => POPULAR_DESTINATIONS.map((dest) => dest.name), []);
 
   const nights = calculateNights(checkIn, checkOut);
   const guestLabel =
@@ -115,18 +138,28 @@ export function HotelSearchCard({ onSearch, embedded = false, showCta = true }: 
         styles.card,
         embedded && styles.embedded,
         { backgroundColor: colors.card, borderColor: colors.border },
+        travel && {
+          padding: 16,
+          gap: 12,
+          borderRadius: 28,
+          shadowOpacity: 0.06,
+          shadowRadius: 14,
+          elevation: 2,
+        },
       ]}
     >
-      <View style={styles.hintRow}>
-        <View style={[styles.hintDot, { backgroundColor: colors.primary }]} />
-        <Text style={[styles.intentHint, { color: colors.muted }]}>
-          Stay when you arrive · place, dates & rooms
-        </Text>
-      </View>
+      {!travel ? (
+        <View style={styles.hintRow}>
+          <View style={[styles.hintDot, { backgroundColor: colors.primary }]} />
+          <Text style={[styles.intentHint, { color: colors.muted }]}>
+            Stay when you arrive · place, dates & rooms
+          </Text>
+        </View>
+      ) : null}
 
       <Field
         icon={<MapPin size={16} color={colors.primary} strokeWidth={2} />}
-        label="Where are you going?"
+        label={travel ? 'Destination' : 'Where are you going?'}
         value={destination || 'Search destination'}
         onPress={() => setShowDestination(true)}
       />
@@ -160,7 +193,9 @@ export function HotelSearchCard({ onSearch, embedded = false, showCta = true }: 
             {nights} night{nights === 1 ? '' : 's'}
           </Text>
         </View>
-        <Text style={[styles.nightsSub, { color: colors.mutedLight }]}>Stay length from your dates</Text>
+        <Text style={[styles.nightsSub, { color: colors.mutedLight }]}>
+          Stay length from your dates
+        </Text>
       </View>
 
       <Field
@@ -171,7 +206,11 @@ export function HotelSearchCard({ onSearch, embedded = false, showCta = true }: 
         onPress={() => setShowGuests(true)}
       />
 
-      {showCta ? (
+      {footer}
+
+      {showCta && travel ? (
+        <TravelSearchButton title="Search stays" onPress={onSearch} />
+      ) : showCta ? (
         <Button
           title="Search hotels"
           onPress={onSearch}

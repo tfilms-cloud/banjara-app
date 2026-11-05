@@ -1,23 +1,13 @@
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  FlatList,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BookingCard } from '@/components/booking/BookingCard';
 import { GuideBookingCard } from '@/components/booking/GuideBookingCard';
 import { PackageBookingCard } from '@/components/booking/PackageBookingCard';
 import { HotelBookingCard } from '@/components/hotels/HotelBookingCard';
-import { ScreenHeader } from '@/components/navigation/ScreenHeader';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/EmptyState';
-import { Colors } from '@/constants/colors';
-import { Radius, Spacing } from '@/constants/spacing';
-import { Fonts } from '@/constants/typography';
 import { useBookings } from '@/hooks/useBooking';
 import { useHotelBookings } from '@/hooks/useHotels';
 import * as hotelService from '@/services/hotelService';
@@ -31,23 +21,33 @@ import type { PackageBooking } from '@/types/tourBooking';
 import type { TripWithDetails } from '@/types/trip';
 import { pushPath } from '@/utils/navigation';
 
-type Category = 'all' | 'transport' | 'hotels' | 'tours' | 'guides';
-type StatusTab = 'upcoming' | 'completed' | 'cancelled';
-
-type UnifiedItem =
-  | { kind: 'transport'; data: Booking }
-  | { kind: 'hotel'; data: HotelBooking }
-  | { kind: 'tour'; data: PackageBooking }
-  | { kind: 'guide'; data: GuideBooking };
-
-function matchStatus(status: string, tab: StatusTab) {
-  if (tab === 'upcoming') {
-    return status === 'upcoming' || status === 'confirmed' || status === 'pending';
-  }
-  return status === tab;
-}
+import { TravelDesignProvider } from '@/components/ui/TravelDesignProvider';
+import { BookingHelp, TravelBookingsLayout } from '@/components/booking/BookingsPresentation';
+import { useHomeDesign } from '@/constants/homeDesign';
+import { useAuthStore } from '@/store/authStore';
+import { useUserStore } from '@/store/userStore';
+import {
+  bookingMatchesQuery,
+  filterBookingItems,
+  matchesBookingStatus,
+  type BookingCategory as Category,
+  type BookingStatusTab as StatusTab,
+  type UnifiedBookingItem,
+} from '@/utils/bookingPresentation';
 
 export default function BookingsScreen() {
+  return (
+    <TravelDesignProvider>
+      <BookingsContent />
+    </TravelDesignProvider>
+  );
+}
+function BookingsContent() {
+  const theme = useHomeDesign();
+  const user = useAuthStore((state) => state.user);
+  const notifications = useUserStore((state) => state.notifications);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [query, setQuery] = useState('');
   const insets = useSafeAreaInsets();
   const { bookings, loading, error, refresh } = useBookings();
   const {
@@ -56,10 +56,10 @@ export default function BookingsScreen() {
     error: hotelError,
     refresh: refreshHotels,
   } = useHotelBookings();
-  const [tourBookings, setTourBookings] = useState<PackageBooking[]>([]);
+  const [tourBookings, setTourBookings] = useBackendState<PackageBooking[]>([]);
   const [tourLoading, setTourLoading] = useState(true);
   const [tourError, setTourError] = useState<string | null>(null);
-  const [guideBookings, setGuideBookings] = useState<GuideBooking[]>([]);
+  const [guideBookings, setGuideBookings] = useBackendState<GuideBooking[]>([]);
   const [guideLoading, setGuideLoading] = useState(true);
   const [guideError, setGuideError] = useState<string | null>(null);
   const [category, setCategory] = useState<Category>('all');
@@ -99,72 +99,46 @@ export default function BookingsScreen() {
     void refreshGuides();
   }, [refreshTours, refreshGuides]);
 
-  const transportBookings = useMemo(() => {
-    if (status === 'upcoming') {
-      return bookings.filter(
-        (item) =>
-          item.status === 'upcoming' ||
-          item.status === 'confirmed' ||
-          item.status === 'pending'
-      );
-    }
-    return bookings.filter((item) => item.status === status);
-  }, [bookings, status]);
-
-  const items = useMemo(() => {
-    const transport: UnifiedItem[] = (
-      category === 'hotels' || category === 'tours' || category === 'guides'
-        ? []
-        : transportBookings
-    ).map((data) => ({ kind: 'transport', data }));
-
-    const hotels: UnifiedItem[] = (
-      category === 'transport' || category === 'tours' || category === 'guides'
-        ? []
-        : hotelBookings.filter((item) => matchStatus(item.status, status))
-    ).map((data) => ({ kind: 'hotel', data }));
-
-    const tours: UnifiedItem[] = (
-      category === 'transport' || category === 'hotels' || category === 'guides'
-        ? []
-        : tourBookings.filter((item) => matchStatus(item.status, status))
-    ).map((data) => ({ kind: 'tour', data }));
-
-    const guides: UnifiedItem[] = (
-      category === 'transport' || category === 'hotels' || category === 'tours'
-        ? []
-        : guideBookings.filter((item) => matchStatus(item.status, status))
-    ).map((data) => ({ kind: 'guide', data }));
-
-    return [...transport, ...hotels, ...tours, ...guides].sort(
-      (a, b) =>
-        new Date(b.data.createdAt).getTime() - new Date(a.data.createdAt).getTime()
-    );
-  }, [category, guideBookings, hotelBookings, status, tourBookings, transportBookings]);
+  const allItems = useMemo<UnifiedBookingItem[]>(
+    () => [
+      ...bookings.map((data) => ({ kind: 'transport' as const, data })),
+      ...hotelBookings.map((data) => ({ kind: 'hotel' as const, data })),
+      ...tourBookings.map((data) => ({ kind: 'tour' as const, data })),
+      ...guideBookings.map((data) => ({ kind: 'guide' as const, data })),
+    ],
+    [bookings, hotelBookings, tourBookings, guideBookings],
+  );
+  const items = useMemo(
+    () => filterBookingItems(allItems, category, status),
+    [allItems, category, status],
+  );
 
   useEffect(() => {
     let cancelled = false;
 
     const tripIds = Array.from(
       new Set(
-        items.filter((i) => i.kind === 'transport').map((i) => i.data.tripId).filter(Boolean)
-      )
+        items
+          .filter((i) => i.kind === 'transport')
+          .map((i) => i.data.tripId)
+          .filter(Boolean),
+      ),
     );
     const hotelIds = Array.from(
       new Set(
         items
           .filter((i) => i.kind === 'hotel')
           .map((i) => (i.data as HotelBooking).hotelId)
-          .filter(Boolean)
-      )
+          .filter(Boolean),
+      ),
     );
     const roomIds = Array.from(
       new Set(
         items
           .filter((i) => i.kind === 'hotel')
           .map((i) => (i.data as HotelBooking).roomId)
-          .filter(Boolean)
-      )
+          .filter(Boolean),
+      ),
     );
 
     const missingTrips = tripIds.filter((id) => !(id in tripMap));
@@ -175,13 +149,13 @@ export default function BookingsScreen() {
     void (async () => {
       const [trips, hotels, rooms] = await Promise.all([
         Promise.all(
-          missingTrips.map(async (id) => [id, await tripService.getTripById(id)] as const)
+          missingTrips.map(async (id) => [id, await tripService.getTripById(id)] as const),
         ),
         Promise.all(
-          missingHotels.map(async (id) => [id, await hotelService.getHotelById(id)] as const)
+          missingHotels.map(async (id) => [id, await hotelService.getHotelById(id)] as const),
         ),
         Promise.all(
-          missingRooms.map(async (id) => [id, await hotelService.getRoomById(id)] as const)
+          missingRooms.map(async (id) => [id, await hotelService.getRoomById(id)] as const),
         ),
       ]);
       if (cancelled) return;
@@ -201,183 +175,171 @@ export default function BookingsScreen() {
     };
   }, [items, tripMap, hotelMap, roomMap]);
 
-  const isLoading = loading || hotelLoading || tourLoading || guideLoading;
-  const combinedError = error || hotelError || tourError || guideError;
-
+  const visibleItems = useMemo(
+    () =>
+      items.filter((item) =>
+        bookingMatchesQuery(item, query, {
+          trip: item.kind === 'transport' ? tripMap[item.data.tripId] : undefined,
+          hotel: item.kind === 'hotel' ? hotelMap[item.data.hotelId] : undefined,
+          room: item.kind === 'hotel' ? roomMap[item.data.roomId] : undefined,
+        }),
+      ),
+    [items, query, tripMap, hotelMap, roomMap],
+  );
+  const activeCount = allItems.filter((item) =>
+    matchesBookingStatus(item.data.status, 'upcoming'),
+  ).length;
+  const isLoading =
+    category === 'all'
+      ? loading || hotelLoading || tourLoading || guideLoading
+      : category === 'transport'
+        ? loading
+        : category === 'hotels'
+          ? hotelLoading
+          : category === 'tours'
+            ? tourLoading
+            : guideLoading;
+  const combinedError =
+    category === 'all'
+      ? error || hotelError || tourError || guideError
+      : category === 'transport'
+        ? error
+        : category === 'hotels'
+          ? hotelError
+          : category === 'tours'
+            ? tourError
+            : guideError;
   const refreshAll = () => {
     void refresh();
     void refreshHotels();
     void refreshTours();
     void refreshGuides();
   };
-
-  if (!isLoading && combinedError && items.length === 0) {
-    return <ErrorState message={combinedError} onRetry={refreshAll} />;
-  }
-
   return (
-    <View style={styles.root}>
-      <ScreenHeader title="Bookings" />
-
-      <View style={styles.content}>
-        <View style={styles.segment}>
-          {(
-            [
-              { key: 'upcoming', label: 'Upcoming' },
-              { key: 'completed', label: 'Completed' },
-              { key: 'cancelled', label: 'Cancelled' },
-            ] as const
-          ).map((item) => (
-            <Pressable
-              key={item.key}
-              style={[styles.segmentItem, status === item.key && styles.segmentItemActive]}
-              onPress={() => setStatus(item.key)}
-            >
-              <Text
-                style={[
-                  styles.segmentText,
-                  status === item.key && styles.segmentTextActive,
-                ]}
-              >
-                {item.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={styles.chips}>
-          {(
-            [
-              { key: 'all', label: 'All' },
-              { key: 'transport', label: 'Transport' },
-              { key: 'hotels', label: 'Hotels' },
-              { key: 'tours', label: 'Tours' },
-              { key: 'guides', label: 'Guides' },
-            ] as const
-          ).map((item) => (
-            <Pressable
-              key={item.key}
-              style={[styles.chip, category === item.key && styles.chipActive]}
-              onPress={() => setCategory(item.key)}
-            >
-              <Text style={[styles.chipText, category === item.key && styles.chipTextActive]}>
-                {item.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {isLoading ? (
-          <LoadingState title="Loading bookings..." />
-        ) : (
-          <FlatList
-            data={items}
-            keyExtractor={(item) => `${item.kind}-${item.data.id}`}
-            contentContainerStyle={{
-              paddingBottom: insets.bottom + 24,
-              gap: Spacing.md,
-              flexGrow: 1,
-            }}
-            refreshControl={
-              <RefreshControl refreshing={isLoading} onRefresh={refreshAll} />
-            }
-            ListEmptyComponent={
-              <EmptyState
-                title="No bookings yet"
-                message="Your transport, hotel, tour, and guide bookings will appear here."
-                icon="ticket-outline"
-              />
-            }
-            renderItem={({ item }) => {
-              if (item.kind === 'transport') {
-                return (
-                  <BookingCard
-                    booking={item.data}
-                    trip={tripMap[item.data.tripId] ?? null}
-                    onPress={() => router.push(`/(customer)/booking-details/${item.data.id}`)}
-                    onViewTicket={() => router.push(`/(customer)/ticket/${item.data.id}`)}
-                  />
-                );
-              }
-              if (item.kind === 'tour') {
-                return (
-                  <PackageBookingCard
-                    booking={item.data}
-                    onPress={() => pushPath(`/(customer)/agency/${item.data.providerId}`)}
-                  />
-                );
-              }
-              if (item.kind === 'guide') {
-                return (
-                  <GuideBookingCard
-                    booking={item.data}
-                    onPress={() => pushPath(`/(customer)/guides/${item.data.providerId}`)}
-                  />
-                );
-              }
-              return (
-                <HotelBookingCard
-                  booking={item.data}
-                  hotel={hotelMap[item.data.hotelId] ?? undefined}
-                  room={roomMap[item.data.roomId] ?? undefined}
-                  onPress={() =>
-                    pushPath(`/(customer)/hotels/booking-details/${item.data.id}`)
-                  }
-                />
-              );
-            }}
+    <TravelBookingsLayout
+      status={status}
+      onStatus={setStatus}
+      category={category}
+      onCategory={setCategory}
+      count={user ? visibleItems.length : 0}
+      activeCount={user ? activeCount : 0}
+      query={query}
+      onQuery={setQuery}
+      searchVisible={searchVisible}
+      onSearch={() => {
+        setSearchVisible((visible) => !visible);
+        setQuery('');
+      }}
+      userName={user?.name}
+      userAvatar={user?.avatar}
+      unread={notifications.some((item) => !item.read)}
+      onNotifications={() => pushPath('/(customer)/(tabs)/notifications')}
+      onProfile={() => pushPath('/(customer)/(tabs)/profile')}
+    >
+      <FlatList
+        data={user ? visibleItems : []}
+        keyExtractor={(item) => `${item.kind}-${item.data.id}`}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingBottom: insets.bottom + 24,
+          gap: 12,
+          flexGrow: 1,
+        }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading && allItems.length > 0}
+            onRefresh={refreshAll}
+            tintColor={theme.primary}
+            colors={[theme.primary]}
           />
-        )}
-      </View>
-    </View>
+        }
+        ListHeaderComponent={
+          combinedError && allItems.length ? (
+            <Text style={[styles.notice, { color: theme.muted, backgroundColor: theme.field }]}>
+              Some bookings could not refresh. Pull down to try again.
+            </Text>
+          ) : null
+        }
+        ListEmptyComponent={
+          !user ? (
+            <EmptyState
+              title="Sign in to view bookings"
+              message="Your transport, hotel, tour, and guide reservations will appear here."
+              icon="ticket-outline"
+              actionLabel="Sign in"
+              onAction={() => pushPath('/(auth)/login')}
+            />
+          ) : isLoading ? (
+            <LoadingState title="Loading bookings…" />
+          ) : combinedError ? (
+            <ErrorState message={combinedError} onRetry={refreshAll} />
+          ) : (
+            <EmptyState
+              title={
+                query.trim()
+                  ? 'No matching bookings'
+                  : status === 'upcoming'
+                    ? 'No upcoming bookings'
+                    : `No ${status} bookings`
+              }
+              message={
+                query.trim()
+                  ? 'Try a provider, destination, or booking code.'
+                  : 'Your reservations will appear here when they match this status and service.'
+              }
+              icon="ticket-outline"
+            />
+          )
+        }
+        ListFooterComponent={<BookingHelp onPress={() => pushPath('/(customer)/settings')} />}
+        renderItem={({ item }) => {
+          if (item.kind === 'transport')
+            return (
+              <BookingCard
+                booking={item.data}
+                trip={tripMap[item.data.tripId] ?? null}
+                onPress={() => router.push(`/(customer)/booking-details/${item.data.id}`)}
+                onViewTicket={() => router.push(`/(customer)/ticket/${item.data.id}`)}
+              />
+            );
+          if (item.kind === 'tour')
+            return (
+              <PackageBookingCard
+                booking={item.data}
+                onPress={() => pushPath(`/(customer)/agency/${item.data.providerId}`)}
+              />
+            );
+          if (item.kind === 'guide')
+            return (
+              <GuideBookingCard
+                booking={item.data}
+                onPress={() => pushPath(`/(customer)/guides/${item.data.providerId}`)}
+                onMessage={
+                  item.data.providerUserId
+                    ? () =>
+                        pushPath(
+                          `/(customer)/messages/${item.data.providerUserId}?bookingId=${item.data.id}`,
+                        )
+                    : undefined
+                }
+              />
+            );
+          return (
+            <HotelBookingCard
+              booking={item.data}
+              hotel={hotelMap[item.data.hotelId] ?? undefined}
+              room={roomMap[item.data.roomId] ?? undefined}
+              onPress={() => pushPath(`/(customer)/hotels/booking-details/${item.data.id}`)}
+            />
+          );
+        }}
+      />
+    </TravelBookingsLayout>
   );
 }
-
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
-  content: {
-    flex: 1,
-    paddingHorizontal: Spacing.screen,
-    gap: Spacing.md,
-  },
-  segment: {
-    flexDirection: 'row',
-    backgroundColor: Colors.card,
-    borderRadius: Radius.lg,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  segmentItem: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-  },
-  segmentItemActive: { backgroundColor: Colors.action },
-  segmentText: {
-    fontFamily: Fonts.bodySemiBold,
-    fontSize: 12,
-    color: Colors.muted,
-  },
-  segmentTextActive: { color: Colors.white },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  chip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 8,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  chipActive: {
-    backgroundColor: Colors.actionSoft,
-    borderColor: Colors.action,
-  },
-  chipText: {
-    fontFamily: Fonts.bodySemiBold,
-    fontSize: 12,
-    color: Colors.muted,
-  },
-  chipTextActive: { color: Colors.action },
+  notice: { padding: 12, borderRadius: 16, fontSize: 12, lineHeight: 18 },
 });

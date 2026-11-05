@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { AuthContext } from '@/components/auth/AuthContext';
-import { useThemeColors } from '@/constants/colors';
+import { usePresentationColors as useThemeColors, useTravelPresentation } from '@/components/ui/TravelDesignProvider';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Fonts, Typography } from '@/constants/typography';
 
@@ -47,6 +47,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
   const [revealed, setRevealed] = useState(false);
   const disabled = editable === false;
   const colors = useThemeColors();
+  const travel = useTravelPresentation();
   const authContext = useContext(AuthContext);
 
   const isPassword =
@@ -73,6 +74,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
       <View
         style={[
           styles.field,
+          travel && { borderRadius: 24, borderWidth: 1 },
           { backgroundColor: colors.inputBg, borderColor: colors.border },
           focused && !error && !disabled
             ? { borderColor: colors.action, backgroundColor: colors.card }

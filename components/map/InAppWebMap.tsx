@@ -128,9 +128,9 @@ function buildHtml(
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    html, body, #map { margin:0; padding:0; height:100%; width:100%; background:#E6F2F0; }
+    html, body, #map { margin:0; padding:0; height:100%; width:100%; background:#ccfbf1; }
     .pin {
-      background:#134E4A; color:#fff; border:2px solid #fff; border-radius:999px;
+      background:#0f9b98; color:#fff; border:2px solid #fff; border-radius:999px;
       width:28px; height:28px; display:flex; align-items:center; justify-content:center;
       font:700 12px/1 system-ui,sans-serif; box-shadow:0 2px 8px rgba(0,0,0,.25);
     }
@@ -145,7 +145,7 @@ function buildHtml(
       overflow:hidden;
     }
     .avatar img { width:100%; height:100%; object-fit:cover; }
-    .avatar.provider { background:#134E4A; box-shadow:0 2px 10px rgba(0,0,0,.28); }
+    .avatar.provider { background:#0f9b98; box-shadow:0 2px 10px rgba(0,0,0,.28); }
     .label {
       background:rgba(15,61,58,.92); color:#fff; border-radius:999px;
       padding:2px 8px; font:600 10px/1.2 system-ui,sans-serif; white-space:nowrap;

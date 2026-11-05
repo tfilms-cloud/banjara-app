@@ -1,13 +1,13 @@
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PaymentFlowSteps } from '@/components/payments/PaymentFlowSteps';
 import { ImagePickerField } from '@/components/ui/ImagePickerField';
 import { Button } from '@/components/ui/Button';
-import { Header } from '@/components/ui/Header';
 import { Input } from '@/components/ui/Input';
-import { Colors } from '@/constants/colors';
+import { BookingFlowHeader as Header, useBookingColors, withBookingFlow, BookingFlowSection, BookingFlowNotice, BookingFlowFooter } from '@/components/booking/BookingFlowPresentation';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Typography } from '@/constants/typography';
 import { getApiErrorMessage } from '@/services/apiError';
@@ -17,14 +17,16 @@ import { useAuthStore } from '@/store/authStore';
 import { usePaymentProofDraftStore, type PaymentProofDraft } from '@/store/paymentProofDraftStore';
 import { formatCurrency } from '@/utils/formatCurrency';
 
-export default function SubmitPaymentProofScreen() {
+function SubmitPaymentProofScreen() {
+  const Colors = useBookingColors();
+  const styles = makeStyles(Colors);
   const insets = useSafeAreaInsets();
   const { paymentId, bookingId } = useLocalSearchParams<{ paymentId: string; bookingId?: string }>();
   const id = String(paymentId ?? '');
   const userId = useAuthStore(state => state.user?.id);
   const key = `${userId}:${id}`;
   const [draft, setDraft] = useState<PaymentProofDraft>(() => usePaymentProofDraftStore.getState().drafts[key] ?? { receipts: [], reference: '', amount: '', note: '' });
-  const [payment, setPayment] = useState<p2p.PaymentTransaction | null>(null);
+  const [payment, setPayment] = useBackendState<p2p.PaymentTransaction | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [removingImage, setRemovingImage] = useState(false);
@@ -83,7 +85,7 @@ export default function SubmitPaymentProofScreen() {
   };
 
   return <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-    <Header title="Upload payment proof" showBack fallbackHref={`/(customer)/payments/${id}` as never} />
+    <Header title="Upload payment proof" subtitle="Share your receipt with the provider for verification." showBack fallbackHref={`/(customer)/payments/${id}` as never} />
     <ScrollView keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentContainerStyle={{ padding: Spacing.lg, paddingBottom: insets.bottom + 32, gap: Spacing.lg }}>
       <PaymentFlowSteps activeStep={2} />
       <View style={styles.summary}>
@@ -92,9 +94,10 @@ export default function SubmitPaymentProofScreen() {
         <Text style={styles.body}>{payment?.summary?.title}</Text>
         <Text style={styles.caption}>{payment?.summary?.bookingNumber}</Text>
       </View>
-      <Text style={styles.body}>Upload the complete receipt. Your booking is confirmed after the provider checks that the money arrived.</Text>
+      <BookingFlowNotice title="Payment sent? Add your receipt" message="Upload the complete receipt. Your booking is confirmed after the provider checks that the money arrived." icon="receipt-outline" />
       {error ? <View style={styles.warning}><Text style={styles.body} accessibilityRole="alert">{error}</Text>{!payment ? <Button title="Retry loading" variant="outline" onPress={() => void load()} /> : null}</View> : null}
       {payment && !canSubmit ? <View style={styles.warning}><Text style={styles.body}>This payment is no longer accepting proof. If you already paid, open payment chat for help. Do not send the payment again.</Text><Button title="Open payment and get help" variant="outline" onPress={() => router.replace({ pathname: '/(customer)/payments/[paymentId]', params: { paymentId: id } })} /></View> : null}
+      <BookingFlowSection title="Your receipt" description="A clear screenshot and transfer reference help the provider verify your payment." icon="cloud-upload-outline">
       <ImagePickerField label="Receipt / screenshot · private attachment" urls={draft.receipts.map(file => file.url)} storageReferences={draft.receipts.map(file => file.storageRef)} disabled={submitting || loading} onRemovingChange={setRemovingImage} uploading={uploading} max={6} onAdd={() => void onAddReceipt()} onRemove={index => { if (!submitting) update({ receipts: draft.receipts.filter((_, i) => i !== index) }); }} />
       {uploading ? <Text style={styles.caption} accessibilityLiveRegion="polite">Uploading {progress}%</Text> : null}
       {attempted && !draft.receipts.length ? <Text style={styles.error}>Upload at least one receipt.</Text> : null}
@@ -102,18 +105,21 @@ export default function SubmitPaymentProofScreen() {
       <Input label={`Amount you paid (${payment?.currency || 'PKR'})`} value={draft.amount} onChangeText={amount => update({ amount })} keyboardType="decimal-pad" editable={!submitting} error={attempted ? amountError : undefined} />
       {mismatch ? <View style={styles.warning}><Text style={styles.body}>This differs from the booking total. Submit the amount actually transferred so the provider can resolve it. Do not send extra money until the issue is checked.</Text></View> : null}
       <Input label="Note (optional)" value={draft.note} onChangeText={note => update({ note })} maxLength={500} multiline editable={!submitting} placeholder="Anything the provider needs to check" />
+      </BookingFlowSection>
       <Text style={styles.caption}>Your draft is kept during this signed-in session. Never share your PIN, password or OTP.</Text>
-      <Button title="Submit payment proof" loading={submitting} disabled={uploading || removingImage || loading || !canSubmit} onPress={() => void onSubmit()} />
     </ScrollView>
+    <BookingFlowFooter><Button title="Submit payment proof" loading={submitting} disabled={uploading || removingImage || loading || !canSubmit} onPress={() => void onSubmit()} /></BookingFlowFooter>
   </KeyboardAvoidingView>;
 }
 
-const styles = StyleSheet.create({
+function makeStyles(Colors: ReturnType<typeof useBookingColors>) { return StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  summary: { padding: Spacing.xl, borderRadius: Radius.xl, backgroundColor: Colors.primarySoft, gap: 8 },
+  summary: { padding: Spacing.xl, borderRadius: 28, backgroundColor: Colors.primarySoft, gap: 8 },
   total: { ...Typography.h1, color: Colors.dark },
   body: { ...Typography.body, color: Colors.dark, lineHeight: 23 },
   caption: { ...Typography.caption, color: Colors.muted, lineHeight: 19 },
   warning: { padding: Spacing.lg, borderRadius: Radius.lg, backgroundColor: Colors.primarySoft, gap: 12 },
   error: { ...Typography.caption, color: Colors.danger },
-});
+}); }
+
+export default withBookingFlow(SubmitPaymentProofScreen);

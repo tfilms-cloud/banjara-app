@@ -1,120 +1,89 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { HotelPriceBreakdownCard } from '@/components/hotels/HotelPriceBreakdown';
-import { HotelRoomCard, RoomQuantitySelector } from '@/components/hotels/HotelRoomCard';
-import { Button } from '@/components/ui/Button';
-import { EmptyState, LoadingState } from '@/components/ui/EmptyState';
-import { Header } from '@/components/ui/Header';
-import { Colors } from '@/constants/colors';
-import { Spacing } from '@/constants/spacing';
-import { Typography } from '@/constants/typography';
+import { useEffect } from 'react';
+import { HotelBookingFrame } from '@/components/hotels/HotelBookingPresentation';
+import { SelectRoomPresentation } from '@/components/hotels/SelectRoomPresentation';
+import { ErrorState, LoadingState } from '@/components/ui/EmptyState';
 import { useHotel } from '@/hooks/useHotels';
 import { useHotelStore } from '@/store/hotelStore';
-import type { HotelRoom } from '@/types/hotel';
-import { formatCurrency } from '@/utils/formatCurrency';
-import { pushPath } from '@/utils/navigation';
+import { calculateNights } from '@/utils/hotelPricing';
+import { roomInventory } from '@/utils/hotelRoomSelection';
+import { paramId, pushPath, safeBack } from '@/utils/navigation';
 
 export default function HotelRoomsScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const insets = useSafeAreaInsets();
-  const { hotel, rooms, loading } = useHotel(id);
+  const params = useLocalSearchParams<{ id: string | string[] }>();
+  const id = paramId(params.id);
+  const { hotel, rooms, loading, error, refresh } = useHotel(id);
   const {
+    selectedHotel,
     selectedRoom,
     setRoom,
     roomQuantity,
     setRoomQuantity,
     priceBreakdown,
-    setHotel,
+    priceLoading,
+    priceEstimated,
+    syncHotelRooms,
+    checkIn,
+    checkOut,
+    adults,
+    children,
   } = useHotelStore();
-  const [ready, setReady] = useState(false);
+  const onBack = () => safeBack(`/(customer)/hotels/${id}` as never);
+  const onProfile = () => pushPath('/(customer)/(tabs)/profile');
 
   useEffect(() => {
-    if (hotel) {
-      setHotel(hotel);
-      setReady(true);
-    }
-  }, [hotel, setHotel]);
+    if (hotel && !loading && !error) syncHotelRooms(hotel, rooms);
+  }, [hotel, rooms, loading, error, syncHotelRooms]);
 
-  const onSelect = (room: HotelRoom) => {
-    setRoom(room);
-  };
-
-  if (loading || !ready) return <LoadingState title="Loading rooms..." />;
-
-  return (
-    <View style={styles.container}>
-      <Header
-        title="Select Room"
-        subtitle={hotel?.name}
-        showBack
-        fallbackHref={`/(customer)/hotels/${id}` as never}
-      />
-      <FlatList
-        data={rooms}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 180 }]}
-        ListEmptyComponent={<EmptyState title="No rooms available" icon="bed-outline" />}
-        ListHeaderComponent={
-          selectedRoom ? (
-            <View style={styles.topBlock}>
-              <RoomQuantitySelector
-                value={roomQuantity}
-                max={selectedRoom.availableRooms}
-                onChange={setRoomQuantity}
-              />
-              {priceBreakdown ? <HotelPriceBreakdownCard breakdown={priceBreakdown} /> : null}
-            </View>
-          ) : (
-            <Text style={styles.hint}>Choose a room to continue booking.</Text>
-          )
-        }
-        renderItem={({ item }) => (
-          <HotelRoomCard
-            room={item}
-            selected={selectedRoom?.id === item.id}
-            onSelect={() => onSelect(item)}
-            onView={() =>
-              pushPath(
-                `/(customer)/hotels/room-detail/${item.id}?hotelId=${encodeURIComponent(String(id))}`
-              )
-            }
+  if (!hotel)
+    return (
+      <HotelBookingFrame title="Select Room" onBack={onBack} onProfile={onProfile}>
+        {loading ? (
+          <LoadingState title="Loading rooms…" />
+        ) : (
+          <ErrorState
+            title="Rooms unavailable"
+            message={error || 'This property is unavailable.'}
+            onRetry={() => void refresh()}
           />
         )}
-      />
+      </HotelBookingFrame>
+    );
 
-      <View style={[styles.cta, { paddingBottom: insets.bottom + Spacing.md }]}>
-        <Text style={styles.total}>
-          {priceBreakdown
-            ? formatCurrency(priceBreakdown.total, priceBreakdown.currency)
-            : 'Select a room'}
-        </Text>
-        <Button
-          title="Continue"
-          disabled={!selectedRoom}
-          onPress={() => pushPath(`/(customer)/hotels/booking/${id}`)}
-        />
-      </View>
-    </View>
+  const selection = selectedHotel?.id === id && selectedRoom?.hotelId === id ? selectedRoom : null;
+  return (
+    <SelectRoomPresentation
+      hotel={hotel}
+      rooms={rooms}
+      selectedRoom={selection}
+      quantity={roomQuantity}
+      breakdown={selection ? priceBreakdown : null}
+      guests={adults + children}
+      nights={calculateNights(checkIn, checkOut)}
+      priceLoading={!!selection && priceLoading}
+      priceEstimated={priceEstimated}
+      refreshing={loading}
+      onRefresh={() => void refresh()}
+      onBack={onBack}
+      onProfile={onProfile}
+      onSelect={setRoom}
+      onQuantityChange={setRoomQuantity}
+      onView={(room) =>
+        pushPath(`/(customer)/hotels/room-detail/${room.id}?hotelId=${encodeURIComponent(id)}`)
+      }
+      onContinue={() => {
+        const state = useHotelStore.getState();
+        if (
+          !loading &&
+          state.selectedHotel?.id === id &&
+          state.selectedRoom?.hotelId === id &&
+          state.priceBreakdown &&
+          !state.priceLoading &&
+          roomInventory(state.selectedRoom) >= state.roomQuantity
+        ) {
+          pushPath(`/(customer)/hotels/booking/${id}`);
+        }
+      }}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  list: { padding: Spacing.lg, gap: Spacing.md },
-  topBlock: { gap: Spacing.md, marginBottom: Spacing.md },
-  hint: { ...Typography.caption, color: Colors.muted, marginBottom: Spacing.md },
-  cta: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: Colors.card,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    padding: Spacing.lg,
-    gap: Spacing.md,
-  },
-  total: { ...Typography.h3, color: Colors.primary },
-});

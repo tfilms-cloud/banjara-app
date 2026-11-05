@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '@/constants/colors';
+import { useHomeDesign } from '@/constants/homeDesign';
 import { Fonts } from '@/constants/typography';
 import { Shadows } from '@/constants/theme';
 import { useChatStore } from '@/store/chatStore';
@@ -11,12 +12,15 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const unread = useChatStore((s) => s.unreadTotal ?? 0);
   const colors = useThemeColors();
+  const homeTheme = useHomeDesign();
 
   return (
     <Tabs
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: ['index', 'search', 'inbox', 'bookings', 'profile'].includes(route.name)
+          ? homeTheme.primary
+          : colors.primary,
         tabBarInactiveTintColor: colors.mutedLight,
         tabBarHideOnKeyboard: true,
         tabBarStyle: {
@@ -33,7 +37,7 @@ export default function TabsLayout() {
           fontSize: 11,
           marginTop: 2,
         },
-      }}
+      })}
     >
       <Tabs.Screen
         name="index"
@@ -46,14 +50,18 @@ export default function TabsLayout() {
         name="search"
         options={{
           title: 'Explore',
-          tabBarIcon: ({ color, size }) => <Compass size={size ?? 22} color={color} strokeWidth={2} />,
+          tabBarIcon: ({ color, size }) => (
+            <Compass size={size ?? 22} color={color} strokeWidth={2} />
+          ),
         }}
       />
       <Tabs.Screen
         name="bookings"
         options={{
           title: 'Bookings',
-          tabBarIcon: ({ color, size }) => <Ticket size={size ?? 22} color={color} strokeWidth={2} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ticket size={size ?? 22} color={color} strokeWidth={2} />
+          ),
         }}
       />
       <Tabs.Screen

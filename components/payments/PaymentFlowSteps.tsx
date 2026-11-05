@@ -1,5 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { Colors } from '@/constants/colors';
+import { useHomeDesign } from '@/constants/homeDesign';
+import { useTravelPresentation } from '@/components/ui/TravelDesignProvider';
+import { usePresentationColors as useBookingColors } from '@/components/ui/TravelDesignProvider';
 import { Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 
@@ -16,8 +18,12 @@ type Props = {
 };
 
 export function PaymentFlowSteps({ activeStep }: Props) {
+  const travel = useTravelPresentation();
+  const theme = useHomeDesign();
+  const Colors = useBookingColors();
+  const styles = makeStyles(Colors);
   return (
-    <View style={styles.row} accessibilityRole="summary">
+    <View style={[styles.row, travel && { backgroundColor: theme.field, borderRadius: 24, padding: 16 }]} accessibilityRole="summary">
       {STEPS.map((step, index) => {
         const done = activeStep > step.id;
         const active = activeStep === step.id;
@@ -35,6 +41,7 @@ export function PaymentFlowSteps({ activeStep }: Props) {
                   style={[
                     styles.dotText,
                     (done || active) && styles.dotTextOn,
+                    travel && (done || active) && { color: theme.background },
                   ]}
                 >
                   {done ? '✓' : step.id}
@@ -63,7 +70,7 @@ export function paymentStepFromStatus(status: string): 1 | 2 | 3 | 4 {
   return 1;
 }
 
-const styles = StyleSheet.create({
+function makeStyles(Colors: ReturnType<typeof useBookingColors>) { return StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -121,4 +128,4 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bodySemiBold,
     color: Colors.primary,
   },
-});
+}); }

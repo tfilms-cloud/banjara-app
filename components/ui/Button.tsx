@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, type ViewStyle } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
-import { useThemeColors } from '@/constants/colors';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import {
+  usePresentationColors as useThemeColors,
+  useTravelPresentation,
+} from './TravelDesignProvider';
+import { useHomeDesign } from '@/constants/homeDesign';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 
@@ -44,6 +44,8 @@ export function Button({
   const isDisabled = disabled || loading;
   const resolvedVariant = variant === 'tertiary' ? 'ghost' : variant;
   const colors = useThemeColors();
+  const travel = useTravelPresentation();
+  const theme = useHomeDesign();
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -72,7 +74,9 @@ export function Button({
           ? colors.primary
           : resolvedVariant === 'accent'
             ? colors.dark
-            : colors.white);
+            : travel
+              ? theme.background
+              : colors.white);
 
   return (
     <AnimatedPressable
@@ -107,7 +111,9 @@ export function Button({
       ) : (
         <>
           {icon && iconPosition === 'left' ? icon : null}
-          <Text style={[styles.title, compact && styles.compactTitle, { color: textColor }]}>{title}</Text>
+          <Text style={[styles.title, compact && styles.compactTitle, { color: textColor }]}>
+            {title}
+          </Text>
           {icon && iconPosition === 'right' ? icon : null}
         </>
       )}

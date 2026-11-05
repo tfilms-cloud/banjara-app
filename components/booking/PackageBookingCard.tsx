@@ -7,6 +7,8 @@ import { Fonts } from '@/constants/typography';
 import type { PackageBooking } from '@/types/tourBooking';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatDate';
+import { useTravelPresentation } from '@/components/ui/TravelDesignProvider';
+import { TravelPackageBookingCard } from './TravelBookingCards';
 
 type Props = {
   booking: PackageBooking;
@@ -15,6 +17,8 @@ type Props = {
 
 export function PackageBookingCard({ booking, onPress }: Props) {
   const colors = useThemeColors();
+  const travel = useTravelPresentation();
+  if (travel) return <TravelPackageBookingCard booking={booking} onPress={onPress} />;
   const pending = booking.status === 'pending';
   return (
     <Pressable
@@ -36,7 +40,9 @@ export function PackageBookingCard({ booking, onPress }: Props) {
           {booking.travelers === 1 ? '' : 's'}
         </Text>
         {pending ? (
-          <Text style={[styles.pending, { color: colors.warning }]}>Awaiting provider approval</Text>
+          <Text style={[styles.pending, { color: colors.warning }]}>
+            Awaiting provider approval
+          </Text>
         ) : null}
         <Text style={[styles.price, { color: colors.primary }]}>
           {formatCurrency(booking.priceBreakdown.total, booking.priceBreakdown.currency)}

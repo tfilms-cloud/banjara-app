@@ -6,9 +6,8 @@ import { PriceCard } from '@/components/booking/PriceCard';
 import { HowPaymentWorksNote } from '@/components/payments/HowPaymentWorksNote';
 import { PaymentMethodIcon } from '@/components/payments/PayoutChannelIcon';
 import { Button } from '@/components/ui/Button';
-import { Header } from '@/components/ui/Header';
 import { LoadingState } from '@/components/ui/EmptyState';
-import { Colors } from '@/constants/colors';
+import { BookingFlowHeader as Header, BookingFlowFooter, useBookingColors, withBookingFlow, BookingJourneyCard, BookingFlowNotice } from '@/components/booking/BookingFlowPresentation';
 import {
   toStorePaymentMethod,
   type CustomerPaymentMethodId,
@@ -21,10 +20,14 @@ import { useBookingStore } from '@/store/bookingStore';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { navigateAfterBookingPayment } from '@/utils/p2pPaymentNav';
 
-export default function PaymentScreen() {
+function PaymentScreen() {
+  const Colors = useBookingColors();
+  const styles = makeStyles(Colors);
   const insets = useSafeAreaInsets();
   const {
     selectedTrip,
+    selectedPickup,
+    selectedSeats,
     setPaymentMethod,
     priceBreakdown,
     confirmBooking,
@@ -69,21 +72,20 @@ export default function PaymentScreen() {
   if (!selectedTrip || !priceBreakdown) {
     return (
       <View style={styles.container}>
-        <Header title="Payment" showBack fallbackHref="/(customer)/(tabs)/bookings" />
-        <Text style={styles.empty}>No booking to pay for.</Text>
+        <Header step={4} title="Choose payment method" showBack fallbackHref="/(customer)/(tabs)/bookings" />
+        <View style={{ padding: 20 }}><BookingFlowNotice title="Your booking selection is unavailable" message="Return to your trip and try again when live data is available." /></View>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Header
+      <Header step={4}
         title="Choose payment method"
         showBack
         fallbackHref="/(customer)/booking/review"
         onBack={() => {
           // Keep seat hold if booking already created — user can resume pay.
-          // Going further back to seats will release via seat screen focus.
           router.back();
         }}
       />
@@ -94,6 +96,7 @@ export default function PaymentScreen() {
           gap: Spacing.lg,
         }}
       >
+        <BookingJourneyCard trip={selectedTrip} pickup={selectedPickup} seats={selectedSeats} compact />
         <View style={styles.summary}>
           <Text style={styles.summaryLabel}>Amount due</Text>
           <Text style={styles.amount}>
@@ -104,7 +107,6 @@ export default function PaymentScreen() {
           </Text>
         </View>
 
-        <HowPaymentWorksNote />
 
         <Text style={styles.section}>
           Provider payment methods
@@ -159,35 +161,39 @@ export default function PaymentScreen() {
           })}
 
         <PriceCard breakdown={priceBreakdown} />
+        <HowPaymentWorksNote compact />
       </ScrollView>
 
-      <View style={[styles.cta, { paddingBottom: insets.bottom + Spacing.md }]}>
+      <BookingFlowFooter>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}><Text style={{ ...Typography.caption, color: Colors.muted }}>Amount due</Text><Text style={{ ...Typography.bodyBold, color: Colors.primary }}>{formatCurrency(priceBreakdown.total, priceBreakdown.currency)}</Text></View>
         <Button
           title="Continue to pay"
           loading={isSubmitting}
           disabled={!selected || loading || Boolean(error)}
           onPress={() => void onPay()}
         />
-      </View>
+      </BookingFlowFooter>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(Colors: ReturnType<typeof useBookingColors>) { return StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   empty: { ...Typography.body, color: Colors.muted, padding: Spacing.lg },
   summary: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.xl,
+    backgroundColor: Colors.primarySoft,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: Spacing['2xl'],
   },
-  summaryLabel: { ...Typography.caption, color: 'rgba(255,255,255,0.7)' },
-  amount: { ...Typography.h1, color: Colors.white, marginTop: 4 },
-  meta: { ...Typography.caption, color: 'rgba(255,255,255,0.75)', marginTop: 8 },
-  section: { ...Typography.h3, color: Colors.primary },
+  summaryLabel: { ...Typography.caption, color: Colors.muted },
+  amount: { ...Typography.h1, color: Colors.primary, marginTop: 4 },
+  meta: { ...Typography.caption, color: Colors.muted, marginTop: 8 },
+  section: { ...Typography.h3, color: Colors.dark },
   warn: {
-    backgroundColor: '#FFF7ED',
-    borderRadius: Radius.lg,
+    backgroundColor: Colors.primarySoft,
+    borderRadius: 24,
     padding: Spacing.lg,
     gap: Spacing.md,
   },
@@ -204,12 +210,14 @@ const styles = StyleSheet.create({
   },
   methodActive: { borderColor: Colors.primary, backgroundColor: Colors.primarySoft },
   methodIcon: {
-    width: 42,
-    height: 42,
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: Colors.inputBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  methodLabel: { ...Typography.bodyBold, color: Colors.primary },
+  methodLabel: { ...Typography.bodyBold, color: Colors.dark },
   methodHint: { ...Typography.caption, color: Colors.muted, marginTop: 2 },
   radio: {
     width: 22,
@@ -232,4 +240,6 @@ const styles = StyleSheet.create({
     borderTopColor: Colors.border,
     padding: Spacing.lg,
   },
-});
+}); }
+
+export default withBookingFlow(PaymentScreen);

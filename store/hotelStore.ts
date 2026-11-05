@@ -15,6 +15,9 @@ import type {
 } from '@/types/hotel';
 import { toISODate } from '@/utils/formatDate';
 import { calculateHotelPrice, calculateNights } from '@/utils/hotelPricing';
+import { reconcileRoomSelection, roomInventory } from '@/utils/hotelRoomSelection';
+
+let quoteRequest = 0;
 
 function defaultCheckIn() {
   const date = new Date();
@@ -48,6 +51,8 @@ interface HotelState {
   guest: HotelGuest;
   paymentMethod: HotelPaymentMethod;
   priceBreakdown: HotelPriceBreakdown | null;
+  priceLoading: boolean;
+  priceEstimated: boolean;
   lastBooking: HotelBooking | null;
   isSubmitting: boolean;
   error: string | null;
@@ -64,11 +69,12 @@ interface HotelState {
   applyRecentSearch: (search: RecentHotelSearch) => void;
   getSearchParams: () => HotelSearchParams;
   setHotel: (hotel: Hotel) => void;
+  syncHotelRooms: (hotel: Hotel, rooms: HotelRoom[]) => void;
   setRoom: (room: HotelRoom) => void;
   setRoomQuantity: (quantity: number) => void;
   setGuest: (guest: Partial<HotelGuest>) => void;
   setPaymentMethod: (method: HotelPaymentMethod) => void;
-  recalculatePrice: () => Promise<void>;
+  recalculatePrice: (retainBreakdown?: boolean) => Promise<void>;
   confirmHotelBooking: () => Promise<HotelBooking>;
   resetHotelFlow: () => void;
 }
@@ -98,6 +104,8 @@ export const useHotelStore = create<HotelState>()(
       guest: defaultGuest,
       paymentMethod: 'card',
       priceBreakdown: null,
+      priceLoading: false,
+      priceEstimated: false,
       lastBooking: null,
       isSubmitting: false,
       error: null,
@@ -110,8 +118,14 @@ export const useHotelStore = create<HotelState>()(
         set({ checkOut });
         void get().recalculatePrice();
       },
-      setAdults: (adults) => set({ adults: Math.max(1, Math.min(8, adults)) }),
-      setChildren: (children) => set({ children: Math.max(0, Math.min(6, children)) }),
+      setAdults: (adults) => {
+        set({ adults: Math.max(1, Math.min(8, adults)) });
+        void get().recalculatePrice();
+      },
+      setChildren: (children) => {
+        set({ children: Math.max(0, Math.min(6, children)) });
+        void get().recalculatePrice();
+      },
       setRooms: (rooms) => set({ rooms: Math.max(1, Math.min(5, rooms)) }),
       setFilters: (filters) => set({ filters }),
       setSortBy: (sortBy) => set({ sortBy }),
@@ -120,7 +134,7 @@ export const useHotelStore = create<HotelState>()(
         const params = get().getSearchParams();
         const next = { id: `hrs-${Date.now()}`, ...params };
         const filtered = get().recentSearches.filter(
-          (item) => item.destination !== params.destination
+          (item) => item.destination !== params.destination,
         );
         set({ recentSearches: [next, ...filtered].slice(0, 6) });
       },
@@ -137,28 +151,72 @@ export const useHotelStore = create<HotelState>()(
         const { destination, checkIn, checkOut, adults, children, rooms } = get();
         return { destination, checkIn, checkOut, adults, children, rooms };
       },
-      setHotel: (hotel) => set({ selectedHotel: hotel, selectedRoom: null, priceBreakdown: null }),
+      setHotel: (hotel) => {
+        const room = get().selectedRoom;
+        const matches = room?.hotelId === hotel.id;
+        set({
+          selectedHotel: hotel,
+          selectedRoom: matches ? room : null,
+          roomQuantity: matches ? get().roomQuantity : 1,
+        });
+        void get().recalculatePrice();
+      },
+      syncHotelRooms: (hotel, rooms) => {
+        const next = reconcileRoomSelection(
+          hotel.id,
+          rooms,
+          get().selectedRoom,
+          get().roomQuantity,
+        );
+        set({ selectedHotel: hotel, selectedRoom: next.room, roomQuantity: next.quantity });
+        void get().recalculatePrice();
+      },
       setRoom: (room) => {
+        if (roomInventory(room) < 1) return;
         set({ selectedRoom: room, roomQuantity: 1 });
         void get().recalculatePrice();
       },
       setRoomQuantity: (quantity) => {
-        const max = get().selectedRoom?.availableRooms ?? 1;
-        set({ roomQuantity: Math.max(1, Math.min(max, quantity)) });
+        const room = get().selectedRoom;
+        if (!room || roomInventory(room) < 1) return;
+        set({
+          roomQuantity: Math.max(1, Math.min(roomInventory(room), Math.floor(quantity) || 1)),
+        });
         void get().recalculatePrice();
       },
       setGuest: (guest) => set((state) => ({ guest: { ...state.guest, ...guest } })),
       setPaymentMethod: (paymentMethod) => {
+        if (get().paymentMethod === paymentMethod) return;
         set({ paymentMethod });
-        void get().recalculatePrice();
+        // Payment screens already have a valid stay; keep their summary mounted while repricing.
+        void get().recalculatePrice(true);
       },
-      recalculatePrice: async () => {
-        const { selectedHotel, selectedRoom, checkIn, checkOut, roomQuantity, paymentMethod, adults, children } =
-          get();
-        if (!selectedHotel || !selectedRoom) {
-          set({ priceBreakdown: null });
+      recalculatePrice: async (retainBreakdown = false) => {
+        const current = ++quoteRequest;
+        const {
+          selectedHotel,
+          selectedRoom,
+          checkIn,
+          checkOut,
+          roomQuantity,
+          paymentMethod,
+          adults,
+          children,
+        } = get();
+        if (
+          !selectedHotel ||
+          !selectedRoom ||
+          selectedRoom.hotelId !== selectedHotel.id ||
+          roomInventory(selectedRoom) < roomQuantity
+        ) {
+          set({ priceBreakdown: null, priceLoading: false, priceEstimated: false });
           return;
         }
+        set({
+          priceBreakdown: retainBreakdown ? get().priceBreakdown : null,
+          priceLoading: true,
+          priceEstimated: false,
+        });
         const nights = calculateNights(checkIn, checkOut);
         const discount = paymentMethod === 'wallet' ? 500 : 0;
         try {
@@ -170,6 +228,7 @@ export const useHotelStore = create<HotelState>()(
             rooms: roomQuantity,
             guests: adults + children,
           });
+          if (current !== quoteRequest) return;
           const subtotal = Number(quote.subtotal ?? 0);
           const avgNightly = Math.round(subtotal / Math.max(1, nights * roomQuantity));
           const breakdown = calculateHotelPrice({
@@ -179,6 +238,8 @@ export const useHotelStore = create<HotelState>()(
             discount,
           });
           set({
+            priceLoading: false,
+            priceEstimated: false,
             priceBreakdown: subtotal
               ? {
                   ...breakdown,
@@ -188,7 +249,10 @@ export const useHotelStore = create<HotelState>()(
               : breakdown,
           });
         } catch {
+          if (current !== quoteRequest) return;
           set({
+            priceLoading: false,
+            priceEstimated: true,
             priceBreakdown: calculateHotelPrice({
               pricePerNight: selectedRoom.pricePerNight,
               nights,
@@ -239,16 +303,20 @@ export const useHotelStore = create<HotelState>()(
           throw error;
         }
       },
-      resetHotelFlow: () =>
+      resetHotelFlow: () => {
+        quoteRequest++;
         set({
           selectedHotel: null,
           selectedRoom: null,
           roomQuantity: 1,
           paymentMethod: 'card',
           priceBreakdown: null,
+          priceLoading: false,
+          priceEstimated: false,
           error: null,
           isSubmitting: false,
-        }),
+        });
+      },
     }),
     {
       name: 'banjara-hotel',
@@ -263,6 +331,6 @@ export const useHotelStore = create<HotelState>()(
         recentSearches: state.recentSearches,
         guest: state.guest,
       }),
-    }
-  )
+    },
+  ),
 );

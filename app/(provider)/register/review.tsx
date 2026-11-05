@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
 import { Header } from '@/components/ui/Header';
 import { useThemeColors } from '@/constants/colors';
-import { SERVICE_OPTIONS, stayTypeLabel } from '@/constants/providerOptions';
+import { isTransportService, SERVICE_OPTIONS, stayTypeLabel } from '@/constants/providerOptions';
 import { Radius, Shadows, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 import { getApiErrorMessage } from '@/services/apiError';
@@ -152,9 +152,15 @@ export default function ProviderReviewScreen() {
     { label: 'Phone', value: user?.phone || draft.personal.phone },
   ]);
 
+  // Transport is offered by individual drivers, so there is no separate business or owner.
+  const isDriver = draft.selectedServices.some(isTransportService);
   const businessRows = visibleRows([
-    { label: 'Business', value: draft.business.businessName },
-    { label: 'Owner', value: draft.business.ownerName },
+    ...(isDriver
+      ? [{ label: 'Driver', value: draft.business.ownerName || draft.business.businessName }]
+      : [
+          { label: 'Business', value: draft.business.businessName },
+          { label: 'Owner', value: draft.business.ownerName },
+        ]),
     { label: 'City', value: draft.business.city },
     { label: 'Address', value: draft.business.address },
   ]);
@@ -175,14 +181,14 @@ export default function ProviderReviewScreen() {
           label: 'Vehicle class',
           value: draft.transport.vehicleClass ?? draft.transport.vehicleTypes?.join(', '),
         },
-        { label: 'Owner name', value: draft.transport.ownerName },
+        { label: 'Registered to', value: draft.transport.ownerName },
         { label: 'Vehicle model', value: draft.transport.vehicleModel },
         { label: 'Make year', value: draft.transport.vehicleMakeYear },
         { label: 'Engine number', value: draft.transport.engineNumber },
         { label: 'Registration', value: draft.transport.registrationNumber },
         { label: 'Driver', value: draft.transport.driverName },
-        { label: 'Driver phone', value: draft.transport.driverPhone },
-        { label: 'Driver CNIC', value: draft.transport.driverCnic },
+        { label: 'Phone', value: draft.transport.driverPhone },
+        { label: 'CNIC', value: draft.transport.driverCnic },
         { label: 'License', value: draft.transport.driverLicenseNumber },
         {
           label: 'Experience',
@@ -199,7 +205,6 @@ export default function ProviderReviewScreen() {
         },
         { label: 'Insurer', value: draft.transport.insuranceCompany },
         { label: 'Policy #', value: draft.transport.insuranceNumber },
-        { label: 'Business', value: draft.transport.businessName },
         { label: 'Routes', value: draft.transport.operatingRoutes?.join(', ') },
       ])
     : [];
@@ -370,8 +375,8 @@ export default function ProviderReviewScreen() {
         </ReviewSection>
 
         <ReviewSection
-          icon="briefcase-outline"
-          title="Business"
+          icon={isDriver ? 'person-outline' : 'briefcase-outline'}
+          title={isDriver ? 'Your details' : 'Business'}
           editHref="/(provider)/register/business"
           index={sectionIndex++}
         >

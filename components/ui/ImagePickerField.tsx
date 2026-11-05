@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Colors } from '@/constants/colors';
+import { usePresentationColors } from '@/components/ui/TravelDesignProvider';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Typography } from '@/constants/typography';
 import { normalizeMediaUrl } from '@/utils/mediaUrl';
@@ -34,6 +34,8 @@ export function ImagePickerField({
   onAdd,
   onRemove,
 }: Props) {
+  const Colors = usePresentationColors();
+  const styles = makeStyles(Colors);
   const [removing, setRemoving] = useState<number | null>(null);
   const [removeError, setRemoveError] = useState('');
   const [removeNotice, setRemoveNotice] = useState('');
@@ -61,7 +63,7 @@ export function ImagePickerField({
   return (
     <View style={styles.wrap}>
       <Text style={styles.label}>{label}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+      <ScrollView horizontal style={{ minHeight: 88, flexGrow: 0 }} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {previews.map((uri, index) => (
           <View key={`${uri}-${index}`} style={styles.thumbWrap}>
             <Image
@@ -114,7 +116,7 @@ export function ImagePickerField({
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(Colors: ReturnType<typeof usePresentationColors>) { return StyleSheet.create({
   wrap: { gap: Spacing.sm },
   label: { ...Typography.caption, color: Colors.muted, fontWeight: '600' },
   row: { gap: Spacing.sm, alignItems: 'center' },
@@ -151,4 +153,4 @@ const styles = StyleSheet.create({
   addText: { ...Typography.caption, color: Colors.secondary, fontWeight: '600' },
   hint: { ...Typography.small, color: Colors.muted },
   error: { ...Typography.small, color: Colors.danger },
-});
+}); }

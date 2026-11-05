@@ -1,14 +1,14 @@
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useBackendFocusEffect as useFocusEffect } from '@/hooks/useBackendFocusEffect';
+import { useBackendState } from '@/hooks/useBackendData';
+import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SeatMap } from '@/components/seat/SeatMap';
-import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, ErrorState } from '@/components/ui/EmptyState';
-import { Header } from '@/components/ui/Header';
 import { SeatSelectionSkeleton } from '@/components/ui/Skeleton';
-import { Colors } from '@/constants/colors';
+import { BookingFlowHeader as Header, BookingFlowFooter, useBookingColors, withBookingFlow, BookingJourneyCard, BookingFlowNotice } from '@/components/booking/BookingFlowPresentation';
 import { Shadows, Spacing } from '@/constants/spacing';
 import { Fonts, Typography } from '@/constants/typography';
 import { getApiErrorMessage } from '@/services/apiError';
@@ -16,12 +16,11 @@ import * as tripService from '@/services/tripService';
 import { useBookingStore } from '@/store/bookingStore';
 import type { Seat, SeatLayout } from '@/types/seat';
 import { formatCurrency } from '@/utils/formatCurrency';
-import { formatDate } from '@/utils/formatDate';
-import { formatTime } from '@/utils/formatTime';
-import { vehicleTypeLabel } from '@/utils/helpers';
 import { paramId, pushPath, safeBack } from '@/utils/navigation';
 
-export default function SeatSelectionScreen() {
+function SeatSelectionScreen() {
+  const Colors = useBookingColors();
+  const styles = makeStyles(Colors);
   const params = useLocalSearchParams<{ id: string | string[] }>();
   const id = paramId(params.id);
   const insets = useSafeAreaInsets();
@@ -32,7 +31,7 @@ export default function SeatSelectionScreen() {
   const pruneUnavailableSeats = useBookingStore((state) => state.pruneUnavailableSeats);
   const lastBooking = useBookingStore((state) => state.lastBooking);
   const priceBreakdown = useBookingStore((state) => state.priceBreakdown);
-  const [layout, setLayout] = useState<SeatLayout | null>(null);
+  const [layout, setLayout] = useBackendState<SeatLayout | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -109,6 +108,7 @@ export default function SeatSelectionScreen() {
   );
   const soldOut = Boolean(layout && freeSeatCount === 0);
   const canContinue =
+    Boolean(layout) && !loading && !error &&
     selectedSeats.length > 0 &&
     Boolean(selectedTrip) &&
     Boolean(selectedPickup) &&
@@ -119,29 +119,9 @@ export default function SeatSelectionScreen() {
     selectedTrip?.from && selectedTrip?.to
       ? `${selectedTrip.from} → ${selectedTrip.to}`
       : 'Select your seats';
-  const whenLabel = selectedTrip
-    ? [
-        selectedTrip.date ? formatDate(selectedTrip.date, false) : '',
-        selectedTrip.departureTime ? formatTime(selectedTrip.departureTime) : '',
-      ]
-        .filter(Boolean)
-        .join(' · ')
-    : '';
-
-  const vehicleBits = [
-    selectedTrip?.vehicleType ? vehicleTypeLabel(selectedTrip.vehicleType) : '',
-    selectedTrip?.vehicleName ?? '',
-    [selectedTrip?.vehicleBrand, selectedTrip?.vehicleModel].filter(Boolean).join(' '),
-  ].filter((value, index, list) => value.length > 0 && list.indexOf(value) === index);
-
-  const capacityLabel =
-    selectedTrip?.vehicleCapacity || selectedTrip?.totalSeats
-      ? `${selectedTrip.vehicleCapacity ?? selectedTrip.totalSeats} seats`
-      : '';
-
   return (
     <View style={styles.container}>
-      <Header
+      <Header step={2}
         title="Select your seats"
         subtitle={routeLabel}
         showBack
@@ -167,25 +147,13 @@ export default function SeatSelectionScreen() {
           <ScrollView
             contentContainerStyle={{
               padding: Spacing.screen,
-              paddingBottom: insets.bottom + 150,
+              paddingBottom: 24,
               gap: Spacing.md,
             }}
             showsVerticalScrollIndicator={false}
           >
-            {selectedTrip ? (
-              <View style={styles.context}>
-                {whenLabel ? <Text style={styles.when}>{whenLabel}</Text> : null}
-                <View style={styles.chipRow}>
-                  {vehicleBits.map((bit) => (
-                    <Badge key={bit} label={bit} tone="gray" />
-                  ))}
-                  {capacityLabel ? <Badge label={capacityLabel} tone="blue" /> : null}
-                  {selectedTrip.agency.name ? (
-                    <Badge label={selectedTrip.agency.name} tone="navy" />
-                  ) : null}
-                </View>
-              </View>
-            ) : null}
+            {selectedTrip ? <BookingJourneyCard trip={selectedTrip} pickup={selectedPickup} compact /> : null}
+            <BookingFlowNotice title="Choose your seat" message="Tap a free seat. Teal seats are selected." icon="grid-outline" />
 
             {soldOut || tripUnavailable ? (
               <EmptyState
@@ -202,7 +170,7 @@ export default function SeatSelectionScreen() {
             )}
           </ScrollView>
 
-          <View style={[styles.cta, { paddingBottom: insets.bottom + Spacing.md }]}>
+          <BookingFlowFooter>
             <View style={styles.summaryRow}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.label}>Selected seats</Text>
@@ -225,18 +193,18 @@ export default function SeatSelectionScreen() {
               </View>
             </View>
             <Button
-              title="Continue"
+              title="Review booking"
               disabled={!canContinue}
               onPress={() => pushPath('/(customer)/booking/review')}
             />
-          </View>
+          </BookingFlowFooter>
         </>
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(Colors: ReturnType<typeof useBookingColors>) { return StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   context: { gap: Spacing.sm },
   when: {
@@ -279,4 +247,6 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     marginTop: 2,
   },
-});
+}); }
+
+export default withBookingFlow(SeatSelectionScreen);

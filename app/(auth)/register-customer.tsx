@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { StyleSheet, Text, View } from 'react-native';
 import { z } from 'zod';
+import { newPasswordSchema, PASSWORD_HINT } from '@/utils/passwordRule';
 import { AuthErrorBanner, AuthScreen } from '@/components/auth/AuthScreen';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -16,7 +17,7 @@ const schema = z
     name: z.string().min(2, 'Enter your full name'),
     email: z.string().email('Enter a valid email'),
     phone: z.string().min(10, 'Enter a valid phone number'),
-    password: z.string().min(6, 'Minimum 6 characters'),
+    password: newPasswordSchema,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -131,7 +132,7 @@ export default function RegisterCustomerScreen() {
               leftIcon="lock-closed-outline"
               password
               autoComplete="new-password"
-              placeholder="At least 6 characters"
+              placeholder={PASSWORD_HINT}
               hint="Use a mix of letters and numbers for a stronger password."
               value={value}
               onChangeText={onChange}

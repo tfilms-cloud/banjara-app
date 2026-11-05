@@ -13,7 +13,8 @@
     "test:location": "node scripts/verify-location-pickers.cjs",
     "test:runtime": "node --test scripts/metro-runtime.test.cjs",
     "test:transport": "node --test scripts/transport-onboarding.test.cjs",
-    "test:service-area": "node --test scripts/service-area.test.cjs"
+    "test:service-area": "node --test scripts/service-area.test.cjs",
+    "test:explore-refine": "node --test scripts/explore-refine.test.cjs"
   },
   "dependencies": {
     "@expo-google-fonts/dm-serif-display": "^0.4.2",
@@ -44,6 +45,7 @@
     "expo-secure-store": "~57.0.4",
     "expo-splash-screen": "~57.0.10",
     "expo-status-bar": "~57.0.1",
+    "expo-video": "~57.0.5",
     "lucide-react-native": "^1.45.0",
     "nativewind": "^4.2.6",
     "react": "19.2.3",

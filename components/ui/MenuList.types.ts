@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import type { Ionicons } from '@expo/vector-icons';
 
 export type MenuListItem = {
@@ -8,4 +8,5 @@ export type MenuListItem = {
   icon: ComponentProps<typeof Ionicons>['name'];
   onPress: () => void;
   danger?: boolean;
+  trailing?: ReactNode;
 };

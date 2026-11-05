@@ -4,6 +4,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useThemeColors } from '@/constants/colors';
 import { Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
+import { useTravelPresentation } from '@/components/ui/TravelDesignProvider';
+import { TravelSection } from '@/components/ui/TravelPrimitives';
 
 type HomeSectionProps = {
   title: string;
@@ -21,12 +23,26 @@ export function HomeSection({
   children,
 }: HomeSectionProps) {
   const colors = useThemeColors();
+  const travel = useTravelPresentation();
+  if (travel)
+    return (
+      <TravelSection
+        title={title}
+        subtitle={subtitle}
+        actionLabel={actionLabel}
+        onAction={onAction}
+      >
+        {children}
+      </TravelSection>
+    );
   return (
     <View style={styles.section}>
       <View style={styles.head}>
         <View style={styles.copy}>
           <Text style={[styles.title, { color: colors.dark }]}>{title}</Text>
-          {subtitle ? <Text style={[styles.subtitle, { color: colors.mutedLight }]}>{subtitle}</Text> : null}
+          {subtitle ? (
+            <Text style={[styles.subtitle, { color: colors.mutedLight }]}>{subtitle}</Text>
+          ) : null}
         </View>
         {actionLabel && onAction ? (
           <Pressable

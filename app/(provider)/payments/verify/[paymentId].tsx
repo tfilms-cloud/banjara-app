@@ -1,9 +1,11 @@
+import { useBackendFocusEffect as useFocusEffect } from '@/hooks/useBackendFocusEffect';
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
 import { PaymentReviewSheet } from '@/components/payments/PaymentReviewSheet';
 import { ReceiptViewer } from '@/components/payments/ReceiptViewer';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import {
   Alert,
   Keyboard,
@@ -37,7 +39,7 @@ export default function ProviderPaymentVerifyScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
 
-  const [payment, setPayment] = useState<p2p.PaymentTransaction | null>(null);
+  const [payment, setPayment] = useBackendState<p2p.PaymentTransaction | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');

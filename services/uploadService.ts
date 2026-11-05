@@ -90,7 +90,7 @@ export async function takePhoto(options?: {
   const granted =
     current.granted || (await ImagePicker.requestCameraPermissionsAsync()).granted;
   if (!granted) {
-    throw new Error('Camera permission is required to photograph your CNIC.');
+    throw new Error('Camera permission is required to take a photo.');
   }
 
   const result = await ImagePicker.launchCameraAsync({

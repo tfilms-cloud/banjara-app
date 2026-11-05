@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useThemeColors } from '@/constants/colors';
+import { usePresentationColors as useThemeColors } from '@/components/ui/TravelDesignProvider';
 import { Radius, Shadows, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 import type { Agency } from '@/types/trip';

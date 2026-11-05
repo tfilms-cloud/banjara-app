@@ -4,7 +4,9 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { Colors, useThemeColors } from '@/constants/colors';
+import { Colors } from '@/constants/colors';
+import { usePresentationColors as useThemeColors, useTravelPresentation } from '@/components/ui/TravelDesignProvider';
+import { useHomeDesign } from '@/constants/homeDesign';
 import { Radius } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 import type { Seat as SeatType, SeatStatus } from '@/types/seat';
@@ -25,9 +27,11 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function Seat({ seat, onPress }: SeatProps) {
   const theme = useThemeColors();
+  const travel = useTravelPresentation();
+  const design = useHomeDesign();
   const statusColors: Record<SeatStatus, { bg: string; fg: string; border: string }> = {
-    available: { bg: theme.white, fg: theme.dark, border: theme.primary },
-    selected: { bg: theme.action, fg: theme.white, border: theme.actionDark },
+    available: { bg: theme.card, fg: theme.dark, border: theme.primary },
+    selected: { bg: theme.action, fg: travel ? design.background : theme.white, border: theme.actionDark },
     occupied: { bg: theme.seatOccupied, fg: theme.muted, border: theme.seatOccupied },
     reserved: { bg: theme.softAmber, fg: theme.primary, border: theme.accent },
   };
@@ -74,7 +78,7 @@ export function Seat({ seat, onPress }: SeatProps) {
       >
         {seat.label}
       </Text>
-      {selected ? <View style={styles.selectedMark} /> : null}
+      {selected ? <View style={[styles.selectedMark, { backgroundColor: travel ? design.background : theme.white }]} /> : null}
       {seat.status === 'occupied' ? <View style={styles.bookedBar} /> : null}
     </AnimatedPressable>
   );

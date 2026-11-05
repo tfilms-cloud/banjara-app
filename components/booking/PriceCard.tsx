@@ -1,6 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { Colors } from '@/constants/colors';
+import { usePresentationColors as useBookingColors } from '@/components/ui/TravelDesignProvider';
 import { Radius, Spacing } from '@/constants/spacing';
+import { useTravelPresentation } from '@/components/ui/TravelDesignProvider';
+import { Fonts } from '@/constants/typography';
 import { Typography } from '@/constants/typography';
 import type { PriceBreakdown } from '@/types/booking';
 import { formatCurrency } from '@/utils/formatCurrency';
@@ -10,9 +12,12 @@ interface PriceCardProps {
 }
 
 export function PriceCard({ breakdown }: PriceCardProps) {
+  const travel = useTravelPresentation();
+  const Colors = useBookingColors();
+  const styles = makeStyles(Colors);
   return (
-    <View style={styles.card}>
-      <Text style={styles.title}>Price breakdown</Text>
+    <View style={[styles.card, travel && { borderRadius: 28, padding: 18 }]}>
+      <Text style={[styles.title, travel && { fontFamily: Fonts.display, fontSize: 18, color: Colors.dark }]}>Price breakdown</Text>
       <Row label="Ticket price" value={formatCurrency(breakdown.ticketPrice, breakdown.currency)} />
       <Row label="Service fee" value={formatCurrency(breakdown.serviceFee, breakdown.currency)} />
       {breakdown.discount > 0 ? (
@@ -43,6 +48,8 @@ function Row({
   bold?: boolean;
   valueColor?: string;
 }) {
+  const Colors = useBookingColors();
+  const styles = makeStyles(Colors);
   return (
     <View style={styles.row}>
       <Text style={[styles.label, bold && styles.bold]}>{label}</Text>
@@ -53,7 +60,7 @@ function Row({
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(Colors: ReturnType<typeof useBookingColors>) { return StyleSheet.create({
   card: {
     backgroundColor: Colors.card,
     borderRadius: Radius.xl,
@@ -89,4 +96,4 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.border,
     marginVertical: Spacing.xs,
   },
-});
+}); }

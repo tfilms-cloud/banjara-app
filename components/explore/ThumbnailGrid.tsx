@@ -6,6 +6,8 @@ import type { ExploreThumb } from '@/constants/exploreCatalog';
 import { Radius, Shadows, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 import { pushPath } from '@/utils/navigation';
+import { useTravelPresentation } from '@/components/ui/TravelDesignProvider';
+import { TravelCatalogGrid, TravelFilterChips } from '@/components/ui/TravelCatalog';
 
 type ThumbnailGridProps = {
   items: ExploreThumb[];
@@ -31,12 +33,24 @@ export function ThumbnailGrid({
 }: ThumbnailGridProps) {
   const colors = useThemeColors();
   const { width } = useWindowDimensions();
+  const travel = useTravelPresentation();
   const pad = Spacing.screen * 2;
   const gap = Spacing.sm;
   const cell = Math.floor((width - pad - gap * (columns - 1)) / columns);
   const limit = columns * rows;
   const visible = items.slice(0, limit);
   const hasMore = items.length > limit || Boolean(onShowMore);
+
+  if (travel && items.length)
+    return (
+      <TravelCatalogGrid
+        items={items}
+        rows={rows}
+        onItemPress={onItemPress}
+        onShowMore={onShowMore}
+        showMoreLabel={showMoreLabel}
+      />
+    );
 
   if (!items.length) {
     return (
@@ -117,6 +131,8 @@ export function ExploreFilterChips<T extends string>({
   onChange,
 }: FilterChipsProps<T>) {
   const colors = useThemeColors();
+  const travel = useTravelPresentation();
+  if (travel) return <TravelFilterChips options={options} value={value} onChange={onChange} />;
   return (
     <View style={[styles.filters, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
       {options.map((option) => {
@@ -125,10 +141,7 @@ export function ExploreFilterChips<T extends string>({
           <Pressable
             key={option.id}
             onPress={() => onChange(option.id)}
-            style={[
-              styles.filterChip,
-              active && { backgroundColor: colors.primary },
-            ]}
+            style={[styles.filterChip, active && { backgroundColor: colors.primary }]}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
           >

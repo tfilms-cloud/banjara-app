@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
+import { useCallback, useState } from 'react';
 import { getApiErrorMessage } from '@/services/apiError';
 import * as tripService from '@/services/tripService';
 import { useSearchStore } from '@/store/searchStore';
 import type { TripWithDetails } from '@/types/trip';
 
 export function useTrips() {
-  const [trips, setTrips] = useState<TripWithDetails[]>([]);
+  const [trips, setTrips] = useBackendState<TripWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const from = useSearchStore((s) => s.from);
@@ -46,7 +47,7 @@ export function useTrips() {
 }
 
 export function useTrip(id?: string) {
-  const [trip, setTrip] = useState<TripWithDetails | null>(null);
+  const [trip, setTrip] = useBackendState<TripWithDetails | null>(null);
   const [loading, setLoading] = useState(Boolean(id));
   const [error, setError] = useState<string | null>(null);
 
@@ -80,7 +81,7 @@ export function useTrip(id?: string) {
 }
 
 export function useRecommendedTrips() {
-  const [trips, setTrips] = useState<TripWithDetails[]>([]);
+  const [trips, setTrips] = useBackendState<TripWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

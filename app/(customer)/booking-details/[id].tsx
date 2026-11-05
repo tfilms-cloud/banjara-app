@@ -1,5 +1,6 @@
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert, Linking, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BookingStatusTimeline } from '@/components/booking/BookingStatusTimeline';
@@ -45,7 +46,7 @@ export default function BookingDetailsScreen() {
   const user = useAuthStore((s) => s.user);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
-  const [trip, setTrip] = useState<TripWithDetails | null>(null);
+  const [trip, setTrip] = useBackendState<TripWithDetails | null>(null);
   const setDestination = useHotelStore((s) => s.setDestination);
   const setCheckIn = useHotelStore((s) => s.setCheckIn);
   const setCheckOut = useHotelStore((s) => s.setCheckOut);

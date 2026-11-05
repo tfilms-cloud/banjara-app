@@ -3,7 +3,10 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Avatar } from '@/components/ui/Avatar';
-import { useThemeColors } from '@/constants/colors';
+import {
+  usePresentationColors as useThemeColors,
+  useTravelPresentation,
+} from '@/components/ui/TravelDesignProvider';
 import { Radius, Shadows, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 import type { ProviderTransportSetup } from '@/types/provider';
@@ -16,6 +19,7 @@ type PublicDriver = Pick<
 
 export function DriverCard({ driver }: { driver?: PublicDriver }) {
   const colors = useThemeColors();
+  const travel = useTravelPresentation();
   const [failedPhoto, setFailedPhoto] = useState<string>();
   const name = driver?.driverName?.trim();
   const photo = normalizeMediaUrl(driver?.driverPhoto);
@@ -25,41 +29,52 @@ export function DriverCard({ driver }: { driver?: PublicDriver }) {
   if (!name && !photo && !hasExperience) return null;
 
   return (
-    <View style={styles.section}>
-      <Text style={[styles.heading, { color: colors.dark }]}>Your driver</Text>
+    <View style={[styles.section, travel && { marginTop: 0 }]}>
+      <Text
+        style={[styles.heading, { color: colors.dark }, travel && { fontSize: 18, lineHeight: 25 }]}
+      >
+        {travel ? 'Lead highway driver' : 'Your driver'}
+      </Text>
       <View
         style={[
           styles.card,
           { backgroundColor: colors.card, borderColor: colors.border },
+          travel && { borderRadius: 32, padding: 16, gap: 12 },
         ]}
       >
         <View
-          style={[styles.portrait, { backgroundColor: colors.primarySoft }]}
+          style={[
+            styles.portrait,
+            { backgroundColor: colors.primarySoft },
+            travel && { width: 52, height: 52, borderRadius: 26 },
+          ]}
         >
           {photo && failedPhoto !== photo ? (
             <Image
               source={{ uri: photo }}
-              style={styles.photo}
+              style={[styles.photo, travel && { width: 52, height: 52 }]}
               contentFit="cover"
               accessibilityLabel={name ? `Photo of ${name}` : 'Driver photo'}
               onError={() => setFailedPhoto(photo)}
             />
           ) : (
-            <Avatar name={name ?? ''} size={88} />
+            <Avatar name={name ?? ''} size={travel ? 52 : 88} />
           )}
         </View>
         <View style={styles.details}>
-          <Text style={[styles.role, { color: colors.primary }]}>Driver</Text>
-          <Text style={[styles.name, { color: colors.dark }]}>
+          {!travel ? <Text style={[styles.role, { color: colors.primary }]}>Driver</Text> : null}
+          <Text
+            style={[
+              styles.name,
+              { color: colors.dark },
+              travel && { fontSize: 15, lineHeight: 21 },
+            ]}
+          >
             {name || 'Name not provided'}
           </Text>
           {hasExperience ? (
-            <View style={styles.experience}>
-              <Ionicons
-                name="ribbon-outline"
-                size={17}
-                color={colors.primary}
-              />
+            <View style={[styles.experience, travel && { marginTop: 0 }]}>
+              <Ionicons name="ribbon-outline" size={17} color={colors.primary} />
               <Text style={[styles.caption, { color: colors.muted }]}>
                 {years} {years === 1 ? 'year' : 'years'} of driving experience
               </Text>

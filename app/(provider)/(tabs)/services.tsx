@@ -1,6 +1,8 @@
+import { useBackendFocusEffect as useFocusEffect } from '@/hooks/useBackendFocusEffect';
+import { useBackendState } from '@/hooks/useBackendData';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
@@ -456,7 +458,7 @@ export default function ProviderServicesScreen() {
     refreshDashboard,
   } = useProviderStore();
   const [subFilter, setSubFilter] = useState<string | null>(null);
-  const [itineraries, setItineraries] = useState<TourItinerary[]>([]);
+  const [itineraries, setItineraries] = useBackendState<TourItinerary[]>([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -755,27 +757,27 @@ export default function ProviderServicesScreen() {
         </View>
         <View style={hStyles.sectionCard}>
           <View style={hStyles.sectionHead}>
-            <Text style={hStyles.sectionTitle}>Your fleet</Text>
+            <Text style={hStyles.sectionTitle}>Your vehicle</Text>
             <Pressable onPress={() => pushPath('/(provider)/transport')}>
               <Text style={hStyles.link}>Manage</Text>
             </Pressable>
           </View>
           {vehicleChildren.length ? (
             <View style={styles.stack}>
-              {vehicleChildren.slice(0, 4).map((item) => (
+              {vehicleChildren.slice(0, 1).map((item) => (
                 <ChildServiceCard key={item.id} item={item} />
               ))}
             </View>
           ) : (
             <CatalogEmpty
               icon="bus-outline"
-              title="No vehicles listed"
-              message="Add a vehicle so travelers can ride with you."
-              actionLabel="Add vehicle"
+              title="No vehicle registered"
+              message="Register the vehicle you drive so travelers can ride with you."
+              actionLabel="Register your vehicle"
               onAction={() =>
                 void withPaymentAccounts(
                   () => router.push('/(provider)/vehicles/add'),
-                  'add vehicles'
+                  'register your vehicle'
                 )
               }
             />

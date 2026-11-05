@@ -60,7 +60,10 @@ export default function AddVehicleScreen() {
       vehicles.find((item) =>
         onboarding
           ? item.registrationNumber === provider?.transport?.registrationNumber
-          : item.id === requestedId,
+          : // Drivers have one vehicle: without an id, open the one they already have.
+            requestedId
+            ? item.id === requestedId
+            : true,
       ),
     [
       vehicles,
@@ -259,7 +262,7 @@ export default function AddVehicleScreen() {
     if (!provider) return;
     Alert.alert(
       'Remove vehicle',
-      `Remove ${form.name || 'this vehicle'} from your fleet?`,
+      `Remove ${form.name || 'this vehicle'} from your account? You need one registered vehicle to offer rides.`,
       [
         { text: 'Keep', style: 'cancel' },
         {
@@ -287,10 +290,10 @@ export default function AddVehicleScreen() {
       <Header
         title={
           onboarding
-            ? 'Register primary vehicle'
+            ? 'Register your vehicle'
             : isEditing
-              ? 'Edit vehicle'
-              : 'Add vehicle'
+              ? 'Edit your vehicle'
+              : 'Register your vehicle'
         }
         showBack
         onBack={goBack}
@@ -325,7 +328,7 @@ export default function AddVehicleScreen() {
               registration. Enter the passenger capacity and choose amenities.
             </Text>
             <Button
-              title="Edit transporter details"
+              title="Edit driver details"
               variant="outline"
               onPress={() => router.push('/(provider)/register/transport')}
             />
@@ -453,7 +456,7 @@ export default function AddVehicleScreen() {
               ? 'Save vehicle and continue'
               : isEditing
                 ? 'Save changes'
-                : 'Add vehicle'
+                : 'Register vehicle'
           }
           disabled={removingImage}
           loading={loading || uploadingImages}

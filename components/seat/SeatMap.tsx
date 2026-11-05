@@ -1,6 +1,8 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Seat } from '@/components/seat/Seat';
-import { Colors } from '@/constants/colors';
+import { useHomeDesign } from '@/constants/homeDesign';
+import { useTravelPresentation } from '@/components/ui/TravelDesignProvider';
+import { usePresentationColors as useBookingColors } from '@/components/ui/TravelDesignProvider';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Fonts, Typography } from '@/constants/typography';
 import type { Seat as SeatType, SeatLayout, SeatStatus } from '@/types/seat';
@@ -19,6 +21,10 @@ const LEGEND: Array<{ label: string; status: SeatStatus }> = [
 ];
 
 export function SeatMap({ layout, selectedSeats, onToggleSeat }: SeatMapProps) {
+  const theme = useHomeDesign();
+  const travel = useTravelPresentation();
+  const Colors = useBookingColors();
+  const styles = makeStyles(Colors);
   const rowNumbers = Array.from(new Set(layout.seats.map((seat) => seat.row))).sort(
     (a, b) => a - b
   );
@@ -26,11 +32,12 @@ export function SeatMap({ layout, selectedSeats, onToggleSeat }: SeatMapProps) {
   return (
     <View style={styles.container}>
       <View style={styles.driver} accessibilityLabel="Driver at the front of the vehicle">
-        <Text style={styles.driverText}>Driver</Text>
+        <Text style={[styles.driverText, travel && { color: theme.background }]}>Front · Driver</Text>
       </View>
 
       <ScrollView
         horizontal
+        style={{ minHeight: Math.max(48, rowNumbers.length * 64 - 16), flexGrow: 0 }}
         nestedScrollEnabled
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.gridScroll}
@@ -86,10 +93,10 @@ export function SeatMap({ layout, selectedSeats, onToggleSeat }: SeatMapProps) {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(Colors: ReturnType<typeof useBookingColors>) { return StyleSheet.create({
   container: {
     backgroundColor: Colors.card,
-    borderRadius: Radius['2xl'],
+    borderRadius: 28,
     padding: Spacing.lg,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -177,4 +184,4 @@ const styles = StyleSheet.create({
     ...Typography.small,
     color: Colors.muted,
   },
-});
+}); }

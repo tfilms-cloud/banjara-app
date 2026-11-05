@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { Fonts, Typography } from '@/constants/typography';
+import { useTravelPresentation } from '@/components/ui/TravelDesignProvider';
+import { useHomeDesign } from '@/constants/homeDesign';
 
 type ExpandableTextProps = {
   text: string;
@@ -16,6 +18,8 @@ export function ExpandableText({
   expandLabel = 'Read more',
   collapseLabel = 'Show less',
 }: ExpandableTextProps) {
+  const travel = useTravelPresentation();
+  const theme = useHomeDesign();
   const [expanded, setExpanded] = useState(false);
   const [lineCount, setLineCount] = useState(0);
   const trimmed = text.trim();
@@ -26,12 +30,19 @@ export function ExpandableText({
   return (
     <View>
       <Text
-        style={[styles.body, styles.measure]}
+        style={[
+          styles.body,
+          styles.measure,
+          travel && { color: theme.muted, fontSize: 13, lineHeight: 21 },
+        ]}
         onTextLayout={(event) => setLineCount(event.nativeEvent.lines.length)}
       >
         {trimmed}
       </Text>
-      <Text style={styles.body} numberOfLines={expanded ? undefined : numberOfLines}>
+      <Text
+        style={[styles.body, travel && { color: theme.muted, fontSize: 13, lineHeight: 21 }]}
+        numberOfLines={expanded ? undefined : numberOfLines}
+      >
         {trimmed}
       </Text>
       {truncated ? (
@@ -40,8 +51,11 @@ export function ExpandableText({
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={expanded ? collapseLabel : expandLabel}
+          style={travel ? { minHeight: 44, justifyContent: 'center' } : undefined}
         >
-          <Text style={styles.toggle}>{expanded ? collapseLabel : expandLabel}</Text>
+          <Text style={[styles.toggle, travel && { color: theme.primary, fontSize: 12 }]}>
+            {expanded ? collapseLabel : expandLabel}
+          </Text>
         </Pressable>
       ) : null}
     </View>

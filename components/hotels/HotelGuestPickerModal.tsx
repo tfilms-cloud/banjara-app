@@ -3,6 +3,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Fonts, Typography } from '@/constants/typography';
+import { usePresentationColors, useTravelPresentation } from '@/components/ui/TravelDesignProvider';
 
 type HotelGuestPickerModalProps = {
   visible: boolean;
@@ -30,29 +31,39 @@ function CounterRow({
   max: number;
   onChange: (value: number) => void;
 }) {
+  const colors = usePresentationColors();
+  const travel = useTravelPresentation();
   return (
     <View style={styles.counterRow}>
       <View style={{ flex: 1 }}>
-        <Text style={styles.counterLabel}>{label}</Text>
-        {hint ? <Text style={styles.counterHint}>{hint}</Text> : null}
+        <Text style={[styles.counterLabel, { color: colors.dark }]}>{label}</Text>
+        {hint ? <Text style={[styles.counterHint, { color: colors.muted }]}>{hint}</Text> : null}
       </View>
       <View style={styles.controls}>
         <Pressable
-          style={[styles.btn, value <= min && styles.btnDisabled]}
+          style={[
+            styles.btn,
+            { backgroundColor: travel ? colors.inputBg : colors.elevated },
+            value <= min && styles.btnDisabled,
+          ]}
           onPress={() => onChange(Math.max(min, value - 1))}
           disabled={value <= min}
           accessibilityLabel={`Decrease ${label}`}
         >
-          <Ionicons name="remove" size={16} color={Colors.dark} />
+          <Ionicons name="remove" size={16} color={colors.dark} />
         </Pressable>
-        <Text style={styles.value}>{value}</Text>
+        <Text style={[styles.value, { color: colors.dark }]}>{value}</Text>
         <Pressable
-          style={[styles.btn, value >= max && styles.btnDisabled]}
+          style={[
+            styles.btn,
+            { backgroundColor: travel ? colors.inputBg : colors.elevated },
+            value >= max && styles.btnDisabled,
+          ]}
           onPress={() => onChange(Math.min(max, value + 1))}
           disabled={value >= max}
           accessibilityLabel={`Increase ${label}`}
         >
-          <Ionicons name="add" size={16} color={Colors.dark} />
+          <Ionicons name="add" size={16} color={colors.dark} />
         </Pressable>
       </View>
     </View>
@@ -69,13 +80,17 @@ export function HotelGuestPickerModal({
   onChangeRooms,
   onClose,
 }: HotelGuestPickerModalProps) {
+  const colors = usePresentationColors();
+  const travel = useTravelPresentation();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.root}>
         <Pressable style={styles.backdrop} onPress={onClose} />
-        <View style={styles.sheet}>
-          <Text style={styles.title}>Guests & rooms</Text>
-          <Text style={styles.sub}>Choose who is staying and how many rooms you need.</Text>
+        <View style={[styles.sheet, { backgroundColor: colors.card }]}>
+          <Text style={[styles.title, { color: colors.primary }]}>Guests & rooms</Text>
+          <Text style={[styles.sub, { color: colors.muted }]}>
+            Choose who is staying and how many rooms you need.
+          </Text>
           <CounterRow
             label="Adults"
             hint="Age 13+"
@@ -93,8 +108,10 @@ export function HotelGuestPickerModal({
             onChange={onChangeChildren}
           />
           <CounterRow label="Rooms" value={rooms} min={1} max={5} onChange={onChangeRooms} />
-          <Pressable style={styles.done} onPress={onClose}>
-            <Text style={styles.doneText}>Done</Text>
+          <Pressable style={[styles.done, { backgroundColor: colors.primary }]} onPress={onClose}>
+            <Text style={[styles.doneText, { color: travel ? colors.background : colors.white }]}>
+              Done
+            </Text>
           </Pressable>
         </View>
       </View>

@@ -3,9 +3,6 @@ import { asArray, idOf, mapProvider, type AnyRecord } from '@/services/mappers';
 import type { Restaurant, RestaurantOffer } from '@/types/restaurant';
 import type { Provider } from '@/types/provider';
 
-const FALLBACK_IMAGE =
-  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=80&auto=format&fit=crop';
-
 function providerToRestaurant(provider: Provider): Restaurant | null {
   if (!provider.services.includes('restaurant') && !provider.restaurant) return null;
   const r = provider.restaurant;
@@ -35,7 +32,7 @@ function providerToRestaurant(provider: Provider): Restaurant | null {
     menuVariety,
     rating,
     reviewCount,
-    images: r?.images?.length ? r.images : provider.logo ? [provider.logo] : [FALLBACK_IMAGE],
+    images: r?.images?.length ? r.images : provider.logo ? [provider.logo] : [],
     offers,
     description: r?.description || provider.description,
     phone: r?.phone || provider.phone,
@@ -44,6 +41,7 @@ function providerToRestaurant(provider: Provider): Restaurant | null {
     latitude: r?.latitude ?? provider.latitude,
     longitude: r?.longitude ?? provider.longitude,
     visitScore,
+    verified: provider.verificationStatus === 'approved',
   };
 }
 

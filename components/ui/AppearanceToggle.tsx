@@ -1,6 +1,6 @@
-import { Moon, Sun } from 'lucide-react-native';
+import { Moon, Palette, Sun } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useThemeColors } from '@/constants/colors';
+import { usePresentationColors, useTravelPresentation } from './TravelDesignProvider';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 import { useUserStore } from '@/store/userStore';
@@ -10,7 +10,8 @@ type AppearanceToggleProps = {
 };
 
 export function AppearanceToggle({ compact }: AppearanceToggleProps) {
-  const colors = useThemeColors();
+  const colors = usePresentationColors();
+  const travel = useTravelPresentation();
   const darkMode = useUserStore((state) => state.settings.darkMode);
   const updateSettings = useUserStore((state) => state.updateSettings);
 
@@ -22,29 +23,46 @@ export function AppearanceToggle({ compact }: AppearanceToggleProps) {
           backgroundColor: colors.card,
           borderColor: colors.border,
           padding: compact ? Spacing.md : Spacing.lg,
+          borderRadius: travel ? 32 : Radius.xl,
         },
       ]}
     >
       {compact ? null : (
-        <View style={styles.copy}>
-          <Text style={[styles.title, { color: colors.dark }]}>Appearance</Text>
-          <Text style={[styles.sub, { color: colors.muted }]}>
-            Switch between light and dark
-          </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View style={[styles.copy, { flex: 1 }]}>
+            <Text style={[styles.title, { color: colors.dark }]}>Appearance</Text>
+            <Text style={[styles.sub, { color: colors.muted }]}>
+              {travel
+                ? 'Switch between light and dark ambient modes'
+                : 'Switch between light and dark'}
+            </Text>
+          </View>
+          {travel ? <Palette size={19} color={colors.primary} /> : null}
         </View>
       )}
-      <View style={[styles.track, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+      <View
+        style={[
+          styles.track,
+          { backgroundColor: colors.inputBg, borderColor: colors.border },
+          travel && { borderRadius: 24, borderWidth: 0 },
+        ]}
+      >
         <Pressable
           onPress={() => updateSettings({ darkMode: false })}
           style={[
             styles.option,
             !darkMode && { backgroundColor: colors.elevated, borderColor: colors.border },
+            travel && { borderRadius: 22, borderWidth: 0 },
           ]}
           accessibilityRole="button"
           accessibilityState={{ selected: !darkMode }}
           accessibilityLabel="Light mode"
         >
-          <Sun size={16} color={!darkMode ? colors.warning : colors.muted} strokeWidth={2} />
+          <Sun
+            size={16}
+            color={!darkMode ? (travel ? colors.primary : colors.warning) : colors.muted}
+            strokeWidth={2}
+          />
           <Text style={[styles.optionText, { color: !darkMode ? colors.dark : colors.muted }]}>
             Light
           </Text>
@@ -54,6 +72,7 @@ export function AppearanceToggle({ compact }: AppearanceToggleProps) {
           style={[
             styles.option,
             darkMode && { backgroundColor: colors.elevated, borderColor: colors.border },
+            travel && { borderRadius: 22, borderWidth: 0 },
           ]}
           accessibilityRole="button"
           accessibilityState={{ selected: darkMode }}

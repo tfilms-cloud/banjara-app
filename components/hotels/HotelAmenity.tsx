@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import { Colors } from '@/constants/colors';
-import { Typography } from '@/constants/typography';
+import { Fonts, Typography } from '@/constants/typography';
 import type { HotelAmenity } from '@/types/hotel';
+import { useTravelPresentation } from '@/components/ui/TravelDesignProvider';
+import { useHotelDesign } from '@/constants/hotelDesign';
 
-const iconMap: Partial<Record<HotelAmenity, keyof typeof Ionicons.glyphMap>> = {
+const iconMap: Partial<Record<string, keyof typeof Ionicons.glyphMap>> = {
   WiFi: 'wifi',
   'Air Conditioning': 'snow',
   Breakfast: 'cafe',
@@ -19,25 +21,85 @@ const iconMap: Partial<Record<HotelAmenity, keyof typeof Ionicons.glyphMap>> = {
   Laundry: 'shirt',
 };
 
+const travelIcons: Partial<Record<string, keyof typeof Ionicons.glyphMap>> = {
+  'Hot water': 'water',
+  'Mountain view': 'image',
+  'Private bathroom': 'water-outline',
+};
+
 interface HotelAmenityChipProps {
   amenity: HotelAmenity;
   compact?: boolean;
+  tone?: 'neutral' | 'surface';
 }
 
-export function HotelAmenityChip({ amenity, compact }: HotelAmenityChipProps) {
+export function HotelAmenityChip({ amenity, compact, tone = 'neutral' }: HotelAmenityChipProps) {
+  const travel = useTravelPresentation();
+  const theme = useHotelDesign();
   return (
-    <View style={[styles.chip, compact && styles.compact]}>
-      <Ionicons name={iconMap[amenity] ?? 'checkmark'} size={14} color={Colors.secondary} />
-      {!compact ? <Text style={styles.label}>{amenity}</Text> : null}
+    <View
+      style={[
+        styles.chip,
+        travel && {
+          backgroundColor: theme.neutral,
+          paddingHorizontal: 12,
+          paddingVertical: 9,
+          maxWidth: '100%',
+        },
+        travel &&
+          tone === 'surface' && {
+            backgroundColor: theme.surface,
+            paddingVertical: 5,
+            borderWidth: 1,
+            borderColor: theme.border,
+          },
+        compact && styles.compact,
+      ]}
+    >
+      <Ionicons
+        name={iconMap[amenity] ?? (travel ? travelIcons[amenity] : undefined) ?? 'checkmark'}
+        size={14}
+        color={travel ? theme.primary : Colors.secondary}
+      />
+      {!compact ? (
+        <Text
+          style={[
+            styles.label,
+            travel && {
+              color: theme.text,
+              fontFamily: Fonts.bodyMedium,
+              fontWeight: 'normal',
+              flexShrink: 1,
+              lineHeight: 18,
+            },
+            travel && tone === 'surface' && { fontSize: 11, lineHeight: 17 },
+          ]}
+        >
+          {amenity}
+        </Text>
+      ) : null}
     </View>
   );
 }
 
-export function HotelAmenityList({ amenities }: { amenities: HotelAmenity[] }) {
+export function HotelAmenityList({
+  amenities,
+  layout = 'wrap',
+  tone = 'neutral',
+}: {
+  amenities: HotelAmenity[];
+  layout?: 'wrap' | 'column';
+  tone?: 'neutral' | 'surface';
+}) {
   return (
-    <View style={styles.list}>
+    <View
+      style={[
+        styles.list,
+        layout === 'column' && { flexDirection: 'column', alignItems: 'flex-start', gap: 9 },
+      ]}
+    >
       {amenities.map((amenity) => (
-        <HotelAmenityChip key={amenity} amenity={amenity} />
+        <HotelAmenityChip key={amenity} amenity={amenity} tone={tone} />
       ))}
     </View>
   );

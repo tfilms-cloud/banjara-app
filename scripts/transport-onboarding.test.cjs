@@ -579,12 +579,12 @@ test('the real transport screen preserves edits when remounted, validates them, 
   await env.store.getState().loadProviderByUser('user-1');
   const Screen = env.load('app/(provider)/register/transport.tsx').default;
   let tree = env.runner.render(Screen);
-  find(tree, 'Input', "Driver's phone number *").onChangeText('123');
+  find(tree, 'Input', 'Your phone number *').onChangeText('123');
   tree = env.runner.render(Screen);
   await find(tree, 'Button', 'Continue').onPress();
   assert.equal(env.routes.length, 0);
   assert.match(env.alerts.at(-1).join(' '), /phone/);
-  find(tree, 'Input', "Driver's phone number *").onChangeText('03001234567');
+  find(tree, 'Input', 'Your phone number *').onChangeText('03001234567');
   tree = env.runner.render(Screen);
   const checkpoint = deferred();
   env.service.saveOnboardingCheckpoint = () => checkpoint.promise;
@@ -693,7 +693,7 @@ test('Transportation selection opens Business Info, including when resuming a pe
   );
 });
 
-test('Business Info validates required fields, saves edits as typed, and saves before opening the map', async () => {
+test('Driver details validate required fields, save edits as typed, and save before opening the map', async () => {
   const env = runtime();
   await flush();
   env.store.getState().setSelectedServices(['transport']);
@@ -732,29 +732,30 @@ test('Business Info validates required fields, saves edits as typed, and saves b
   };
   const Screen = env.load('app/(provider)/register/business.tsx').default;
   let tree = env.runner.render(Screen);
-  assert.equal(find(tree, 'Input', 'Owner / Manager Name').value, 'Test Owner');
+  assert.equal(find(tree, 'Input', 'Full name (as on your CNIC)').value, 'Test Owner');
   await find(tree, 'Button', 'Continue').onPress();
   assert.equal(env.routes.length, 0);
   assert.equal(env.calls.length, 0);
   for (const [label, value] of [
-    ['Business / Agency Name', 'Fresh Travels'],
-    ['Business Description', 'Reliable transport service'],
-    ['Years of Experience', '0'],
+    ['Full name (as on your CNIC)', 'Ayesha Khan'],
+    ['About you', 'I drive the Karakoram Highway every week'],
+    ['Driving experience (years)', '0'],
   ]) {
     find(tree, 'Input', label).onChangeText(value);
   }
   find(tree, 'SearchSelect', 'City').onChange('Islamabad');
   find(tree, 'LocationPinField', 'Address').onChangeText('Test Road Islamabad');
   assert.equal(
-    env.store.getState().formDrafts.business.businessName,
-    'Fresh Travels',
+    env.store.getState().formDrafts.business.ownerName,
+    'Ayesha Khan',
   );
   tree = env.runner.render(Screen);
   await find(tree, 'Button', 'Continue').onPress();
-  assert.equal(
-    env.calls.find((call) => call[0] === 'save')[1].business.yearsExperience,
-    0,
-  );
+  const saved = env.calls.find((call) => call[0] === 'save')[1].business;
+  assert.equal(saved.yearsExperience, 0);
+  // Rides are offered by individual drivers: the listing name is the driver's own name.
+  assert.equal(saved.ownerName, 'Ayesha Khan');
+  assert.equal(saved.businessName, 'Ayesha Khan');
   assert.equal(env.routes.at(-1).pathname, '/(provider)/location');
 });
 
@@ -764,7 +765,7 @@ test('transport form values and uploaded photos are restored after a complete st
   await env.store.getState().loadProviderByUser('user-1');
   let Screen = env.load('app/(provider)/register/transport.tsx').default;
   let tree = env.runner.render(Screen);
-  find(tree, 'Input', "Driver's phone number *").onChangeText('03009999999');
+  find(tree, 'Input', 'Your phone number *').onChangeText('03009999999');
   env.store
     .getState()
     .setFormDraft('transport.front', [
@@ -777,7 +778,7 @@ test('transport form values and uploaded photos are restored after a complete st
   Screen = reopened.load('app/(provider)/register/transport.tsx').default;
   tree = reopened.runner.render(Screen);
   assert.equal(
-    find(tree, 'Input', "Driver's phone number *").value,
+    find(tree, 'Input', 'Your phone number *').value,
     '03009999999',
   );
   assert.ok(

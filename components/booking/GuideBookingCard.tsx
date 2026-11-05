@@ -7,14 +7,20 @@ import { Fonts } from '@/constants/typography';
 import type { GuideBooking } from '@/types/guideBooking';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatDate';
+import { useTravelPresentation } from '@/components/ui/TravelDesignProvider';
+import { TravelGuideBookingCard } from './TravelBookingCards';
 
 type Props = {
   booking: GuideBooking;
   onPress?: () => void;
+  onMessage?: () => void;
 };
 
-export function GuideBookingCard({ booking, onPress }: Props) {
+export function GuideBookingCard({ booking, onPress, onMessage }: Props) {
   const colors = useThemeColors();
+  const travel = useTravelPresentation();
+  if (travel)
+    return <TravelGuideBookingCard booking={booking} onPress={onPress} onMessage={onMessage} />;
   const pending = booking.status === 'pending';
   return (
     <Pressable

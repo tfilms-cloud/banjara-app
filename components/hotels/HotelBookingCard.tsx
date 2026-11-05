@@ -7,6 +7,8 @@ import { Typography } from '@/constants/typography';
 import type { Hotel, HotelBooking, HotelRoom } from '@/types/hotel';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatDate';
+import { useTravelPresentation } from '@/components/ui/TravelDesignProvider';
+import { TravelHotelBookingCard } from '@/components/booking/TravelBookingCards';
 
 interface HotelBookingCardProps {
   booking: HotelBooking;
@@ -16,6 +18,9 @@ interface HotelBookingCardProps {
 }
 
 export function HotelBookingCard({ booking, hotel, room, onPress }: HotelBookingCardProps) {
+  const travel = useTravelPresentation();
+  if (travel)
+    return <TravelHotelBookingCard booking={booking} hotel={hotel} room={room} onPress={onPress} />;
   const pending = booking.status === 'pending';
   const tone =
     booking.status === 'cancelled'
@@ -71,7 +76,12 @@ const styles = StyleSheet.create({
   },
   image: { width: '100%', height: 120 },
   body: { padding: Spacing.lg, gap: Spacing.xs },
-  top: { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.md, alignItems: 'center' },
+  top: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+    alignItems: 'center',
+  },
   name: { ...Typography.h3, color: Colors.primary, flex: 1 },
   meta: { ...Typography.caption, color: Colors.muted },
   pendingHint: {

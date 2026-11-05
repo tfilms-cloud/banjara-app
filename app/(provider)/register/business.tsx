@@ -27,16 +27,13 @@ import { useProviderStore } from '@/store/providerStore';
 import { useAuthStore } from '@/store/authStore';
 
 const schema = z.object({
-  businessName: z.string().min(2, 'Enter business name'),
-  ownerName: z.string().min(2, 'Enter owner name'),
+  ownerName: z.string().trim().min(2, 'Enter your full name'),
   phone: z.string().refine((value) => /^\+?\d{10,15}$/.test(value.replace(/[\s()-]/g, '')), 'Enter a valid phone number (10–15 digits)'),
   email: z.string().email('Enter email'),
-  description: z.string().min(10, 'Add a short description'),
+  description: z.string().min(10, 'Tell travellers a little about yourself'),
   city: z.string().min(2, 'Select a city'),
   address: z.string().min(5, 'Enter address or pin on the map'),
   yearsExperience: z.string().regex(/^\d+$/, 'Enter whole years, including 0').refine((value) => Number(value) <= 100, 'Enter 0 to 100 years'),
-  website: z.string().optional(),
-  socialMedia: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -69,7 +66,6 @@ export default function ProviderBusinessScreen() {
   const { control, handleSubmit, formState, setValue, watch } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      businessName: draft.business.businessName ?? '',
       ownerName: draft.business.ownerName || draft.personal.name || user?.name || '',
       phone: draft.business.phone || draft.personal.phone || user?.phone || '',
       email: draft.business.email || draft.personal.email || user?.email || '',
@@ -77,8 +73,6 @@ export default function ProviderBusinessScreen() {
       city: draft.business.city ?? '',
       address: draft.business.address ?? '',
       yearsExperience: String(draft.business.yearsExperience ?? ''),
-      website: draft.business.website ?? '',
-      socialMedia: draft.business.socialMedia ?? '',
       ...cached,
     },
   });
@@ -89,8 +83,12 @@ export default function ProviderBusinessScreen() {
   }, [watch]);
 
   const onSubmit = handleSubmit(async (values) => {
+    // Transport is offered by individual local drivers: the driver is the listing.
+    const name = values.ownerName.trim();
     setBusiness({
       ...values,
+      ownerName: name,
+      businessName: name,
       yearsExperience: Number(values.yearsExperience) || 0,
     });
     try {
@@ -108,7 +106,7 @@ export default function ProviderBusinessScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <Header
-        title="Business Info"
+        title="Your details"
         showBack
         fallbackHref="/(provider)/register/services"
       />
@@ -116,19 +114,15 @@ export default function ProviderBusinessScreen() {
         contentContainerStyle={{ padding: Spacing.lg, paddingBottom: insets.bottom + 40, gap: Spacing.lg }}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.heading}>Tell us about your business</Text>
-        <Controller
-          control={control}
-          name="businessName"
-          render={({ field: { onChange, value } }) => (
-            <Input label="Business / Agency Name" value={value} onChangeText={onChange} error={formState.errors.businessName?.message} />
-          )}
-        />
+        <Text style={styles.heading}>Tell us about yourself</Text>
+        <Text style={styles.sub}>
+          Rides on Banjara are offered by local drivers who drive their own vehicle. Travellers will see your name on your rides.
+        </Text>
         <Controller
           control={control}
           name="ownerName"
           render={({ field: { onChange, value } }) => (
-            <Input label="Owner / Manager Name" value={value} onChangeText={onChange} error={formState.errors.ownerName?.message} />
+            <Input label="Full name (as on your CNIC)" value={value} onChangeText={onChange} error={formState.errors.ownerName?.message} />
           )}
         />
         <Controller
@@ -149,7 +143,7 @@ export default function ProviderBusinessScreen() {
           control={control}
           name="description"
           render={({ field: { onChange, value } }) => (
-            <Input label="Business Description" value={value} onChangeText={onChange} multiline error={formState.errors.description?.message} />
+            <Input label="About you" placeholder="Routes you know, languages you speak, what travellers can expect" value={value} onChangeText={onChange} multiline error={formState.errors.description?.message} />
           )}
         />
         <Controller
@@ -162,7 +156,7 @@ export default function ProviderBusinessScreen() {
               value={value}
               options={cityOptions}
               leftIcon="location-outline"
-              hint="Choose your operating city from the list"
+              hint="The city you drive from"
               error={formState.errors.city?.message}
               onChange={onChange}
             />
@@ -178,7 +172,7 @@ export default function ProviderBusinessScreen() {
               onChangeText={onChange}
               error={formState.errors.address?.message}
               result="address"
-              mapTitle="Pin your business"
+              mapTitle="Pin your location"
               mapButtonLabel="Open full map"
               hint="Type the street address, or tap Open full map"
               initialLatitude={draft.location?.latitude}
@@ -209,21 +203,7 @@ export default function ProviderBusinessScreen() {
           control={control}
           name="yearsExperience"
           render={({ field: { onChange, value } }) => (
-            <Input label="Years of Experience" keyboardType="number-pad" value={value} onChangeText={onChange} error={formState.errors.yearsExperience?.message} />
-          )}
-        />
-        <Controller
-          control={control}
-          name="website"
-          render={({ field: { onChange, value } }) => (
-            <Input label="Website (optional)" value={value} onChangeText={onChange} autoCapitalize="none" />
-          )}
-        />
-        <Controller
-          control={control}
-          name="socialMedia"
-          render={({ field: { onChange, value } }) => (
-            <Input label="Social Media (optional)" value={value} onChangeText={onChange} />
+            <Input label="Driving experience (years)" keyboardType="number-pad" value={value} onChangeText={onChange} error={formState.errors.yearsExperience?.message} />
           )}
         />
         <Button title="Continue" loading={saving} onPress={onSubmit} />
@@ -235,4 +215,5 @@ export default function ProviderBusinessScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   heading: { ...Typography.h2, color: Colors.primary },
+  sub: { ...Typography.body, color: Colors.muted, marginTop: -Spacing.sm },
 });

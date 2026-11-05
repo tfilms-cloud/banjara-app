@@ -27,4 +27,5 @@ export type Restaurant = {
   longitude?: number;
   /** Score for “most visited” ranking */
   visitScore: number;
+  verified?: boolean;
 };

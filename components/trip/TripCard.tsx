@@ -1,5 +1,5 @@
-import { ArrowRight, CheckCircle2, Star } from 'lucide-react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowRight, Star } from 'lucide-react-native';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -136,7 +136,7 @@ export const TripCard = memo(function TripCard({ trip, onPress, compact }: TripC
                 {trip.agency.name}
               </Text>
               {trip.agency.verified ? (
-                <CheckCircle2 size={15} color={colors.action} strokeWidth={2.4} />
+                <MaterialIcons name="verified" size={16} color={colors.primary} />
               ) : null}
             </View>
             <View style={styles.ratingRow}>

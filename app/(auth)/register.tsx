@@ -54,7 +54,7 @@ function RoleTile({
         accessibilityLabel={title}
         style={animatedStyle}
       >
-        <View style={[styles.card, { borderColor: isPine ? '#C5DDD9' : '#F0D5C4' }]}>
+        <View style={[styles.card, { borderColor: isPine ? '#c7d0db' : '#F0D5C4' }]}>
           <View style={[styles.accentBar, { backgroundColor: accent }]} />
           <View style={styles.cardInner}>
             <View style={[styles.icon, { backgroundColor: bg }]}>

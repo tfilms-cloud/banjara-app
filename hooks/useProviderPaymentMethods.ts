@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
+import { useCallback, useMemo, useState } from 'react';
 import {
   paymentMethodsForProviderChannels,
   type CustomerPaymentMethodId,
@@ -11,7 +12,7 @@ import * as p2p from '@/services/p2pPaymentService';
  * customer payment methods (Bank / Easypaisa / JazzCash / Raast).
  */
 export function useProviderPaymentMethods(providerId?: string | null) {
-  const [accounts, setAccounts] = useState<p2p.ProviderPaymentAccount[]>([]);
+  const [accounts, setAccounts] = useBackendState<p2p.ProviderPaymentAccount[]>([]);
   const [loading, setLoading] = useState(Boolean(providerId));
   const [error, setError] = useState<string | null>(null);
 

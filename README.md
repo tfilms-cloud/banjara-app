@@ -19,6 +19,9 @@ files, read the **[Home page UI guide](../HOME-UI-README.md)**.
 Customer screen guides: **[Bookings](../BOOKINGS-UI-README.md)**,
 **[Messages](../MESSAGES-UI-README.md)** and **[Profile](../PROFILE-UI-README.md)**.
 
+For the seven rebuilt pickup, seat, booking review, payment, receipt, and result
+screens, read the **[Booking and Payment UI README](BOOKING-FLOW-UI-README.md)**.
+
 The full UI map, features, and **file-by-file functionality** (mobile + admin + backend) is in the root guide:
 
 **[../README.md](../README.md)**

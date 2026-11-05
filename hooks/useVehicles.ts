@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
+import { useCallback, useState } from 'react';
 import * as providerService from '@/services/providerService';
 import type { ProviderVehicle } from '@/types/provider';
 
 export function useVehicles(providerId?: string) {
-  const [vehicles, setVehicles] = useState<ProviderVehicle[]>([]);
+  const [vehicles, setVehicles] = useBackendState<ProviderVehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

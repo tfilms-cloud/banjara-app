@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
+import { useCallback, useState } from 'react';
 import * as tourItineraryService from '@/services/tourItineraryService';
 import type { TourItinerary, TourOperatorBrief, TourType, TourTypeCatalog } from '@/types/tourItinerary';
 
 export function useTourCatalog(tourType: TourType) {
-  const [catalog, setCatalog] = useState<TourTypeCatalog | null>(null);
+  const [catalog, setCatalog] = useBackendState<TourTypeCatalog | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
@@ -25,7 +26,7 @@ export function useTourCatalog(tourType: TourType) {
 }
 
 export function useBestTourOperators(limit = 12) {
-  const [operators, setOperators] = useState<TourOperatorBrief[]>([]);
+  const [operators, setOperators] = useBackendState<TourOperatorBrief[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
@@ -47,7 +48,7 @@ export function useBestTourOperators(limit = 12) {
 }
 
 export function useTourItinerary(id: string) {
-  const [item, setItem] = useState<TourItinerary | null>(null);
+  const [item, setItem] = useBackendState<TourItinerary | null>(null);
   const [loading, setLoading] = useState(Boolean(id));
   const [error, setError] = useState<string | null>(null);
 

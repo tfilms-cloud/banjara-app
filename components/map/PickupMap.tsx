@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -48,6 +49,8 @@ export type PickupMapProps = {
   /** Compact embed vs interactive experience */
   showControls?: boolean;
   showSelectedCard?: boolean;
+  /** Optional compact presentation for embeds; fullscreen keeps the standard details. */
+  renderEmbeddedDetails?: (onOpenMap: () => void) => ReactNode;
   allowFullscreen?: boolean;
   /** Highlight mode for booked pickup only */
   focusPickupId?: string;
@@ -68,6 +71,7 @@ export function PickupMap({
   height = 300,
   showControls = true,
   showSelectedCard = true,
+  renderEmbeddedDetails,
   allowFullscreen = true,
   focusPickupId,
   title = 'Pickup points',
@@ -231,6 +235,7 @@ export function PickupMap({
 
   const renderDetail = (full: boolean, compact = false) => {
     if (!showSelectedCard || !selected) return null;
+    if (!full && renderEmbeddedDetails) return renderEmbeddedDetails(openInAppMap);
 
     // Fullscreen: keep map clear by default; slim peek bar when details hidden
     if (full && !detailsOpen) {
@@ -357,7 +362,7 @@ export function PickupMap({
           }}
         />
         {renderDetail(full, !full)}
-        {!full && allowFullscreen ? (
+        {!full && allowFullscreen && !renderEmbeddedDetails ? (
           <Pressable
             style={styles.fallbackFullBtn}
             onPress={openInAppMap}
@@ -613,7 +618,7 @@ export function PickupMap({
         </View>
       ) : null}
 
-      {!full ? (
+      {!full && !renderEmbeddedDetails ? (
         <View style={styles.legend}>
           <Text style={styles.legendText}>
             {pickups.length} {pickups.length === 1 ? pointLabel : pointLabelPlural}
@@ -621,7 +626,7 @@ export function PickupMap({
             {selectedDistanceLabel ? ` · ${selectedDistanceLabel}` : ''}
           </Text>
         </View>
-      ) : (
+      ) : full ? (
         <View style={[styles.legend, styles.legendFull, { top: insets.top + Spacing.md + 40 }]}>
           <Text style={styles.legendText}>
             {pickups.length} {pickups.length === 1 ? pointLabel : pointLabelPlural}
@@ -629,7 +634,7 @@ export function PickupMap({
             {selectedDistanceLabel ? ` · ${selectedDistanceLabel}` : ''}
           </Text>
         </View>
-      )}
+      ) : null}
 
       {renderDetail(full)}
     </View>

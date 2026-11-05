@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
+import { useCallback, useState } from 'react';
 import * as bookingService from '@/services/bookingService';
 import type { Booking, BookingStatus } from '@/types/booking';
 
 export function useBookings() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useBackendState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,7 +44,7 @@ export function useBookings() {
 }
 
 export function useBooking(id?: string) {
-  const [booking, setBooking] = useState<Booking | null>(null);
+  const [booking, setBooking] = useBackendState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

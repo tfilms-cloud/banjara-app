@@ -5,6 +5,7 @@ import { Colors } from '@/constants/colors';
 import { Radius, Spacing } from '@/constants/spacing';
 import { Typography } from '@/constants/typography';
 import { formatPresenceLabel } from '@/components/chat/chatTime';
+import { usePresentationColors } from '@/components/ui/TravelDesignProvider';
 
 type Props = {
   visible: boolean;
@@ -27,21 +28,40 @@ export function ChatProfilePreview({
   lastSeenAt,
   onViewProfile,
 }: Props) {
+  const colors = usePresentationColors();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
+        <Pressable
+          style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={(e) => e.stopPropagation()}
+        >
           <Avatar uri={avatarUri} name={name} size={72} />
-          <Text style={styles.name}>{name}</Text>
-          <Text style={styles.meta}>
-            {role === 'provider' ? 'Travel provider' : role === 'customer' ? 'Customer' : 'Banjara user'}
+          <Text style={[styles.name, { color: colors.dark }]}>{name}</Text>
+          <Text style={[styles.meta, { color: colors.muted }]}>
+            {role === 'provider'
+              ? 'Travel provider'
+              : role === 'customer'
+                ? 'Customer'
+                : 'Banjara user'}
           </Text>
-          <Text style={styles.presence}>{formatPresenceLabel(online, lastSeenAt)}</Text>
+          <Text style={[styles.presence, { color: colors.primary }]}>
+            {formatPresenceLabel(online, lastSeenAt)}
+          </Text>
           {onViewProfile ? (
-            <Button title="View profile" onPress={onViewProfile} style={{ marginTop: Spacing.md }} />
+            <Button
+              title="View profile"
+              onPress={onViewProfile}
+              style={{ marginTop: Spacing.md }}
+            />
           ) : null}
-          <Pressable onPress={onClose} style={styles.close}>
-            <Text style={styles.closeText}>Close</Text>
+          <Pressable
+            onPress={onClose}
+            style={[styles.close, { minHeight: 44, justifyContent: 'center' }]}
+            accessibilityRole="button"
+            accessibilityLabel="Close conversation information"
+          >
+            <Text style={[styles.closeText, { color: colors.muted }]}>Close</Text>
           </Pressable>
         </Pressable>
       </Pressable>

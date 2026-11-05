@@ -1,10 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Colors } from '@/constants/colors';
 import { Radius, Shadows, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
+import { useTravelPresentation } from '@/components/ui/TravelDesignProvider';
+import { useHomeDesign } from '@/constants/homeDesign';
 
 type DestinationCardProps = {
   name: string;
@@ -27,6 +29,9 @@ export function DestinationCard({
   onPress,
   featured,
 }: DestinationCardProps) {
+  const travel = useTravelPresentation();
+  const theme = useHomeDesign();
+  const { width } = useWindowDimensions();
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -43,9 +48,15 @@ export function DestinationCard({
       }}
       accessibilityRole="button"
       accessibilityLabel={`${name}${subtitle ? `, ${subtitle}` : ''}`}
-      style={[styles.wrap, animatedStyle]}
+      style={[styles.wrap, travel && { marginRight: 12 }, animatedStyle]}
     >
-      <View style={[styles.card, featured && styles.cardFeatured]}>
+      <View
+        style={[
+          styles.card,
+          featured && styles.cardFeatured,
+          travel && { width: Math.min(230, (width - 44) / 2), height: 224, borderRadius: 28 },
+        ]}
+      >
         <Image source={{ uri: image }} style={styles.image} contentFit="cover" transition={250} />
         <LinearGradient
           colors={['rgba(8,17,31,0.02)', 'rgba(8,17,31,0.32)', 'rgba(8,17,31,0.88)']}
@@ -53,18 +64,28 @@ export function DestinationCard({
           style={styles.overlay}
         >
           {tag ? (
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>{tag}</Text>
+            <View style={[styles.tag, travel && { backgroundColor: theme.soft, borderWidth: 0 }]}>
+              <Text style={[styles.tagText, travel && { color: theme.primary }]}>{tag}</Text>
             </View>
           ) : (
             <View />
           )}
           <View style={styles.contentWrap}>
-            <Text style={[styles.name, featured && styles.nameFeatured]} numberOfLines={2}>
+            <Text
+              style={[
+                styles.name,
+                featured && styles.nameFeatured,
+                travel && { fontSize: 17, color: 'rgb(255, 255, 255)' },
+              ]}
+              numberOfLines={2}
+            >
               {name}
             </Text>
             {subtitle ? (
-              <Text style={styles.subtitle} numberOfLines={1}>
+              <Text
+                style={[styles.subtitle, travel && { color: 'rgb(255, 255, 255)' }]}
+                numberOfLines={1}
+              >
                 {subtitle}
               </Text>
             ) : null}

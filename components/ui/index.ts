@@ -9,3 +9,20 @@ export { EmptyState, ErrorState, LoadingState } from './EmptyState';
 export { Modal } from './Modal';
 export { BottomSheet } from './BottomSheet';
 export { IconButton } from './IconButton';
+export {
+  TravelSurface,
+  TravelIconAction,
+  TravelSegmentedControl,
+  TravelSection,
+} from './TravelPrimitives';
+export type { TravelIcon } from './TravelPrimitives';
+export {
+  TravelFormCard,
+  TravelSelectField,
+  TravelTextField,
+  TravelSearchButton,
+  TravelOptionRow,
+} from './TravelForm';
+export { TravelCatalogGrid, TravelFilterChips } from './TravelCatalog';
+export { TravelDesignProvider } from './TravelDesignProvider';
+export { TravelPhotoGallery } from './TravelPhotoGallery';

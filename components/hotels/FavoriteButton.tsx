@@ -3,6 +3,8 @@ import { Pressable, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Colors } from '@/constants/colors';
 import { useFavoritesStore } from '@/store/favoritesStore';
+import { useTravelPresentation } from '@/components/ui/TravelDesignProvider';
+import { useHotelDesign } from '@/constants/hotelDesign';
 
 interface FavoriteButtonProps {
   hotelId: string;
@@ -12,6 +14,8 @@ interface FavoriteButtonProps {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function FavoriteButton({ hotelId, size = 20 }: FavoriteButtonProps) {
+  const travel = useTravelPresentation();
+  const theme = useHotelDesign();
   const isFavorite = useFavoritesStore((state) => state.isFavorite(hotelId));
   const toggleHotel = useFavoritesStore((state) => state.toggleHotel);
   const scale = useSharedValue(1);
@@ -31,7 +35,11 @@ export function FavoriteButton({ hotelId, size = 20 }: FavoriteButtonProps) {
       onPressOut={() => {
         scale.value = withSpring(1, { damping: 16, stiffness: 320 });
       }}
-      style={[styles.btn, animatedStyle]}
+      style={[
+        styles.btn,
+        travel && { backgroundColor: theme.neutral, borderWidth: 1, borderColor: theme.border },
+        animatedStyle,
+      ]}
       accessibilityRole="button"
       accessibilityLabel={isFavorite ? 'Remove from saved hotels' : 'Save hotel'}
       accessibilityState={{ selected: isFavorite }}
@@ -39,7 +47,7 @@ export function FavoriteButton({ hotelId, size = 20 }: FavoriteButtonProps) {
       <Ionicons
         name={isFavorite ? 'heart' : 'heart-outline'}
         size={size}
-        color={Colors.accent}
+        color={travel ? (isFavorite ? theme.coral : theme.muted) : Colors.accent}
       />
     </AnimatedPressable>
   );

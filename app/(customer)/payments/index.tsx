@@ -1,5 +1,7 @@
+import { useBackendFocusEffect as useFocusEffect } from '@/hooks/useBackendFocusEffect';
+import { useBackendState } from '@/hooks/useBackendData';
 import { Ionicons } from '@expo/vector-icons';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   Alert,
@@ -31,7 +33,7 @@ function methodLabel(method: string) {
 
 export default function CustomerPaymentsCenterScreen() {
   const insets = useSafeAreaInsets();
-  const [rows, setRows] = useState<p2p.PaymentTransaction[]>([]);
+  const [rows, setRows] = useBackendState<p2p.PaymentTransaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {

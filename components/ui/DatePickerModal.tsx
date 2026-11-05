@@ -67,7 +67,8 @@ export function DatePickerModal({
         mode="date"
         minimumDate={minDate}
         display="default"
-        onChange={onPick}
+        onValueChange={onPick}
+        onDismiss={onClose}
       />
     );
   }
@@ -87,7 +88,7 @@ export function DatePickerModal({
               minimumDate={minDate}
               display="spinner"
               themeVariant={darkMode ? 'dark' : 'light'}
-              onChange={onPick}
+              onValueChange={onPick}
               style={styles.spinner}
             />
           </View>

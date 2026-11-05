@@ -160,6 +160,7 @@ export function mapGuideBooking(raw: AnyRecord): GuideBooking {
     id: String(raw._id ?? raw.id ?? ''),
     bookingCode: String(raw.bookingNumber ?? ''),
     providerId: String(raw.providerId ?? gb.providerId ?? ''),
+    providerUserId: raw.providerUserId ? String(raw.providerUserId) : undefined,
     providerName: String(gb.providerName ?? raw.providerName ?? 'Guide'),
     serviceName: String(gb.serviceName ?? 'Guide hire'),
     date: String(gb.date ?? '').slice(0, 10),

@@ -3,6 +3,7 @@ import { ListRow } from '@/components/ui/ListRow';
 import { Colors } from '@/constants/colors';
 import { Radius } from '@/constants/spacing';
 import type { MenuListItem } from '@/components/ui/MenuList.types';
+import { usePresentationColors, useTravelPresentation } from './TravelDesignProvider';
 
 export type { MenuListItem } from '@/components/ui/MenuList.types';
 
@@ -12,8 +13,17 @@ type MenuListProps = {
 };
 
 export function MenuList({ items, style }: MenuListProps) {
+  const colors = usePresentationColors();
+  const travel = useTravelPresentation();
   return (
-    <View style={[styles.wrap, style]}>
+    <View
+      style={[
+        styles.wrap,
+        { backgroundColor: colors.card, borderColor: colors.border },
+        travel && { borderRadius: 32 },
+        style,
+      ]}
+    >
       {items.map((item, index) => (
         <ListRow
           key={item.key}
@@ -22,7 +32,8 @@ export function MenuList({ items, style }: MenuListProps) {
           subtitle={item.subtitle}
           danger={item.danger}
           onPress={item.onPress}
-          divider={index < items.length - 1}
+          trailing={item.trailing}
+          divider={!travel && index < items.length - 1}
         />
       ))}
     </View>

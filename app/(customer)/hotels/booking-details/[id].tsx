@@ -1,6 +1,7 @@
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LiveLocationShareCard } from '@/components/booking/LiveLocationShareCard';
@@ -34,8 +35,8 @@ export default function HotelBookingDetailsScreen() {
   const { booking, loading, setBooking } = useHotelBooking(id);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
-  const [hotel, setHotel] = useState<Hotel | null>(null);
-  const [room, setRoom] = useState<HotelRoom | null>(null);
+  const [hotel, setHotel] = useBackendState<Hotel | null>(null);
+  const [room, setRoom] = useBackendState<HotelRoom | null>(null);
   const checkIn = useHotelCheckInStore((s) => (id ? s.byBookingId[id] : undefined));
 
   useEffect(() => {

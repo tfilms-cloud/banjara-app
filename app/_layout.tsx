@@ -18,6 +18,7 @@ import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { BrandSplash } from '@/components/brand/BrandSplash';
+import { BackendAvailabilityGate } from '@/components/BackendAvailabilityGate';
 import { useIsDarkMode, useThemeColors } from '@/constants/colors';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useUserStore } from '@/store/userStore';
@@ -70,6 +71,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
       <SafeAreaProvider>
         <StatusBar style={darkMode ? 'light' : 'dark'} />
+        <BackendAvailabilityGate>
         <PushBootstrap />
         <Stack
           screenOptions={{
@@ -85,6 +87,7 @@ export default function RootLayout() {
           <Stack.Screen name="terms/[role]" />
           <Stack.Screen name="+not-found" />
         </Stack>
+        </BackendAvailabilityGate>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

@@ -79,7 +79,7 @@ export async function ensureAndroidChannel() {
     name: 'Banjara',
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
-    lightColor: '#0F766E',
+    lightColor: '#0f9b98',
     sound: 'default',
   });
 }

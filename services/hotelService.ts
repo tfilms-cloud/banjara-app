@@ -1,4 +1,5 @@
 import { del, get, post, put } from '@/services/api';
+import { backendAvailability } from '@/services/backendAvailability';
 import { ApiError } from '@/services/apiError';
 import {
   asArray,
@@ -19,7 +20,7 @@ import type {
 } from '@/types/hotel';
 import { matchesSearchText } from '@/utils/matchesSearchText';
 
-const hotelDetailCache = new Map<string, { at: number; hotel: Hotel }>();
+const hotelDetailCache = new Map<string, { at: number; epoch: number; hotel: Hotel }>();
 const HOTEL_CACHE_MS = 20_000;
 
 function sortToBackend(sortBy: HotelSortBy): string {
@@ -66,15 +67,16 @@ export async function getHotels(): Promise<Hotel[]> {
   return asArray<AnyRecord>(data).map(mapHotel);
 }
 
-export async function getHotelById(id: string): Promise<Hotel | null> {
+export async function getHotelById(id: string, options?: { refresh?: boolean }): Promise<Hotel | null> {
   const cached = hotelDetailCache.get(id);
-  if (cached && Date.now() - cached.at < HOTEL_CACHE_MS) {
+  if (!options?.refresh && cached && cached.epoch === backendAvailability.getEpoch() && Date.now() - cached.at < HOTEL_CACHE_MS) {
     return cached.hotel;
   }
   try {
+    const epoch = backendAvailability.getEpoch();
     const data = await get<AnyRecord>(`/hotels/${id}`);
     const hotel = mapHotel(data);
-    hotelDetailCache.set(id, { at: Date.now(), hotel });
+    hotelDetailCache.set(id, { at: Date.now(), epoch, hotel });
     return hotel;
   } catch {
     return null;
@@ -167,25 +169,26 @@ export async function getHotelQuote(input: {
   return data;
 }
 
-const roomCache = new Map<string, { at: number; room: HotelRoom | null }>();
+const roomCache = new Map<string, { at: number; epoch: number; room: HotelRoom | null }>();
 const roomInflight = new Map<string, Promise<HotelRoom | null>>();
 const ROOM_CACHE_MS = 20_000;
 
-export async function getRoomById(roomId: string): Promise<HotelRoom | null> {
+export async function getRoomById(roomId: string, options?: { refresh?: boolean }): Promise<HotelRoom | null> {
   if (!roomId) return null;
   const cached = roomCache.get(roomId);
-  if (cached && Date.now() - cached.at < ROOM_CACHE_MS) return cached.room;
+  if (!options?.refresh && cached && cached.epoch === backendAvailability.getEpoch() && Date.now() - cached.at < ROOM_CACHE_MS) return cached.room;
   const pending = roomInflight.get(roomId);
   if (pending) return pending;
 
+  const epoch = backendAvailability.getEpoch();
   const request = (async () => {
     try {
       const data = await get<AnyRecord>(`/rooms/${roomId}`);
       const room = mapHotelRoom(data);
-      roomCache.set(roomId, { at: Date.now(), room });
+      roomCache.set(roomId, { at: Date.now(), epoch, room });
       return room;
     } catch {
-      roomCache.set(roomId, { at: Date.now(), room: null });
+      roomCache.set(roomId, { at: Date.now(), epoch, room: null });
       return null;
     } finally {
       roomInflight.delete(roomId);
@@ -196,7 +199,7 @@ export async function getRoomById(roomId: string): Promise<HotelRoom | null> {
   return request;
 }
 
-let popularHotelsCache: { at: number; hotels: Hotel[] } | null = null;
+let popularHotelsCache: { at: number; epoch: number; hotels: Hotel[] } | null = null;
 const POPULAR_HOTELS_TTL_MS = 60_000;
 
 export function invalidatePopularHotelsCache() {
@@ -204,9 +207,10 @@ export function invalidatePopularHotelsCache() {
 }
 
 export async function getPopularHotels(): Promise<Hotel[]> {
-  if (popularHotelsCache && Date.now() - popularHotelsCache.at < POPULAR_HOTELS_TTL_MS) {
+  if (popularHotelsCache && popularHotelsCache.epoch === backendAvailability.getEpoch() && Date.now() - popularHotelsCache.at < POPULAR_HOTELS_TTL_MS) {
     return popularHotelsCache.hotels;
   }
+  const epoch = backendAvailability.getEpoch();
   const data = await get<unknown>('/hotels/search', {
     params: { sort: 'rating', limit: 40 },
   });
@@ -214,9 +218,16 @@ export async function getPopularHotels(): Promise<Hotel[]> {
     .map(mapHotel)
     .sort((a, b) => Number(b.featured) - Number(a.featured) || b.rating - a.rating)
     .slice(0, 40);
-  popularHotelsCache = { at: Date.now(), hotels };
+  popularHotelsCache = { at: Date.now(), epoch, hotels };
   return hotels;
 }
+
+backendAvailability.registerReset(() => {
+  hotelDetailCache.clear();
+  roomCache.clear();
+  roomInflight.clear();
+  invalidatePopularHotelsCache();
+});
 
 export async function createHotelBooking(
   payload: CreateHotelBookingPayload

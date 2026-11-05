@@ -1,4 +1,5 @@
 import { del, get, post, put } from '@/services/api';
+import { backendAvailability } from '@/services/backendAvailability';
 import {
   asArray,
   mapPickupPoint,
@@ -122,7 +123,7 @@ export async function getTrips(): Promise<TripWithDetails[]> {
 /** In-flight + short TTL cache to stop stampeding GET /trips/:id from remounts. */
 const tripCache = new Map<
   string,
-  { at: number; value: TripWithDetails | null; raw: AnyRecord | null }
+  { at: number; epoch: number; value: TripWithDetails | null; raw: AnyRecord | null }
 >();
 const tripInflight = new Map<string, Promise<TripWithDetails | null>>();
 const TRIP_CACHE_MS = 15_000;
@@ -131,24 +132,25 @@ export async function getTripById(id: string): Promise<TripWithDetails | null> {
   if (!id) return null;
 
   const cached = tripCache.get(id);
-  if (cached && Date.now() - cached.at < TRIP_CACHE_MS) {
+  if (cached && cached.epoch === backendAvailability.getEpoch() && Date.now() - cached.at < TRIP_CACHE_MS) {
     return cached.value;
   }
 
   const pending = tripInflight.get(id);
   if (pending) return pending;
 
+  const epoch = backendAvailability.getEpoch();
   const request = (async () => {
     try {
       const data = await get<AnyRecord>(`/trips/${id}`);
       const trip = mapTrip(data);
-      tripCache.set(id, { at: Date.now(), value: trip, raw: data });
+      tripCache.set(id, { at: Date.now(), epoch, value: trip, raw: data });
       return trip;
     } catch (error) {
       const message = error instanceof Error ? error.message : '';
       // Don't cache rate-limit failures — let the UI show the error and retry later.
       if (/too many requests/i.test(message)) throw error;
-      tripCache.set(id, { at: Date.now(), value: null, raw: null });
+      tripCache.set(id, { at: Date.now(), epoch, value: null, raw: null });
       return null;
     } finally {
       tripInflight.delete(id);
@@ -225,32 +227,40 @@ export async function getPickupPoints(tripId: string): Promise<PickupPoint[]> {
 export async function getVehicleSeats(tripId: string): Promise<SeatLayout | null> {
   if (!tripId) return null;
   await getTripById(tripId);
-  const raw = tripCache.get(tripId)?.raw;
+  const cached = tripCache.get(tripId);
+  const raw = cached?.epoch === backendAvailability.getEpoch() ? cached.raw : null;
   if (!raw) return null;
   return mapSeatLayout(raw);
 }
 
-let recommendedTripsCache: { at: number; trips: TripWithDetails[] } | null = null;
+let recommendedTripsCache: { at: number; epoch: number; trips: TripWithDetails[] } | null = null;
 const RECOMMENDED_TRIPS_TTL_MS = 60_000;
 
 export async function getRecommendedTrips(): Promise<TripWithDetails[]> {
   if (
     recommendedTripsCache &&
+    recommendedTripsCache.epoch === backendAvailability.getEpoch() &&
     Date.now() - recommendedTripsCache.at < RECOMMENDED_TRIPS_TTL_MS
   ) {
     return recommendedTripsCache.trips;
   }
+  const epoch = backendAvailability.getEpoch();
   const data = await get<unknown>('/trips/search', {
     params: { sort: 'recommended', limit: 40 },
   });
   const trips = asArray<AnyRecord>(data).map(mapTrip);
-  recommendedTripsCache = { at: Date.now(), trips };
+  recommendedTripsCache = { at: Date.now(), epoch, trips };
   return trips;
 }
 
 export function invalidateRecommendedTripsCache() {
   recommendedTripsCache = null;
 }
+
+backendAvailability.registerReset(() => {
+  invalidateTripCache();
+  invalidateRecommendedTripsCache();
+});
 
 export async function getPopularTrips(): Promise<TripWithDetails[]> {
   return getRecommendedTrips();

@@ -3,6 +3,9 @@ import { Colors } from '@/constants/colors';
 import { Fonts, Typography } from '@/constants/typography';
 import { Radius, Spacing } from '@/constants/spacing';
 import type { PickupPoint } from '@/types/route';
+import type { TripStop } from '@/types/trip';
+import { useHomeDesign } from '@/constants/homeDesign';
+import { useTravelPresentation } from '@/components/ui/TravelDesignProvider';
 import { formatTime } from '@/utils/formatTime';
 
 type TripRouteTimelineProps = {
@@ -11,6 +14,7 @@ type TripRouteTimelineProps = {
   departureTime?: string;
   arrivalTime?: string;
   pickups?: PickupPoint[];
+  stops?: TripStop[];
 };
 
 export function TripRouteTimeline({
@@ -19,7 +23,10 @@ export function TripRouteTimeline({
   departureTime,
   arrivalTime,
   pickups = [],
+  stops = [],
 }: TripRouteTimelineProps) {
+  const travel = useTravelPresentation();
+  const theme = useHomeDesign();
   const origin = from.trim();
   const destination = to.trim();
   if (!origin && !destination) return null;
@@ -27,14 +34,20 @@ export function TripRouteTimeline({
   const boarding = pickups.filter((point) => point.name.trim());
 
   return (
-    <View style={styles.card} accessibilityLabel="Trip route">
+    <View
+      style={[
+        styles.card,
+        travel && {
+          backgroundColor: theme.surface,
+          borderColor: theme.border,
+          borderRadius: 20,
+          padding: 16,
+        },
+      ]}
+      accessibilityLabel="Trip route"
+    >
       {origin ? (
-        <TimelineRow
-          title={origin}
-          time={departureTime}
-          caption="Departure"
-          first
-        />
+        <TimelineRow title={origin} time={departureTime} caption="Departure" first />
       ) : null}
 
       {boarding.map((point) => (
@@ -47,13 +60,20 @@ export function TripRouteTimeline({
         />
       ))}
 
+      {[...stops]
+        .sort((a, b) => a.order - b.order)
+        .map((stop, index) => (
+          <TimelineRow
+            key={`stop-${index}-${stop.name}`}
+            title={stop.name}
+            time={stop.time}
+            caption="Transit stop"
+            branch
+          />
+        ))}
+
       {destination ? (
-        <TimelineRow
-          title={destination}
-          time={arrivalTime}
-          caption="Arrival"
-          last
-        />
+        <TimelineRow title={destination} time={arrivalTime} caption="Arrival" last />
       ) : null}
     </View>
   );
@@ -74,13 +94,69 @@ function TimelineRow({
   last?: boolean;
   branch?: boolean;
 }) {
+  const travel = useTravelPresentation();
+  const theme = useHomeDesign();
   const formatted = time ? formatTime(time) : '';
+  if (travel)
+    return (
+      <View style={styles.row}>
+        <View style={styles.rail}>
+          <View
+            style={{ width: 2, height: 7, backgroundColor: first ? 'transparent' : theme.border }}
+          />
+          <View style={[styles.dot, { backgroundColor: branch ? theme.coral : theme.primary }]} />
+          <View style={[styles.line, { backgroundColor: last ? 'transparent' : theme.border }]} />
+        </View>
+        <View style={[styles.copy, { paddingTop: 3, paddingBottom: 16, paddingLeft: 8 }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+            <Text
+              style={{
+                flex: 1,
+                fontFamily: Fonts.bodySemiBold,
+                fontSize: 12,
+                lineHeight: 18,
+                color: theme.text,
+              }}
+            >
+              {title}
+            </Text>
+            {formatted ? (
+              <Text
+                style={{
+                  fontFamily: Fonts.bodyMedium,
+                  fontSize: 10,
+                  lineHeight: 18,
+                  color: branch ? theme.muted : theme.primary,
+                }}
+              >
+                {formatted}
+              </Text>
+            ) : null}
+          </View>
+          {caption ? (
+            <Text
+              style={{ fontFamily: Fonts.body, fontSize: 10, lineHeight: 16, color: theme.muted }}
+            >
+              {caption}
+            </Text>
+          ) : null}
+        </View>
+      </View>
+    );
   return (
     <View style={styles.row}>
       <View style={styles.rail}>
-        {!first ? <View style={[styles.line, styles.lineTop]} /> : <View style={styles.lineSpacer} />}
+        {!first ? (
+          <View style={[styles.line, styles.lineTop]} />
+        ) : (
+          <View style={styles.lineSpacer} />
+        )}
         <View style={[styles.dot, last && styles.dotLast, branch && styles.dotBranch]} />
-        {!last ? <View style={[styles.line, styles.lineBottom]} /> : <View style={styles.lineSpacer} />}
+        {!last ? (
+          <View style={[styles.line, styles.lineBottom]} />
+        ) : (
+          <View style={styles.lineSpacer} />
+        )}
       </View>
       <View style={styles.copy}>
         <Text style={styles.title}>{title}</Text>

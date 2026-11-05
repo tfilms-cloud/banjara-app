@@ -77,6 +77,7 @@ export function fleetDetails(
   );
   const fleetCount = Number(transport?.vehicleCount);
   return {
+    linkedTrip,
     kind,
     facts,
     types,

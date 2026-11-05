@@ -88,6 +88,8 @@ export interface Trip {
 export interface TripWithDetails extends Trip {
   agency: Agency;
   vehicleType: VehicleType;
+  /** Provider-selected vehicle class before the legacy customer type conversion. */
+  vehicleCategory?: string;
   vehicleName: string;
   /** Registration / plate from the linked vehicle (display only). */
   vehiclePlate?: string;

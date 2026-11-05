@@ -4,6 +4,7 @@ import { ActivityIndicator, AppState, Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { useThemeColors } from '@/constants/colors';
 import { useThemedStackOptions } from '@/hooks/useThemedStackOptions';
+import { useBackendStatus } from '@/hooks/useBackendData';
 import { useAuthStore } from '@/store/authStore';
 import { useProviderStore } from '@/store/providerStore';
 import { needsProviderOnboarding } from '@/utils/routing';
@@ -16,6 +17,7 @@ import {
 } from '@/utils/providerOnboarding';
 
 export default function ProviderLayout() {
+  const online = useBackendStatus() === 'online';
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const provider = useProviderStore((state) => state.provider);
@@ -47,7 +49,7 @@ export default function ProviderLayout() {
   }, []);
 
   useEffect(() => {
-    if (!hydrated || !providerHydrated || !user?.id || user.role !== 'provider')
+    if (!online || !hydrated || !providerHydrated || !user?.id || user.role !== 'provider')
       return;
     void useProviderStore.getState().loadProviderByUser(user.id);
     const listener = AppState.addEventListener('change', (state) => {
@@ -55,7 +57,7 @@ export default function ProviderLayout() {
         void useProviderStore.getState().loadProviderByUser(user.id);
     });
     return () => listener.remove();
-  }, [hydrated, providerHydrated, user?.id, user?.role]);
+  }, [online, hydrated, providerHydrated, user?.id, user?.role]);
 
   // Allow traveler/guest accounts to complete provider onboarding without being bounced
   // back to the customer tabs (register review may create a customer account first).
@@ -67,7 +69,7 @@ export default function ProviderLayout() {
   if (
     !hydrated ||
     !providerHydrated ||
-    (isAuthenticated && user?.role === 'provider' && loadedFor !== user.id)
+    (online && isAuthenticated && user?.role === 'provider' && loadedFor !== user.id)
   ) {
     return (
       <View
@@ -101,7 +103,7 @@ export default function ProviderLayout() {
     );
   }
 
-  if (isAuthenticated && user?.role === 'provider') {
+  if (online && isAuthenticated && user?.role === 'provider') {
     const nextStep = transportResumeStep(provider, draft);
     if (nextStep && !transportDashboardAllowed(provider)) {
       const currentStep: TransportStep | undefined =

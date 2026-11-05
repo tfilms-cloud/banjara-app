@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useThemeColors } from '@/constants/colors';
+import { usePresentationColors as useThemeColors } from '@/components/ui/TravelDesignProvider';
 import { Radius, Shadows, Spacing } from '@/constants/spacing';
 import { Fonts } from '@/constants/typography';
 import { InAppWebMap } from '@/components/map/InAppWebMap';

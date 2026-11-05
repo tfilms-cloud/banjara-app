@@ -1,5 +1,6 @@
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HotelConfirmation } from '@/components/hotels/HotelConfirmation';
@@ -19,8 +20,8 @@ export default function HotelConfirmationScreen() {
   const lastBooking = useHotelStore((state) => state.lastBooking);
   const selectedHotel = useHotelStore((state) => state.selectedHotel);
   const selectedRoom = useHotelStore((state) => state.selectedRoom);
-  const [hotel, setHotel] = useState<Hotel | null>(selectedHotel);
-  const [room, setRoom] = useState<HotelRoom | null>(selectedRoom);
+  const [hotel, setHotel] = useBackendState<Hotel | null>(selectedHotel, null);
+  const [room, setRoom] = useBackendState<HotelRoom | null>(selectedRoom, null);
 
   const active = booking ?? (lastBooking?.id === id ? lastBooking : null);
 

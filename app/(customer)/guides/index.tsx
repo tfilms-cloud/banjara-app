@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
+import { useCallback, useState } from 'react';
 import {
   FlatList,
   RefreshControl,
@@ -46,7 +47,7 @@ export default function GuideSearchScreen() {
     resetFilters,
   } = search;
 
-  const [results, setResults] = useState<GuideListItem[]>([]);
+  const [results, setResults] = useBackendState<GuideListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

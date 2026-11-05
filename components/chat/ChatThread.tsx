@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { useBackendEffect as useEffect } from '@/hooks/useBackendData';
 import {
   Alert,
   FlatList,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   StyleSheet,
@@ -10,13 +12,18 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { formatDateSeparator, formatPresenceLabel, sameCalendarDay } from '@/components/chat/chatTime';
+import type { Href } from 'expo-router';
+import {
+  formatDateSeparator,
+  formatPresenceLabel,
+  sameCalendarDay,
+} from '@/components/chat/chatTime';
 import { ChatProfilePreview } from '@/components/chat/ChatProfilePreview';
 import { MessageBubble } from '@/components/chat/MessageBubble';
 import { MessageComposer } from '@/components/chat/MessageComposer';
 import { TypingDots } from '@/components/chat/TypingDots';
 import { Avatar } from '@/components/ui/Avatar';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { EmptyState, ErrorState } from '@/components/ui/EmptyState';
 import { Header } from '@/components/ui/Header';
 import { Colors } from '@/constants/colors';
 import { Spacing } from '@/constants/spacing';
@@ -26,6 +33,13 @@ import * as uploadService from '@/services/uploadService';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import type { ChatMessage } from '@/types/chat';
+import { useTravelPresentation } from '@/components/ui/TravelDesignProvider';
+import { useHomeDesign } from '@/constants/homeDesign';
+import { Fonts } from '@/constants/typography';
+import { ChatBookingBanner, ChatQuickReplies, ChatThreadHeader } from './ChatPresentation';
+import { useChatBookingContext } from '@/hooks/useChatBookingContext';
+import { useBookingStore } from '@/store/bookingStore';
+import { pushPath, safeBack } from '@/utils/navigation';
 
 type ListItem =
   | { kind: 'separator'; id: string; label: string }
@@ -40,10 +54,13 @@ type Props = {
 };
 
 export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, avatarUri }: Props) {
+  const travel = useTravelPresentation();
+  const theme = useHomeDesign();
   const insets = useSafeAreaInsets();
   const me = useAuthStore((s) => s.user?.id);
   const messages = useChatStore((s) => s.messages);
   const loadingThread = useChatStore((s) => s.loadingThread);
+  const error = useChatStore((s) => s.error);
   const loadingOlder = useChatStore((s) => s.loadingOlder);
   const hasMoreOlder = useChatStore((s) => s.hasMoreOlder);
   const sending = useChatStore((s) => s.sending);
@@ -61,11 +78,16 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
   const [nearBottom, setNearBottom] = useState(true);
   const [pendingNew, setPendingNew] = useState(0);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const booking = useChatBookingContext(bookingId, otherUserId, travel && Boolean(me));
+  const selectedTrip = useBookingStore((state) => state.selectedTrip);
+  const linkedAgency =
+    selectedTrip?.agency.userId === otherUserId ? selectedTrip.agency : undefined;
   const listRef = useRef<FlatList>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevCount = useRef(0);
   const conversation = useChatStore((s) =>
-    s.conversations.find((item) => item.otherUserId === otherUserId)
+    s.conversations.find((item) => item.otherUserId === otherUserId),
   );
 
   useEffect(() => {
@@ -105,8 +127,7 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
           label: formatDateSeparator(message.createdAt),
         });
       }
-      const showAvatar =
-        message.senderId !== me && (!next || next.senderId !== message.senderId);
+      const showAvatar = message.senderId !== me && (!next || next.senderId !== message.senderId);
       const showTail = !next || next.senderId !== message.senderId;
       items.push({
         kind: 'message',
@@ -141,10 +162,19 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
     }
   };
 
-  const onAttach = async () => {
-    if (sending) return;
+  const onAttach = async (camera = false) => {
+    if (sending || uploading) return;
+    setUploading(true);
     try {
-      const uploaded = await uploadService.pickAndUpload('chat', { allowsEditing: false });
+      const captured = camera ? await uploadService.takePhoto({ allowsEditing: false }) : null;
+      const uploaded = camera
+        ? captured
+          ? await uploadService.uploadImage(captured.uri, 'chat', {
+              mimeType: captured.mimeType,
+              fileName: captured.fileName,
+            })
+          : null
+        : await uploadService.pickAndUpload('chat', { allowsEditing: false });
       if (!uploaded) return;
       setNearBottom(true);
       setPendingNew(0);
@@ -156,10 +186,15 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
       requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
     } catch (error) {
       Alert.alert('Could not send photo', getApiErrorMessage(error));
+    } finally {
+      setUploading(false);
     }
   };
 
-  const presenceLabel = formatPresenceLabel(presence?.online, presence?.lastSeenAt);
+  const presenceLabel = formatPresenceLabel(
+    presence?.online ?? conversation?.online,
+    presence?.lastSeenAt ?? conversation?.lastSeenAt,
+  );
   const connectionLabel =
     connectionStatus === 'connecting'
       ? 'Connecting…'
@@ -184,31 +219,62 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
         void loadOlder();
       }
     },
-    [hasMoreOlder, loadingOlder, loadOlder]
+    [hasMoreOlder, loadingOlder, loadOlder],
   );
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={[styles.container, travel && { backgroundColor: theme.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : travel ? 'height' : undefined}
     >
-      <Header
-        title={title}
-        subtitle={connectionLabel ?? (typingUserId ? `${title.split(' ')[0]} is typing…` : presenceLabel)}
-        showBack
-        fallbackHref={backHref as never}
-        right={
-          <Pressable
-            onPress={() => setProfileOpen(true)}
-            style={styles.headerRight}
-            accessibilityRole="button"
-            accessibilityLabel={`${title} profile`}
-          >
-            <Avatar uri={avatarUri ?? conversation?.otherUserAvatar} name={title} size={36} />
-            {presence?.online ? <View style={styles.onlineDot} /> : null}
-          </Pressable>
-        }
-      />
+      {travel ? (
+        <ChatThreadHeader
+          title={title}
+          avatar={avatarUri ?? conversation?.otherUserAvatar}
+          online={presence?.online ?? conversation?.online}
+          subtitle={connectionLabel ?? (typingUserId ? 'Typing…' : presenceLabel)}
+          onBack={() => safeBack(backHref as Href)}
+          onInfo={() => setProfileOpen(true)}
+          onProfile={() => pushPath('/(customer)/(tabs)/profile')}
+          onCall={
+            linkedAgency?.phone
+              ? () => {
+                  void Linking.openURL(`tel:${linkedAgency.phone.replace(/[^+\d]/g, '')}`).catch(
+                    () => Alert.alert('Call unavailable', 'Unable to open the phone app.'),
+                  );
+                }
+              : undefined
+          }
+        />
+      ) : (
+        <Header
+          title={title}
+          subtitle={
+            connectionLabel ?? (typingUserId ? `${title.split(' ')[0]} is typing…` : presenceLabel)
+          }
+          showBack
+          fallbackHref={backHref as never}
+          right={
+            <Pressable
+              onPress={() => setProfileOpen(true)}
+              style={styles.headerRight}
+              accessibilityRole="button"
+              accessibilityLabel={`${title} profile`}
+            >
+              <Avatar uri={avatarUri ?? conversation?.otherUserAvatar} name={title} size={36} />
+              {presence?.online ? <View style={styles.onlineDot} /> : null}
+            </Pressable>
+          }
+        />
+      )}
+
+      {travel && booking ? (
+        <ChatBookingBanner
+          booking={booking}
+          onDetails={() => pushPath(booking.detailHref)}
+          onTicket={booking.ticketHref ? () => pushPath(booking.ticketHref!) : undefined}
+        />
+      ) : null}
 
       <ChatProfilePreview
         visible={profileOpen}
@@ -216,8 +282,16 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
         name={title}
         role={conversation?.otherUserRole}
         avatarUri={avatarUri ?? conversation?.otherUserAvatar}
-        online={presence?.online}
-        lastSeenAt={presence?.lastSeenAt}
+        online={presence?.online ?? conversation?.online}
+        lastSeenAt={presence?.lastSeenAt ?? conversation?.lastSeenAt}
+        onViewProfile={
+          travel && linkedAgency
+            ? () => {
+                setProfileOpen(false);
+                pushPath(`/(customer)/agency/${linkedAgency.id}`);
+              }
+            : undefined
+        }
       />
       {loadingThread && messages.length === 0 ? (
         <View style={styles.skeletonWrap}>
@@ -229,7 +303,7 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
           ))}
         </View>
       ) : (
-        <View style={styles.chatBg}>
+        <View style={[styles.chatBg, travel && { backgroundColor: theme.background }]}>
           <FlatList
             ref={listRef}
             data={listItems}
@@ -240,7 +314,7 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
             contentContainerStyle={{
               paddingHorizontal: Spacing.lg,
               paddingTop: Spacing.md,
-              paddingBottom: insets.bottom + 12,
+              paddingBottom: travel ? 12 : insets.bottom + 12,
               flexGrow: 1,
               gap: Spacing.xs,
             }}
@@ -248,33 +322,69 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
               loadingOlder ? (
                 <Text style={styles.loadingOlder}>Loading older messages…</Text>
               ) : hasMoreOlder ? (
-                <Pressable onPress={() => void loadOlder()}>
+                <Pressable
+                  onPress={() => void loadOlder()}
+                  style={travel ? { minHeight: 44, justifyContent: 'center' } : undefined}
+                >
                   <Text style={styles.loadingOlder}>Load earlier messages</Text>
                 </Pressable>
               ) : null
             }
             ListEmptyComponent={
-              <EmptyState
-                title="Start your conversation"
-                message="Discuss trip details, pickup points, availability, seats and booking information."
-                icon="chatbubble-ellipses-outline"
-              />
+              travel && error ? (
+                <ErrorState
+                  title="Couldn't load this conversation"
+                  message={error}
+                  onRetry={() => void openThread(otherUserId, { bookingId })}
+                />
+              ) : (
+                <EmptyState
+                  title="Start your conversation"
+                  message="Discuss trip details, pickup points, availability, seats and booking information."
+                  icon="chatbubble-ellipses-outline"
+                />
+              )
             }
             renderItem={({ item }) => {
               if (item.kind === 'separator') {
                 return (
-                  <View style={styles.separator}>
-                    <View style={styles.sepLine} />
-                    <Text style={styles.sepText}>{item.label}</Text>
-                    <View style={styles.sepLine} />
+                  <View style={[styles.separator, travel && { justifyContent: 'center' }]}>
+                    {!travel ? <View style={styles.sepLine} /> : null}
+                    <Text
+                      style={[
+                        styles.sepText,
+                        travel && {
+                          backgroundColor: theme.field,
+                          color: theme.muted,
+                          borderRadius: 12,
+                          paddingHorizontal: 9,
+                          paddingVertical: 4,
+                          fontFamily: Fonts.bodyMedium,
+                          fontSize: 10,
+                        },
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                    {!travel ? <View style={styles.sepLine} /> : null}
                   </View>
                 );
               }
               const mine = item.message.senderId === me;
               return (
-                <View style={[styles.row, mine ? styles.rowMine : styles.rowTheirs]}>
+                <View
+                  style={[
+                    styles.row,
+                    mine ? styles.rowMine : styles.rowTheirs,
+                    travel && { alignItems: 'flex-start', marginVertical: 6 },
+                  ]}
+                >
                   {!mine && item.showAvatar ? (
-                    <Avatar uri={avatarUri} name={title} size={28} />
+                    <Avatar
+                      uri={avatarUri ?? conversation?.otherUserAvatar}
+                      name={title}
+                      size={28}
+                    />
                   ) : !mine ? (
                     <View style={{ width: 28 }} />
                   ) : null}
@@ -302,7 +412,7 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
 
           {pendingNew > 0 ? (
             <Pressable
-              style={styles.newPill}
+              style={[styles.newPill, travel && { backgroundColor: theme.action }]}
               onPress={() => {
                 setPendingNew(0);
                 setNearBottom(true);
@@ -311,18 +421,33 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
               accessibilityRole="button"
               accessibilityLabel={`${pendingNew} new messages`}
             >
-              <Text style={styles.newPillText}>↓ {pendingNew} new message{pendingNew > 1 ? 's' : ''}</Text>
+              <Text style={[styles.newPillText, travel && { color: theme.background }]}>
+                ↓ {pendingNew} new message{pendingNew > 1 ? 's' : ''}
+              </Text>
             </Pressable>
           ) : null}
         </View>
       )}
 
+      {travel ? (
+        <View>
+          <ChatQuickReplies
+            disabled={!me || sending || uploading}
+            onSelect={(reply) =>
+              onChangeText((text.trim() ? `${text.trim()} ${reply}` : reply).slice(0, 4000))
+            }
+          />
+        </View>
+      ) : null}
       <MessageComposer
         value={text}
         onChangeText={onChangeText}
         onSend={() => void onSend()}
         onAttachPress={() => void onAttach()}
-        sending={sending}
+        sending={sending || uploading}
+        disabled={travel && (!me || loadingThread)}
+        onCameraPress={travel ? () => void onAttach(true) : undefined}
+        placeholder={travel ? `Message ${title.split(' ')[0]}…` : undefined}
         bottomInset={insets.bottom}
       />
     </KeyboardAvoidingView>
