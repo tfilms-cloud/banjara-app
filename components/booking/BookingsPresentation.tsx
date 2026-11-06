@@ -1,3 +1,4 @@
+import type { TextInputInstance } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -53,7 +54,7 @@ export function TravelBookingsLayout({
   onProfile: () => void;
 }) {
   const theme = useHomeDesign();
-  const input = useRef<TextInput>(null);
+  const input = useRef<TextInputInstance>(null);
   useEffect(() => {
     if (searchVisible) input.current?.focus();
   }, [searchVisible]);

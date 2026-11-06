@@ -89,7 +89,11 @@ function createThemed<T extends NamedStyles<T> | NamedStyles<any>>(styles: T): T
   return themed;
 }
 
-const patched = RNStyleSheet as typeof RNStyleSheet & { __banjaraThemed?: boolean };
+// RN 0.88 types `create` as readonly; the runtime object is still a plain, writable object.
+const patched = RNStyleSheet as unknown as {
+  create: typeof RNStyleSheet.create;
+  __banjaraThemed?: boolean;
+};
 if (!patched.__banjaraThemed) {
   patched.create = createThemed as typeof RNStyleSheet.create;
   patched.__banjaraThemed = true;

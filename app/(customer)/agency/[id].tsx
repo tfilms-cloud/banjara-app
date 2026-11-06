@@ -1,3 +1,4 @@
+import type { ScrollViewInstance } from 'react-native';
 import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -284,7 +285,7 @@ export default function AgencyProfileScreen() {
   const params = useLocalSearchParams<{ id: string | string[] }>();
   const agencyId = paramId(params.id);
   const setTrip = useBookingStore((s) => s.setTrip);
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const tripsOffset = useRef(0);
 
   const [agency, setAgency] = useBackendState<Agency | null>(null);

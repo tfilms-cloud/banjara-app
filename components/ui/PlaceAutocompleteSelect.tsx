@@ -247,7 +247,7 @@ export function PlaceAutocompleteSelect({
                       ? 'Popular places appear above — or type to search all of Pakistan.'
                       : 'No matches yet.'}
                   </Text>
-                ) : null
+                ) : undefined
               }
               renderItem={({ item }) => {
                 if (item.kind === 'suggestion') {

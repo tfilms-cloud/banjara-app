@@ -1,3 +1,4 @@
+import type { ScrollViewInstance } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
@@ -327,7 +328,7 @@ export default function HomeScreen() {
   const { hotels, loading: hotelsLoading, refresh: refreshHotels } = usePopularHotels();
   const setTrip = useBookingStore((state) => state.setTrip);
   const [refreshing, setRefreshing] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const colors = useThemeColors();
   const notifications = useUserStore((state) => state.notifications);
   const loadNotifications = useUserStore((state) => state.loadNotifications);

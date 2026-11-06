@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
 import {
-  NativeSyntheticEvent,
   StyleSheet,
   TextInput,
-  TextInputKeyPressEventData,
+  type TextInputInstance,
+  type TextInputKeyPressEvent,
   View,
 } from 'react-native';
 import { AuthFonts } from '@/constants/authFonts';
@@ -17,7 +17,7 @@ type OtpInputProps = {
 };
 
 export function OtpInput({ length = 6, value, onChange }: OtpInputProps) {
-  const refs = useRef<Array<TextInput | null>>([]);
+  const refs = useRef<Array<TextInputInstance | null>>([]);
   const digits = Array.from({ length }, (_, index) => value[index] ?? '');
   const [focusedIndex, setFocusedIndex] = useState(0);
 
@@ -31,7 +31,7 @@ export function OtpInput({ length = 6, value, onChange }: OtpInputProps) {
     }
   };
 
-  const onKeyPress = (index: number, event: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
+  const onKeyPress = (index: number, event: TextInputKeyPressEvent) => {
     if (event.nativeEvent.key === 'Backspace' && !digits[index] && index > 0) {
       refs.current[index - 1]?.focus();
       setDigit(index - 1, '');

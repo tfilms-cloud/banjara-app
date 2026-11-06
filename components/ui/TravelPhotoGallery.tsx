@@ -1,3 +1,4 @@
+import type { ScrollViewInstance } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
@@ -41,7 +42,7 @@ export function TravelPhotoGallery({
   const theme = useHomeDesign();
   const { width, height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const pager = useRef<ScrollView>(null);
+  const pager = useRef<ScrollViewInstance>(null);
   const [index, setIndex] = useState(0);
   const [open, setOpen] = useState(false);
   const [failed, setFailed] = useState<Record<string, boolean>>({});

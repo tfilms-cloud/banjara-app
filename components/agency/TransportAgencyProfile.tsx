@@ -1,3 +1,4 @@
+import type { ScrollViewInstance } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -99,7 +100,7 @@ function TransportAgencyContent({
 }: Props) {
   const theme = useHomeDesign();
   const insets = useSafeAreaInsets();
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
   const departuresY = useRef(0);
   const [details, setDetails] = useState(false);
   const [photos, setPhotos] = useState(false);

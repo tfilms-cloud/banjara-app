@@ -1,3 +1,4 @@
+import type { TextInputInstance } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, type ReactNode, type Ref } from 'react';
 import {
@@ -88,7 +89,7 @@ export function TravelTextField({
   onSubmit?: () => void;
   trailing?: ReactNode;
   compact?: boolean;
-  inputRef?: Ref<TextInput>;
+  inputRef?: Ref<TextInputInstance>;
 }) {
   const theme = useHomeDesign();
   const [focused, setFocused] = useState(false);

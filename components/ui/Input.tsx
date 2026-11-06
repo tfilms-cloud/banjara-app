@@ -1,3 +1,4 @@
+import type { TextInputInstance } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { forwardRef, useContext, useState } from 'react';
 import {
@@ -24,7 +25,7 @@ interface InputProps extends TextInputProps {
   password?: boolean;
 }
 
-export const Input = forwardRef<TextInput, InputProps>(function Input(
+export const Input = forwardRef<TextInputInstance, InputProps>(function Input(
   {
     label,
     hint,

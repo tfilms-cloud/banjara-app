@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { isValidCoord } from '@/components/map/mapHelpers';
@@ -18,7 +18,7 @@ interface LocationWebMapProps {
 }
 
 export function LocationWebMap({ latitude, longitude, interactive, pinMode, onMoving, onSettled, topInset = 0, bottomInset = 0 }: LocationWebMapProps) {
-  const web = useRef<WebView>(null);
+  const web = useRef<ComponentRef<typeof WebView>>(null);
   const initial = useRef({ latitude, longitude });
   const reported = useRef(initial.current);
   const latest = useRef({ latitude, longitude });

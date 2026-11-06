@@ -290,7 +290,7 @@ export default function ProviderTransportScreen() {
                 A route is the corridor you operate, like Islamabad → Hunza. Pin boarding in the start
                 city and drop-off in the end city on that same route.
               </Text>
-            ) : null
+            ) : undefined
           }
           ListEmptyComponent={
             <EmptyState
@@ -378,7 +378,7 @@ export default function ProviderTransportScreen() {
                 Each pin belongs to one corridor. Add a Hunza drop-off on Islamabad → Hunza, not as a
                 shared list.
               </Text>
-            ) : null
+            ) : undefined
           }
           ListEmptyComponent={
             <EmptyState
@@ -431,7 +431,7 @@ export default function ProviderTransportScreen() {
                   router.push({ pathname: '/(provider)/transport/stop-add', params: { kind: 'dropoff' } } as never)
                 }
               />
-            ) : null
+            ) : undefined
           }
         />
       ) : null}

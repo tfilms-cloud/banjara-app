@@ -50,6 +50,10 @@ function hooks() {
     useCallback(fn, deps) {
       return api.useMemo(() => fn, deps);
     },
+    // Screens now reach hooks/useBackendData; a synchronous read is enough here.
+    useSyncExternalStore(_subscribe, getSnapshot) {
+      return getSnapshot();
+    },
     useEffect(fn, deps) {
       const i = cursor++;
       if (!slots[i] || !same(slots[i].deps, deps)) {
@@ -225,6 +229,20 @@ function runtime(storage = new Map()) {
     },
     '@/services/providerService': service,
     '@/services/apiError': { getApiErrorMessage: (error) => error.message },
+    // These tests are about navigation: the API is always reachable.
+    '@/services/backendAvailability': {
+      backendAvailability: {
+        getSnapshot: () => 'online',
+        subscribe: () => () => {},
+        getEpoch: () => 0,
+        check: async () => {},
+        registerReset: () => () => {},
+        reportFailure: () => {},
+      },
+    },
+    // SDK 58 ships expo-modules-core as ESM, which plain Node can't require.
+    'expo-constants': { __esModule: true, default: {} },
+    'expo-device': { isDevice: false },
     '@/store/authStore': { useAuthStore: authStore },
     'expo-router': {
       router: {
@@ -248,6 +266,7 @@ function runtime(storage = new Map()) {
     '@/utils/navigation': {
       paramId: (value) => (Array.isArray(value) ? value[0] : value || ''),
       useWizardBack: (fn) => fn,
+      useBlockBack: () => {},
       wizardBack: (href) => routes.push(href),
       leaveProviderEditor: () => routes.push('editor'),
       pushPath: (href) => routes.push(href),

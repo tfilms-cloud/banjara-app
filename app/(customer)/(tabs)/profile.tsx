@@ -1,3 +1,4 @@
+import type { ScrollViewInstance } from 'react-native';
 import { useBackendFocusEffect as useFocusEffect } from '@/hooks/useBackendFocusEffect';
 import { useBackendState } from '@/hooks/useBackendData';
 import Constants from 'expo-constants';
@@ -42,7 +43,7 @@ export default function ProfileScreen() {
 function ProfileContent() {
   const theme = useHomeDesign();
   const insets = useSafeAreaInsets();
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const refreshUser = useAuthStore((state) => state.refreshUser);

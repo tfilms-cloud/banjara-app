@@ -1,3 +1,4 @@
+import type { ScrollViewInstance } from 'react-native';
 import { useBackendFocusEffect as useFocusEffect } from '@/hooks/useBackendFocusEffect';
 import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
 import { Ionicons } from '@expo/vector-icons';
@@ -111,7 +112,7 @@ function CustomerPaymentTransactionScreen() {
   const [busy, setBusy] = useState(false);
   const [tick, setTick] = useState(0);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
 
   const { method: preferredMethod, channel } = useMemo(
     () =>

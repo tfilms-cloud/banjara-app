@@ -1,3 +1,4 @@
+import type { TextInputInstance } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useRef, useState } from 'react';
 import {
@@ -144,7 +145,7 @@ export function TravelConversationInbox({
   notificationUnread = false,
 }: InboxProps) {
   const theme = useHomeDesign();
-  const searchRef = useRef<TextInput>(null);
+  const searchRef = useRef<TextInputInstance>(null);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<InboxFilter>('all');
   const items = useMemo(
@@ -240,7 +241,7 @@ export function TravelConversationInbox({
                 Could not refresh messages. Pull down to try again.
               </Text>
             </View>
-          ) : null
+          ) : undefined
         }
         ListFooterComponent={<ChatInboxFooter onHelp={onHelp} />}
       />

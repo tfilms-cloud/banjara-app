@@ -1,5 +1,5 @@
-import { Href, router, useNavigation } from 'expo-router';
-import { useCallback, useEffect, useRef } from 'react';
+import { Href, router, usePreventRemove } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import type { User } from '@/types/user';
 
 const DEAD_END_SCREENS = new Set(['register/success', 'success', 'welcome', 'login']);
@@ -66,26 +66,39 @@ export function wizardBack(href: Href) {
 
 /** Header + Android/iOS back both go to `go`, instead of whatever is under this screen. */
 export function useWizardBack(go: () => void) {
-  const navigation = useNavigation();
   const goRef = useRef(go);
   goRef.current = go;
   const run = useCallback(() => goRef.current(), []);
 
-  useEffect(() => {
-    const unsub = navigation.addListener(
-      'beforeRemove',
-      (event: { data: { action: { type: string } }; preventDefault: () => void }) => {
-        const type = event.data.action.type;
-        if (type === 'GO_BACK' || type === 'POP') {
-          event.preventDefault();
-          run();
-        }
-      }
-    );
-    return unsub;
-  }, [navigation, run]);
+  useBlockBack(true, run);
 
   return run;
+}
+
+/**
+ * Blocks back navigation (header back, swipe, Android back → GO_BACK / POP) while `active`.
+ * With `onBack`, a blocked back calls it instead; without it, back simply does nothing.
+ * Any other removal (replace, reset, navigate away) is let through.
+ * Replaces the `beforeRemove` listener, which expo-router 58 no longer emits.
+ */
+export function useBlockBack(active: boolean, onBack?: () => void) {
+  const [released, setReleased] = useState(false);
+  const onBackRef = useRef(onBack);
+  onBackRef.current = onBack;
+
+  const disablePrevention = usePreventRemove(active && !released, ({ data, repeat }) => {
+    const type = data.action.type;
+    if (type === 'GO_BACK' || type === 'POP') {
+      const handler = onBackRef.current;
+      if (!handler) return; // stay on this screen
+      setReleased(true);
+      disablePrevention();
+      handler();
+      return;
+    }
+    setReleased(true);
+    repeat();
+  });
 }
 
 /** Push helper for dynamic hotel/transport/provider paths with typed routes. */

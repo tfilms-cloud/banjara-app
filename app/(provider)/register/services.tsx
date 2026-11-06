@@ -19,7 +19,7 @@ import * as serviceCatalogService from '@/services/serviceCatalogService';
 import type { CatalogService } from '@/services/serviceCatalogService';
 import { useAuthStore } from '@/store/authStore';
 import { useProviderStore } from '@/store/providerStore';
-import { leaveProviderEditor, pushPath } from '@/utils/navigation';
+import { leaveProviderEditor, pushPath, useBlockBack } from '@/utils/navigation';
 import { needsProviderOnboarding } from '@/utils/routing';
 
 export default function ProviderSelectServicesScreen() {
@@ -67,22 +67,14 @@ export default function ProviderSelectServicesScreen() {
     }
   }, [user?.id, user?.providerId, loadProvider, loadProviderByUser]);
 
+  useBlockBack(!canLeave);
+
   useEffect(() => {
     if (canLeave) return;
 
     navigation.setOptions?.({ gestureEnabled: false });
-    const unsub = navigation.addListener(
-      'beforeRemove',
-      (event: { data: { action: { type: string } }; preventDefault: () => void }) => {
-        const type = event.data.action.type;
-        if (type === 'GO_BACK' || type === 'POP') {
-          event.preventDefault();
-        }
-      }
-    );
     const hardware = BackHandler.addEventListener('hardwareBackPress', () => true);
     return () => {
-      unsub();
       hardware.remove();
     };
   }, [canLeave, navigation]);

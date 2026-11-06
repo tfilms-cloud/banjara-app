@@ -1,3 +1,4 @@
+import type { ScrollViewInstance } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ArrowLeft, CircleAlert } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -64,7 +65,7 @@ export function AuthScreen({
 }: AuthScreenProps) {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
   const keyboardProgress = useSharedValue(0);

@@ -105,7 +105,7 @@ export default function ProviderNotificationsScreen() {
           ListHeaderComponent={
             error ? (
               <Text style={[styles.error, { color: colors.danger }]}>{error}</Text>
-            ) : null
+            ) : undefined
           }
           renderItem={({ item }) => (
             <NotificationCard

@@ -261,7 +261,7 @@ function BookingsContent() {
             <Text style={[styles.notice, { color: theme.muted, backgroundColor: theme.field }]}>
               Some bookings could not refresh. Pull down to try again.
             </Text>
-          ) : null
+          ) : undefined
         }
         ListEmptyComponent={
           !user ? (

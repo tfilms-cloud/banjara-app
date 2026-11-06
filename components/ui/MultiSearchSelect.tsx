@@ -238,7 +238,7 @@ export function MultiSearchSelect({
                       ? 'Type at least 2 letters to search all of Pakistan.'
                       : 'No matches.'}
                   </Text>
-                ) : null
+                ) : undefined
               }
               renderItem={({ item }) => {
                 const active = values.includes(item);

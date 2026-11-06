@@ -328,7 +328,7 @@ export function ChatThread({ otherUserId, title = 'Chat', bookingId, backHref, a
                 >
                   <Text style={styles.loadingOlder}>Load earlier messages</Text>
                 </Pressable>
-              ) : null
+              ) : undefined
             }
             ListEmptyComponent={
               travel && error ? (

@@ -1,3 +1,4 @@
+import type { ScrollViewInstance } from 'react-native';
 import { useBackendFocusEffect as useFocusEffect } from '@/hooks/useBackendFocusEffect';
 import { useBackendState, useBackendEffect as useEffect } from '@/hooks/useBackendData';
 import { PaymentReviewSheet } from '@/components/payments/PaymentReviewSheet';
@@ -36,7 +37,7 @@ export default function ProviderPaymentVerifyScreen() {
   const insets = useSafeAreaInsets();
   const { paymentId } = useLocalSearchParams<{ paymentId: string }>();
   const id = String(paymentId ?? '');
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
 
   const [payment, setPayment] = useBackendState<p2p.PaymentTransaction | null>(null);
