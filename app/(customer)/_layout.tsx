@@ -33,6 +33,7 @@ export default function CustomerLayout() {
       <Stack.Screen name="hotels/confirmation/[id]" />
       <Stack.Screen name="hotels/booking-details/[id]" />
       <Stack.Screen name="explore/map" />
+      <Stack.Screen name="explore/nearby" />
       <Stack.Screen name="restaurants/[id]" />
       <Stack.Screen name="tours/[id]" />
       <Stack.Screen name="tours/book/[id]" />

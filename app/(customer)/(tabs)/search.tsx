@@ -3,13 +3,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { ServicePickerSheet } from '@/components/explore/ServicePickerSheet';
+import { useFocusEffect, useLocalSearchParams, useNavigation } from 'expo-router';
 import { ExplorePanels, FloatingCrossSell } from '@/components/explore/ExplorePanels';
 import {
   ExploreBanner,
@@ -41,7 +44,6 @@ import {
 import { pushPath } from '@/utils/navigation';
 
 const EXPLORE_SERVICES: readonly string[] = ['transport', 'hotels', 'tours', 'guides', 'restaurants'];
-
 function isExploreService(value: string | undefined): value is ExploreServiceTab {
   return !!value && EXPLORE_SERVICES.includes(value);
 }
@@ -97,6 +99,21 @@ export default function ExploreScreen() {
     useCallback(() => {
       void refreshAll();
     }, [refreshAll]),
+  );
+
+  // Ask what the visitor wants every time they open Explore: on first open (unless Home
+  // deep-linked a service) and on every tap of the Explore tab. Coming back from a listing
+  // (the Back button) is not "opening", so it doesn't ask again.
+  const [picker, setPicker] = useState<null | 'choose' | 'locating'>(() =>
+    isExploreService(service) ? null : 'choose',
+  );
+  const navigation = useNavigation();
+  useEffect(
+    () =>
+      (navigation as unknown as {
+        addListener: (event: 'tabPress', listener: () => void) => () => void;
+      }).addListener('tabPress', () => setPicker('choose')),
+    [navigation],
   );
 
   const onRefresh = async () => {
@@ -237,6 +254,21 @@ export default function ExploreScreen() {
             }
           />
           {tab === 'transport' ? (
+            <Pressable
+              onPress={() => setPicker('locating')}
+              style={({ pressed }) => [
+                s.nearMe,
+                { backgroundColor: theme.action, opacity: pressed ? 0.9 : 1 },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Rides near me. Uses your location."
+            >
+              <Ionicons name="locate" size={18} color="#fff" />
+              <Text style={s.nearMeText}>Rides near me</Text>
+              <Text style={s.nearMeHint}>within 10 km</Text>
+            </Pressable>
+          ) : null}
+          {tab === 'transport' ? (
             <ExploreTransportPanel
               trips={catalog.trips}
               loading={tripsLoading}
@@ -266,6 +298,15 @@ export default function ExploreScreen() {
           )}
         </ScrollView>
         <ExploreHelp />
+        <ServicePickerSheet
+          visible={picker !== null}
+          startWith={picker ?? 'choose'}
+          onClose={() => setPicker(null)}
+          onPick={(next) => {
+            setPicker(null);
+            changeService(next);
+          }}
+        />
       </View>
     </TravelDesignProvider>
   );
@@ -283,4 +324,16 @@ const s = StyleSheet.create({
     gap: 8,
   },
   loadingText: { fontFamily: Fonts.body, fontSize: 12 },
+  nearMe: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    minHeight: 48,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+  },
+  nearMeText: { fontFamily: Fonts.bodySemiBold, fontSize: 15, color: '#fff' },
+  nearMeHint: { fontFamily: Fonts.body, fontSize: 13, color: 'rgba(255,255,255,0.85)', marginLeft: 'auto' },
 });

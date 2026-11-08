@@ -32,6 +32,8 @@ type InAppWebMapProps = {
   onSelectMarker?: (id: string) => void;
   /** When set, tapping the map reports a coordinate (drop-pin). */
   onPressMap?: (coordinate: Coordinates) => void;
+  /** "Rides near me": draw this search radius (km) around `userLocation` and frame it. */
+  searchRadiusKm?: number | null;
 };
 
 function escapeHtml(value: string) {
@@ -58,7 +60,8 @@ function buildHtml(
   traveler?: MapPerson | null,
   vehicle?: MapVehicleInfo | null,
   roadRoute?: Coordinates[] | null,
-  dropPin = false
+  dropPin = false,
+  searchRadiusKm?: number | null
 ) {
   const points = markers
     .filter((m) => isValidCoord(m.coordinate))
@@ -228,6 +231,21 @@ function buildHtml(
         fillOpacity: 0.12,
       }).addTo(map);
       bounds.push([user.lat, user.lng]);
+      const searchKm = ${JSON.stringify(searchRadiusKm ?? null)};
+      if (searchKm) {
+        // "Rides near me": show the search area and frame all of it.
+        const area = L.circle([user.lat, user.lng], {
+          radius: searchKm * 1000,
+          color: '#0F9B98',
+          weight: 2,
+          dashArray: '6 8',
+          fillColor: '#16B364',
+          fillOpacity: 0.07,
+          interactive: false,
+        }).addTo(map);
+        const box = area.getBounds();
+        bounds.push([box.getSouth(), box.getWest()], [box.getNorth(), box.getEast()]);
+      }
     }
 
     if (routePath && routePath.length > 1) {
@@ -289,6 +307,7 @@ export function InAppWebMap({
   fill = false,
   onSelectMarker,
   onPressMap,
+  searchRadiusKm,
 }: InAppWebMapProps) {
   const html = useMemo(
     () =>
@@ -299,9 +318,10 @@ export function InAppWebMap({
         traveler,
         vehicle,
         roadRoute,
-        Boolean(onPressMap)
+        Boolean(onPressMap),
+        searchRadiusKm
       ),
-    [markers, userLocation, showRoute, traveler, vehicle, roadRoute, onPressMap]
+    [markers, userLocation, showRoute, traveler, vehicle, roadRoute, onPressMap, searchRadiusKm]
   );
 
   const resolvedHeight = fill ? undefined : (height ?? 280);
